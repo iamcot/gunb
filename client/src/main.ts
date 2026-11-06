@@ -70,7 +70,8 @@ async function main(): Promise<void> {
     mode?.destroy()
     mode = m
     fx.hideProjectiles()
-    ctx.focus.t = 0
+    // chế độ mới đã đặt điểm camera trong constructor (lượt đầu) nên không xoá; chỉ xoá khi về menu
+    if (!m) ctx.focus.t = 0
     if (m) { menu.hide(); menuBtn.style.display = 'block' } else { view.reset(); menu.show(); menuBtn.style.display = 'none'; hud.setVisible(false) }
   }
   let select: SelectScreen | null = null

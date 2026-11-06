@@ -1,5 +1,6 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { TEAM_NAMES, TUNING, aimDir, aimRange, type AimRange, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
+import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
@@ -95,6 +96,7 @@ export class VehicleViews {
       this.container.addChild(root)
       const view: View = { root, body, barrel, bar, name, marker, art: null }
       this.views.set(p.id, view)
+      preloadShotArt(p.mobileId)
       void loadRig(p.mobileId).then(ra => { if (ra && !root.destroyed) this.attachArt(view, ra, p.body.radius) })
     }
   }

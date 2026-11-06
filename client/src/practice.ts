@@ -21,12 +21,12 @@ export class Practice {
 
   constructor(private readonly mask: TerrainMask) {
     const sx = this.flattestX(150, 600)
-    this.shooter = { id: 1, x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 100, armor: 0 }
+    this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 100, armor: 0 }
     this.vehicles = [this.shooter]
     this.container.addChild(this.shooterGfx, this.barrelGfx)
     ;[450, 800, 1200].forEach((dx, i) => {
       const x = sx + dx
-      const v: ShotVehicle = { id: 2 + i, x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 100, armor: 0 }
+      const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 100, armor: 0 }
       const g = new Graphics()
       const label = new Text({ text: '100', style: { fill: 0xffffff, fontSize: 14, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
       label.anchor.set(0.5, 1)
@@ -56,6 +56,8 @@ export class Practice {
   get tilt(): number { return slopeAt(this.mask, this.shooter.x, 0, SHOOTER_HALF_W) }
 
   setAngle(angle: number): void { this.angle = angle }
+
+  setMobile(id: string): void { this.shooter.mobileId = id }
 
   applyDamage(id: number, hpAfter: number): void {
     const v = this.vehicles.find(t => t.id === id)

@@ -1,17 +1,18 @@
 import {
   TEAM_NAMES, TUNING, applyAction, createMatch, currentPlayer, isSettled, windMagnitude,
-  type MatchState, type Team, type TerrainMask,
+  type MatchState, type ShotSlot, type Team, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
+import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
 
-const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · giữ Space tích lực, nhả để bắn · Esc: menu'
+const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đạn (3 = SS khi đầy) · giữ Space tích lực, nhả để bắn · Esc: menu'
 const SETTLE_PAUSE = 0.3
 
-export interface HotseatSetup { perTeam: number }
+export interface HotseatSetup { perTeam: number; mobileIds: string[] }   // mobileIds[i] là pháo của người chơi id i
 
 /** Hotseat: 1v1..4v4 chung một bàn phím. */
 export class HotseatMode implements Mode {
@@ -20,6 +21,7 @@ export class HotseatMode implements Mode {
   private readonly aim = new AimInput(true)
   private readonly vehicles: VehicleViews
   private readonly turnHud = new TurnHud()
+  private readonly shotBar = new ShotBar(slot => { if (slot !== 2 || this.aim.ssReady) this.aim.slot = slot })
   private readonly shownHp = new Map<number, number>()
   private readonly lastPower = new Map<number, number>()
   private playback: ShotPlayback | null = null
@@ -34,7 +36,7 @@ export class HotseatMode implements Mode {
     const players = []
     for (let i = 0; i < setup.perTeam * 2; i++) {
       const team = (i % 2) as Team
-      players.push({ name: `${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}`, team })
+      players.push({ name: `${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}`, team, mobileId: setup.mobileIds[i] ?? 'oc-thiet-giap' })
     }
     this.match = createMatch({ seed: (Date.now() & 0x7fffffff) >>> 0, mask: this.mask, spawnZones: ctx.map.spawnZones, players })
     this.vehicles = new VehicleViews(this.match)
@@ -42,13 +44,16 @@ export class HotseatMode implements Mode {
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
-    this.aim.onFire = (_angle, power) => this.fire(power)
+    this.aim.onFire = (_angle, power, slot) => this.fire(power, slot)
     this.beginTurnUi()
   }
 
   private beginTurnUi(): void {
     const p = currentPlayer(this.match)
+    const def = TUNING.mobiles[p.mobileId]!
+    this.aim.setRange(def.angleMin, def.angleMax)
     this.aim.angle = p.aimAngle
+    this.aim.slot = 0
     this.aim.lastPower = this.lastPower.get(p.id) ?? 0
     this.aim.power = 0
     this.lastTurnPlayer = p.id
@@ -56,18 +61,17 @@ export class HotseatMode implements Mode {
     this.ctx.focus.x = p.body.x; this.ctx.focus.y = p.body.y; this.ctx.focus.t = 1.2
   }
 
-  private fire(power: number): void {
+  private fire(power: number, slot: ShotSlot): void {
     const m = this.match
     if (m.phase !== 'aiming' || this.playback) return
     const p = currentPlayer(m)
     this.lastPower.set(p.id, power)
     for (const q of m.players) this.shownHp.set(q.id, q.hp)
-    const res = applyAction(m, { t: 'fire', id: p.id, angle: this.aim.angle, power, shotType: 'basic' }, { mask: this.mask })
+    const res = applyAction(m, { t: 'fire', id: p.id, angle: this.aim.angle, power, slot }, { mask: this.mask })
     if (!res.ok || !res.shot) return
     this.aim.locked = true
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
-      onProjectile: (x, y, visible) => { this.ctx.proj.x = x; this.ctx.proj.y = y; this.ctx.proj.visible = visible },
     })
   }
 
@@ -76,8 +80,9 @@ export class HotseatMode implements Mode {
     if (m.phase === 'aiming' && !this.playback) {
       if (m.turnPlayerId !== this.lastTurnPlayer) this.beginTurnUi()
       aim.locked = false
-      aim.update(dt)
       const p = currentPlayer(m)
+      aim.ssReady = p.ss >= TUNING.ss.max
+      aim.update(dt)
       if (aim.moveDir !== 0) applyAction(m, { t: 'move', id: p.id, dir: aim.moveDir, dt }, { mask: this.mask })
       applyAction(m, { t: 'aim', id: p.id, angle: aim.angle }, { mask: this.mask })
       const r = applyAction(m, { t: 'tick', dt }, { mask: this.mask })
@@ -90,7 +95,6 @@ export class HotseatMode implements Mode {
         if (this.playback.update(dt)) {
           this.lastHash = this.playback.hashMatches
           this.playback = null
-          ctx.proj.visible = false
         }
       } else {
         applyAction(m, { t: 'tick', dt }, { mask: this.mask })   // xe mất đất dưới chân rơi xuống
@@ -107,7 +111,10 @@ export class HotseatMode implements Mode {
     }
     if (!this.playback && m.phase !== 'resolving') this.shownHp.clear()
     this.vehicles.update(dt, m, this.shownHp)
-    this.turnHud.update(m, TUNING.move.fuelPerTurn)
+    this.turnHud.update(m)
+    const cur = currentPlayer(m)
+    this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
+    this.shotBar.setVisible(m.phase !== 'ended')
   }
 
   private showEnd(): void {
@@ -126,6 +133,7 @@ export class HotseatMode implements Mode {
   debugText(): string {
     const m = this.match, p = currentPlayer(m)
     return `[hotseat ${this.setup.perTeam}v${this.setup.perTeam}] lượt ${m.turnNo} · ${p.name} · pha ${m.phase}\n` +
+      `pháo ${p.mobileId}  đạn ${this.aim.slot + 1}  SS ${p.ss.toFixed(0)}  giáp hiệu lực ${(p.armor - (p.armorDebuff.turns > 0 ? p.armorDebuff.amount : 0)).toFixed(2)}\n` +
       `góc ${this.aim.angle}°  lực ${this.aim.power.toFixed(1)}  nhiên liệu ${p.body.fuel.toFixed(0)}  trên đất ${p.body.onGround}\n` +
       `độ dốc xe ${(p.body.tilt * 180 / Math.PI).toFixed(1)}°  delay ${p.delay.toFixed(0)}\n` +
       `gió (${m.wind.x}, ${m.wind.y}) |${windMagnitude(m.wind).toFixed(1)}|  còn ${m.turnTimeLeft.toFixed(1)} s\n` +
@@ -137,9 +145,10 @@ export class HotseatMode implements Mode {
   destroy(): void {
     this.aim.dispose()
     this.turnHud.destroy()
+    this.shotBar.destroy()
     this.overlay?.remove()
     this.ctx.world.removeChild(this.vehicles.container)
     this.vehicles.destroy()
-    this.ctx.proj.visible = false
+    this.ctx.fx.hideProjectiles()
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
-import { applyAction, createMatch, currentPlayer, isSettled, type MatchState } from './match'
+import { applyAction, createMatch, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
 import { createDefaultTuning } from './tuning'
 
 const W = 2400, H = 1200, G = 800
@@ -12,7 +12,7 @@ function flat(): TerrainMask {
 const zones = { A: { x1: 100, x2: 600 }, B: { x1: 1800, x2: 2300 } }
 function make(n = 4, seed = 7): { s: MatchState; mask: TerrainMask } {
   const mask = flat()
-  const players = Array.from({ length: n }, (_, i) => ({ name: `P${i}`, team: (i % 2) as 0 | 1 }))
+  const players = Array.from({ length: n }, (_, i) => ({ name: `P${i}`, team: (i % 2) as 0 | 1, mobileId: 'oc-thiet-giap' }))
   return { s: createMatch({ seed, mask, spawnZones: zones, players }), mask }
 }
 
@@ -36,7 +36,7 @@ describe('createMatch', () => {
     // nửa vùng đội A (x 100..350) dựng sườn dốc 60°, nửa còn lại phẳng
     for (let x = 100; x < 350; x++) { const top = Math.round(G - (x - 100) * 1.7); for (let y = Math.max(0, top); y < G; y++) mask.data[y * W + x] = 1 }
     for (const seed of [1, 2, 3, 4, 5]) {
-      const s = createMatch({ seed, mask, spawnZones: zones, players: [{ name: 'a', team: 0 }, { name: 'b', team: 1 }, { name: 'c', team: 0 }, { name: 'd', team: 1 }] })
+      const s = createMatch({ seed, mask, spawnZones: zones, players: [{ name: 'a', team: 0, mobileId: 'oc-thiet-giap' }, { name: 'b', team: 1, mobileId: 'oc-thiet-giap' }, { name: 'c', team: 0, mobileId: 'oc-thiet-giap' }, { name: 'd', team: 1, mobileId: 'oc-thiet-giap' }] })
       for (const p of s.players) expect(Math.abs(p.body.tilt)).toBeLessThanOrEqual((30 * Math.PI) / 180 + 1e-9)
     }
   })
@@ -51,7 +51,7 @@ describe('createMatch', () => {
 describe('applyAction', () => {
   it('từ chối hành động của người không phải lượt', () => {
     const { s, mask } = make()
-    expect(applyAction(s, { t: 'fire', id: 1, angle: 45, power: 50, shotType: 'basic' }, { mask }).ok).toBe(false)
+    expect(applyAction(s, { t: 'fire', id: 1, angle: 45, power: 50, slot: 0 }, { mask }).ok).toBe(false)
     expect(applyAction(s, { t: 'move', id: 2, dir: 1, dt: 0.1 }, { mask }).ok).toBe(false)
     expect(s.phase).toBe('aiming')
   })
@@ -63,13 +63,13 @@ describe('applyAction', () => {
     const x0 = p.body.x
     for (let i = 0; i < 30; i++) applyAction(s, { t: 'move', id: p.id, dir: 1, dt: 1 / 60 }, { mask })
     expect(p.body.x).toBeGreaterThan(x0)
-    expect(p.body.fuel).toBeLessThan(t.move.fuelPerTurn)
+    expect(p.body.fuel).toBeLessThan(t.mobiles['oc-thiet-giap']!.fuel)
     expect(p.delay).toBeCloseTo((p.body.x - x0) * t.move.delayPerPx, 3)
-    const r = applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 60, shotType: 'basic' }, { mask })
+    const r = applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 60, slot: 0 }, { mask })
     expect(r.ok).toBe(true)
     expect(r.shot).toBeDefined()
     expect(s.phase).toBe('resolving')
-    expect(applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 60, shotType: 'basic' }, { mask }).ok).toBe(false)
+    expect(applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 60, slot: 0 }, { mask }).ok).toBe(false)
     expect(applyAction(s, { t: 'endTurn' }, { mask }).ok).toBe(true)
     expect(s.phase).toBe('aiming')
     expect(s.turnPlayerId).not.toBe(p.id)
@@ -81,7 +81,7 @@ describe('applyAction', () => {
     const ids: number[] = []
     for (let i = 0; i < 4; i++) {
       ids.push(s.turnPlayerId)
-      applyAction(s, { t: 'fire', id: s.turnPlayerId, angle: 80, power: 20, shotType: 'basic' }, { mask })
+      applyAction(s, { t: 'fire', id: s.turnPlayerId, angle: 80, power: 20, slot: 0 }, { mask })
       applyAction(s, { t: 'endTurn' }, { mask })
     }
     expect(new Set(ids).size).toBe(4)
@@ -108,13 +108,13 @@ describe('applyAction', () => {
     // đặt mục tiêu sát chỗ đạn rơi: lấy điểm rơi từ bắn thử trên bản sao
     const probe = make(2).s
     const probeMask = flat()
-    const res = applyAction(probe, { t: 'fire', id: 0, angle: 45, power: 70, shotType: 'basic' }, { mask: probeMask })
+    const res = applyAction(probe, { t: 'fire', id: 0, angle: 45, power: 70, slot: 0 }, { mask: probeMask })
     const ex = res.shot!.events.find(e => e.kind === 'explode')!
     if (ex.kind !== 'explode') throw new Error()
     target.body.x = ex.x
     target.hp = 10
     const before = mask.hash()
-    applyAction(s, { t: 'fire', id: shooter.id, angle: 45, power: 70, shotType: 'basic' }, { mask })
+    applyAction(s, { t: 'fire', id: shooter.id, angle: 45, power: 70, slot: 0 }, { mask })
     expect(target.hp).toBe(0)
     expect(target.body.alive).toBe(false)
     expect(mask.hash()).not.toBe(before)
@@ -142,10 +142,81 @@ describe('applyAction', () => {
     let ended = false
     for (let i = 0; i < 60 * 8 && !ended; i++) {
       applyAction(s, { t: 'tick', dt: 1 / 60 }, { mask })
-      if (s.phase === 'resolving' && isSettled(s)) { applyAction(s, { t: 'endTurn' }, { mask }); ended = s.phase === 'ended' }
+      if (s.phase === 'resolving' && isSettled(s)) { applyAction(s, { t: 'endTurn' }, { mask }); ended = (s.phase as string) === 'ended' }
     }
     expect(ended).toBe(true)
     expect(s.winner).toBe(p.team === 0 ? 1 : 0)
     expect(s.turnTimeLeft).toBeGreaterThan(10)      // còn nhiều giờ: không phải thắng nhờ hết giờ
+  })
+})
+
+describe('3 pháo + thanh SS', () => {
+  function duel(a: string, b: string): { s: MatchState; mask: TerrainMask } {
+    const mask = flat()
+    return { mask, s: createMatch({ seed: 9, mask, spawnZones: zones, players: [{ name: 'a', team: 0, mobileId: a }, { name: 'b', team: 1, mobileId: b }] }) }
+  }
+  /** Đặt đối thủ ngay chỗ đạn của người bắn sẽ rơi (thử trên bản sao). */
+  function aimAtOpponent(a: string, slot: 0 | 1 | 2): { s: MatchState; mask: TerrainMask } {
+    const probe = duel(a, 'oc-thiet-giap')
+    probe.s.players[0]!.ss = 100
+    const res = applyAction(probe.s, { t: 'fire', id: 0, angle: 50, power: 70, slot }, { mask: probe.mask })
+    const ex = res.shot!.events.find(e => e.kind === 'explode')!
+    if (ex.kind !== 'explode') throw new Error()
+    const d = duel(a, 'oc-thiet-giap')
+    d.s.players[1]!.body.x = ex.x
+    d.s.players[0]!.ss = 100
+    return d
+  }
+
+  it('mỗi pháo có máu/giáp/nhiên liệu riêng', () => {
+    const { s } = duel('chui-khoan', 'bo-loi')
+    expect(s.players[0]!.maxHp).toBe(100)
+    expect(s.players[1]!.maxHp).toBe(90)
+    expect(s.players[0]!.body.fuel).toBe(140)
+  })
+
+  it('SS: chưa đầy thì không bắn được; đầy thì bắn được và về 0', () => {
+    const { s, mask } = duel('oc-thiet-giap', 'oc-thiet-giap')
+    expect(applyAction(s, { t: 'fire', id: 0, angle: 45, power: 60, slot: 2 }, { mask }).ok).toBe(false)
+    expect(s.phase).toBe('aiming')
+    s.players[0]!.ss = 100
+    expect(applyAction(s, { t: 'fire', id: 0, angle: 45, power: 60, slot: 2 }, { mask }).ok).toBe(true)
+    expect(s.players[0]!.ss).toBeLessThan(100)
+  })
+
+  it('gây sát thương lên đối phương làm đầy SS cả hai; đầu lượt cộng thêm perTurn', () => {
+    const { s, mask } = aimAtOpponent('oc-thiet-giap', 0)
+    s.players[0]!.ss = 0
+    applyAction(s, { t: 'fire', id: 0, angle: 50, power: 70, slot: 0 }, { mask })
+    expect(s.players[0]!.ss).toBeGreaterThan(0)
+    expect(s.players[1]!.ss).toBeGreaterThan(0)
+    const before = s.players[1]!.ss
+    applyAction(s, { t: 'endTurn' }, { mask })
+    expect(s.turnPlayerId).toBe(1)
+    expect(s.players[1]!.ss).toBeCloseTo(before + createDefaultTuning().ss.perTurn, 5)
+  })
+
+  it('đạn điện giảm giáp mục tiêu 2 lượt của chính nó rồi hết', () => {
+    const { s, mask } = aimAtOpponent('bo-loi', 0)
+    const target = s.players[1]!
+    const base = effectiveArmor(target)
+    applyAction(s, { t: 'fire', id: 0, angle: 50, power: 70, slot: 0 }, { mask })
+    expect(target.armorDebuff.turns).toBe(2)
+    expect(effectiveArmor(target)).toBeCloseTo(base - 0.25, 5)
+    applyAction(s, { t: 'endTurn' }, { mask })            // sang lượt của mục tiêu
+    applyAction(s, { t: 'skip', id: 1 }, { mask }); applyAction(s, { t: 'endTurn' }, { mask })
+    expect(target.armorDebuff.turns).toBe(1)
+    applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask }); applyAction(s, { t: 'endTurn' }, { mask })
+    applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask }); applyAction(s, { t: 'endTurn' }, { mask })
+    expect(target.armorDebuff.turns).toBe(0)
+    expect(effectiveArmor(target)).toBeCloseTo(base, 5)
+  })
+
+  it('góc ngắm kẹp theo dải góc của từng pháo', () => {
+    const { s, mask } = duel('bo-loi', 'chui-khoan')
+    applyAction(s, { t: 'aim', id: 0, angle: 0 }, { mask })
+    expect(s.players[0]!.aimAngle).toBe(20)
+    applyAction(s, { t: 'aim', id: 0, angle: 200 }, { mask })
+    expect(s.players[0]!.aimAngle).toBe(90)
   })
 })

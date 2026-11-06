@@ -1,5 +1,5 @@
 import { Container, Graphics, Text } from 'pixi.js'
-import { ANGLE_MAX, ANGLE_MIN, TEAM_NAMES, aimDir, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
+import { TEAM_NAMES, TUNING, aimDir, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
@@ -69,11 +69,12 @@ export class VehicleViews {
     v.marker.position.set(0, -58 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (ANGLE_MIN..ANGLE_MAX) + vạch góc hiện tại của người đến lượt. */
+  /** Hình quạt dải góc hợp lệ (angleMin..angleMax của pháo) + vạch góc hiện tại của người đến lượt. */
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan
+    const def = TUNING.mobiles[p.mobileId]!
     g.moveTo(b.x, b.y - 4)
-    for (let a = ANGLE_MIN; a <= ANGLE_MAX; a += 5) {
+    for (let a = def.angleMin; a <= def.angleMax; a += 5) {
       const d = aimDir(this.tmp, a, b.facing, b.tilt)
       g.lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS)
     }

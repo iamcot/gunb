@@ -1,4 +1,4 @@
-import { Application, Container, Graphics } from 'pixi.js'
+import { Application, Container } from 'pixi.js'
 import { GAME_NAME, parseMap } from '@gunb/shared'
 import { Camera } from './camera'
 import type { GameCtx, Mode } from './ctx'
@@ -6,6 +6,7 @@ import { Fx } from './fx'
 import { HotseatMode } from './hotseatMode'
 import { Hud } from './hud'
 import { Menu } from './menu'
+import { SelectScreen } from './selectScreen'
 import { PracticeMode } from './practiceMode'
 import { TerrainView } from './terrainView'
 import { TuningPanel } from './tuningPanel'
@@ -35,10 +36,8 @@ async function main(): Promise<void> {
 
   const world = new Container()
   const fx = new Fx()
-  const projectile = new Graphics().circle(0, 0, 5).fill(0x111111).stroke({ color: 0xffffff, width: 1.5 })
-  projectile.visible = false
   app.stage.addChild(world)
-  world.addChild(view.sprite, projectile, fx.container, view.maskSprite)
+  world.addChild(view.sprite, fx.container, view.maskSprite)
 
   const cam = new Camera(map.width, map.height, app.screen.width, app.screen.height)
   cam.y = map.height - app.screen.height
@@ -48,25 +47,33 @@ async function main(): Promise<void> {
   hud.setVisible(false)
   const tuning = new TuningPanel()
   const ctx: GameCtx = {
-    app, world, view, cam, hud, fx, map, keys: new Set<string>(), projectile,
-    proj: { x: 0, y: 0, visible: false }, focus: { x: 0, y: 0, t: 0 },
+    app, world, view, cam, hud, fx, map, keys: new Set<string>(),
+    focus: { x: 0, y: 0, t: 0 },
   }
 
   let mode: Mode | null = null
   const menuBtn = document.getElementById('menubtn') as HTMLButtonElement
   const menu = new Menu({
-    onHotseat: n => startHotseat(n),
+    onHotseat: n => chooseMobiles(n),
     onPractice: () => { setMode(new PracticeMode(ctx)) },
   })
   function setMode(m: Mode | null): void {
     mode?.destroy()
     mode = m
-    ctx.proj.visible = false
+    fx.hideProjectiles()
     ctx.focus.t = 0
     if (m) { menu.hide(); menuBtn.style.display = 'block' } else { view.reset(); menu.show(); menuBtn.style.display = 'none'; hud.setVisible(false) }
   }
-  function startHotseat(n: number): void {
-    setMode(new HotseatMode(ctx, { perTeam: n }, () => startHotseat(n), () => setMode(null)))
+  let select: SelectScreen | null = null
+  function chooseMobiles(n: number): void {
+    menu.hide()
+    select = new SelectScreen(n, {
+      onStart: ids => { select?.destroy(); select = null; startHotseat(n, ids) },
+      onBack: () => { select?.destroy(); select = null; menu.show() },
+    })
+  }
+  function startHotseat(n: number, ids: string[]): void {
+    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids }, () => startHotseat(n, ids), () => setMode(null)))
   }
   menuBtn.addEventListener('click', () => setMode(null))
 
@@ -96,12 +103,11 @@ async function main(): Promise<void> {
     const dt = Math.min(0.1, t.deltaMS / 1000)
     mode?.update(dt)
     fx.update(dt)
-    projectile.visible = ctx.proj.visible
-    projectile.position.set(ctx.proj.x, ctx.proj.y)
+    const lead = fx.lead()
 
     // Camera: bám đạn khi đang bay, rồi quay về xe; còn lại điều khiển tay (WASD / chuột phải)
     const k = Math.min(1, dt * FOLLOW_K)
-    if (ctx.proj.visible) cam.follow(ctx.proj.x, ctx.proj.y, k)
+    if (lead) cam.follow(lead.x, lead.y, k)
     else if (ctx.focus.t > 0) { ctx.focus.t -= dt; cam.follow(ctx.focus.x, ctx.focus.y, k) }
     let dx = 0, dy = 0
     if (ctx.keys.has('KeyA')) dx -= 1
@@ -111,7 +117,7 @@ async function main(): Promise<void> {
     if (dx || dy) { cam.pan(dx * PAN_SPEED * dt, dy * PAN_SPEED * dt); ctx.focus.t = 0 }
     world.position.set(-cam.x + fx.shakeX, -cam.y + fx.shakeY)
 
-    hud.setOffscreen(ctx.proj.visible && ctx.proj.y - cam.y < 0 ? ctx.proj.x - cam.x : null, -ctx.proj.y)
+    hud.setOffscreen(lead && lead.y - cam.y < 0 ? lead.x - cam.x : null, lead ? -lead.y : 0)
 
     if (debugOn) {
       const wx = Math.floor(mouseX + cam.x), wy = Math.floor(mouseY + cam.y)

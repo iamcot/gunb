@@ -10,6 +10,7 @@ export interface MobileBody {
   facing: 1 | -1
   tilt: number        // radian, dương = dốc lên về bên phải
   fuel: number        // px còn đi được trong lượt
+  speedMul: number    // nhân với tuning.move.speed (khác nhau theo pháo)
   vy: number
   onGround: boolean
   alive: boolean
@@ -26,8 +27,8 @@ export interface MoveResult {
 export const MOVE_DT = 1 / 120
 const FALL_OUT_MARGIN = 100
 
-export function createBody(x: number, y: number, radius: number, facing: 1 | -1): MobileBody {
-  return { x, y, radius, facing, tilt: 0, fuel: 0, vy: 0, onGround: true, alive: true, fallStartBottom: y + radius }
+export function createBody(x: number, y: number, radius: number, facing: 1 | -1, speedMul = 1): MobileBody {
+  return { x, y, radius, facing, tilt: 0, fuel: 0, speedMul, vy: 0, onGround: true, alive: true, fallStartBottom: y + radius }
 }
 
 /** Mặt đất cao nhất ở 3 cột chân (x-hw, x, x+hw), quét xuống từ probeY. Infinity nếu không có đất. */
@@ -48,7 +49,7 @@ function chunk(b: MobileBody, dir: -1 | 0 | 1, dt: number, mask: TerrainMask, t:
   if (b.onGround) {
     if (dir !== 0 && b.fuel > 0) {
       b.facing = dir
-      let dx = dir * m.speed * dt
+      let dx = dir * m.speed * b.speedMul * dt
       if (Math.abs(dx) > b.fuel) dx = dir * b.fuel
       const nx = b.x + dx
       const ang = slopeAt(mask, nx, bottom - 2 * m.stepUp, hw)

@@ -1,4 +1,4 @@
-import { ANGLE_MAX, ANGLE_MIN, TUNING, clamp } from '@gunb/shared'
+import { ANGLE_MAX, ANGLE_MIN, TUNING, clamp, type ShotSlot } from '@gunb/shared'
 
 const REPEAT_DELAY = 0.3      // s giữ phím trước khi lặp
 const REPEAT_SLOW = 8         // độ/s lúc mới lặp
@@ -11,12 +11,16 @@ const REPEAT_RAMP = 1.2       // s để tăng từ chậm lên nhanh
  */
 export class AimInput {
   angle = 45
+  angleMin = ANGLE_MIN
+  angleMax = ANGLE_MAX
+  slot: ShotSlot = 0
+  ssReady = false
   facing: 1 | -1 = 1
   power = 0
   lastPower = 0
   charging = false
   locked = false
-  onFire: (angle: number, power: number) => void = () => {}
+  onFire: (angle: number, power: number, slot: ShotSlot) => void = () => {}
   moveDir: -1 | 0 | 1 = 0
   private up = 0
   private down = 0
@@ -33,6 +37,13 @@ export class AimInput {
     window.addEventListener('blur', this.onBlur)
   }
 
+  /** Đặt dải góc hợp lệ của pháo (kẹp lại góc hiện tại). */
+  setRange(min: number, max: number): void {
+    this.angleMin = min
+    this.angleMax = max
+    this.angle = clamp(this.angle, min, max)
+  }
+
   dispose(): void {
     window.removeEventListener('keydown', this.onKeyDown)
     window.removeEventListener('keyup', this.onKeyUp)
@@ -45,11 +56,14 @@ export class AimInput {
     else if (e.code === 'ArrowRight') this.right = true
     if (e.repeat || this.locked) return
     switch (e.code) {
-      case 'ArrowUp': this.up = 1e-6; this.angle = clamp(this.angle + 1, ANGLE_MIN, ANGLE_MAX); break
-      case 'ArrowDown': this.down = 1e-6; this.angle = clamp(this.angle - 1, ANGLE_MIN, ANGLE_MAX); break
+      case 'ArrowUp': this.up = 1e-6; this.angle = clamp(this.angle + 1, this.angleMin, this.angleMax); break
+      case 'ArrowDown': this.down = 1e-6; this.angle = clamp(this.angle - 1, this.angleMin, this.angleMax); break
       case 'ArrowLeft': if (!this.moveMode) this.facing = -1; break
       case 'ArrowRight': if (!this.moveMode) this.facing = 1; break
       case 'Space': this.charging = true; this.power = 0; break
+      case 'Digit1': this.slot = 0; break
+      case 'Digit2': this.slot = 1; break
+      case 'Digit3': if (this.ssReady) this.slot = 2; break
     }
   }
 
@@ -62,7 +76,7 @@ export class AimInput {
       this.charging = false
       if (!this.locked) {
         this.lastPower = this.power
-        this.onFire(this.angle, this.power)
+        this.onFire(this.angle, this.power, this.slot)
       }
     }
   }
@@ -78,6 +92,7 @@ export class AimInput {
 
   update(dt: number): void {
     if (this.locked) { this.cancel(); return }
+    if (this.slot === 2 && !this.ssReady) this.slot = 0
     this.moveDir = this.moveMode ? ((this.right ? 1 : 0) - (this.left ? 1 : 0)) as -1 | 0 | 1 : 0
     if (this.charging) this.power = Math.min(100, this.power + (100 / TUNING.powerChargeS) * dt)
     const dir = (this.up > 0 ? 1 : 0) - (this.down > 0 ? 1 : 0)
@@ -88,7 +103,7 @@ export class AimInput {
       const k = Math.min(1, (held - REPEAT_DELAY) / REPEAT_RAMP)
       this.acc += dir * (REPEAT_SLOW + (REPEAT_FAST - REPEAT_SLOW) * k) * dt
       const whole = Math.trunc(this.acc)
-      if (whole !== 0) { this.angle = clamp(this.angle + whole, ANGLE_MIN, ANGLE_MAX); this.acc -= whole }
+      if (whole !== 0) { this.angle = clamp(this.angle + whole, this.angleMin, this.angleMax); this.acc -= whole }
     } else this.acc = 0
   }
 }

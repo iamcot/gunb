@@ -26,9 +26,10 @@
 - [x] 2.5 Hotseat 2v2 + kết thúc trận — menu 1v1..4v4 + Tập bắn, hotseatMode.ts, bảng kết quả + Ván mới; Esc về menu. Mask hiển thị và mask trận tách riêng, so hash để phát hiện lệch
 
 ## Phase 3 – 3 pháo đầu tiên + SS
-- [ ] 3.1 Hệ thống behavior cho đạn
-- [ ] 3.2 Thanh SS
-- [ ] 3.3 Chọn pháo + HUD đạn
+- [x] 3.1 Hệ thống behavior cho đạn — shots.ts (Behavior: basic, burst, splitAtApex, drill [theo vận tốc/ngang/xuống], lightning + armorBreak), mobiles/*.ts (Ốc Thiết Giáp, Chũi Khoan, Bọ Lôi, thông số trong Tuning.mobiles), simulateShot nhiều viên đạn + vụ nổ trễ; mỗi behavior có test. `roller` để Phase 6
+- [x] 3.2 Thanh SS — PlayerState.ss, cộng theo sát thương gây ra/nhận + mỗi lượt (tuning.ss), đầy mới bắn được đạn SS, dùng xong về 0; 5 test
+- [x] 3.3 Chọn pháo + HUD đạn — selectScreen.ts (thẻ chỉ số + Ngẫu nhiên), shotBar.ts (1/2/3, delay, thanh SS), F6 chỉnh theo pháo/đạn, tập bắn đổi pháo bằng M
+- [x] Sửa lỗi 1v1: người đến lượt tự chết lúc đang ngắm thì kết thúc lượt ngay (match.ts tick)
 
 ## Phase 4 – Online ⚠️
 - [ ] 4.1 Transport + phòng chờ

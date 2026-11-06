@@ -1,6 +1,6 @@
 import type { MobileDef, ShotSlot } from '@gunb/shared'
 
-/** Thanh chọn đạn (1 / 2 / SS): tên đạn, delay, thanh SS. Bấm hoặc phím 1/2/3. */
+/** Thanh chọn đạn (1 / 2 / SS): tên đạn, delay, thanh SS. Bấm hoặc phím 1/2/3. Nằm trong `#hud-shots` của HUD (kiểu dáng ở ui/hud.css). */
 export class ShotBar {
   private readonly el: HTMLElement
   private readonly btns: HTMLButtonElement[] = []
@@ -20,7 +20,7 @@ export class ShotBar {
     this.fill = document.createElement('div')
     this.fill.className = 'ss-fill'
     this.btns[2]!.appendChild(this.fill)
-    document.body.appendChild(this.el)
+    ;(document.getElementById('hud-shots') ?? document.body).appendChild(this.el)   // nằm trong bảng điều khiển HUD (hud.ts)
   }
 
   update(def: MobileDef, slot: ShotSlot, ss: number, ssMax: number): void {
@@ -30,9 +30,8 @@ export class ShotBar {
     this.last = key
     def.shots.forEach((sh, i) => {
       const b = this.btns[i]!
-      const label = i === 2 ? `<span class="sb-key">3</span> SS · ${sh.name}` : `<span class="sb-key">${i + 1}</span> ${sh.name}`
-      b.innerHTML = `${label}<small>delay ${sh.delay}</small>`
-      b.className = (i === slot ? 'sel ' : '') + (i === 2 && !ready ? 'locked' : '')
+      b.innerHTML = `<span class="sb-key">${i + 1}</span><span class="sb-name">${i === 2 ? 'SS · ' : ''}${sh.name}</span><small>delay ${sh.delay}${i === 2 && !ready ? ` · ${Math.floor((ss / ssMax) * 100)}%` : ''}</small>`
+      b.className = (i === slot ? 'sel ' : '') + (i === 2 ? (ready ? 'ss ready' : 'ss locked') : '')
       b.disabled = i === 2 && !ready
     })
     this.fill.style.width = `${Math.min(100, (ss / ssMax) * 100)}%`

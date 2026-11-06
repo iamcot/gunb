@@ -10,16 +10,6 @@
     #title { position: fixed; top: 8px; left: 12px; color: #fff; font-weight: 700; text-shadow: 0 1px 3px #0006; pointer-events: none; }
     #debug { position: fixed; top: 8px; right: 12px; color: #fff; background: #0008; padding: 6px 10px; font: 12px/1.4 monospace; white-space: pre; display: none; pointer-events: none; }
 
-    #hud { position: fixed; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; align-items: center; gap: 12px; pointer-events: none; font-size: 15px; color: #fff; }
-    .hud-box { background: #0009; padding: 8px 14px; border-radius: 8px; }
-    .hud-bar { position: relative; width: 320px; height: 16px; background: #fff3; border-radius: 8px; overflow: visible; }
-    .hud-fill { height: 100%; width: 0; background: linear-gradient(90deg, #3fd16a, #f5d33a, #ef4a3a); border-radius: 8px; }
-    .hud-last { position: absolute; top: -4px; width: 3px; height: 24px; background: #fff; box-shadow: 0 0 4px #000; display: none; }
-    .hud-num { margin-top: 4px; text-align: center; }
-    .hud-wind { display: flex; align-items: center; gap: 8px; }
-    .hud-arrow { font-size: 26px; transition: transform .15s; }
-    .hud-help { position: fixed; left: 0; right: 0; bottom: 78px; text-align: center; color: #fff; text-shadow: 0 1px 3px #000a; font-size: 12px; }
-    #offscreen { position: fixed; top: 4px; transform: translateX(-50%); color: #fff; background: #c22; padding: 2px 8px; border-radius: 10px; font-size: 13px; display: none; pointer-events: none; }
     #tuning { position: fixed; top: 40px; left: 12px; width: 300px; background: #000c; color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 12px; }
     #tuning label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; }
     #tuning input { width: 80px; }
@@ -35,29 +25,9 @@
     .row { display: flex; gap: 8px; justify-content: center; }
     .panel button { font-size: 16px; padding: 8px 16px; border: 0; border-radius: 8px; background: #3b82f6; color: #fff; cursor: pointer; }
     .panel button:hover { background: #2563eb; }
-    #turnhud { position: fixed; top: 44px; right: 12px; width: 250px; background: #0009; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; pointer-events: none; display: none; }
-    .th-timer { font-size: 34px; font-weight: 700; text-align: center; }
-    .th-timer.warn { color: #ff5a4d; }
-    .th-turn { text-align: center; margin-bottom: 6px; }
-    .th-fuel { height: 8px; background: #fff3; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-    .th-fuel div { height: 100%; background: #f5a623; }
-    .th-list-title { opacity: .7; font-size: 11px; margin-bottom: 3px; }
-    .th-row { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 4px; }
-    .th-row.cur { background: #ffffff30; font-weight: 700; }
-    .th-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .th-name { flex: 1; }
-    .th-mob { opacity: .6; font-size: 10px; }
-    #weather { position: fixed; top: 44px; left: 50%; transform: translateX(-50%); background: #0f172acc; color: #fff; padding: 5px 14px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 4; }
     #mutebtn { position: fixed; top: 8px; left: 215px; font-size: 12px; padding: 3px 10px; z-index: 5; }
     #menubtn { position: fixed; top: 8px; left: 110px; font-size: 12px; padding: 3px 10px; display: none; }
 
-    #shotbar { position: fixed; left: 12px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
-    #shotbar button { position: relative; overflow: hidden; text-align: left; min-width: 190px; font-size: 14px; padding: 6px 12px; border: 2px solid transparent; border-radius: 8px; background: #0009; color: #fff; cursor: pointer; }
-    #shotbar button.sel { border-color: #ffe14d; background: #2a2a0a; }
-    #shotbar button.locked { opacity: .55; cursor: not-allowed; }
-    #shotbar button small { display: block; opacity: .7; font-size: 11px; }
-    .sb-key { display: inline-block; background: #fff3; border-radius: 4px; padding: 0 6px; margin-right: 4px; }
-    .ss-fill { position: absolute; left: 0; bottom: 0; height: 4px; background: #38bdf8; }
     .cards { display: flex; flex-wrap: wrap; gap: 8px; }
     .card { flex: 1 1 150px; max-width: 190px; min-width: 150px; background: #0f172a; border: 2px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; cursor: pointer; }
     .card.sel { border-color: #ffe14d; }

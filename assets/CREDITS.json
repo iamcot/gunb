@@ -512,5 +512,36 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/sua-den/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

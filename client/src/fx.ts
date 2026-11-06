@@ -48,7 +48,12 @@ export class Fx {
     s.visible = visible && art
     g.position.set(x, y)
     s.position.set(x, y)
-    s.rotation = rot
+    const a = this.shellArt
+    if (a && a.upright) {
+      const k = a.length / a.tex.width
+      s.rotation = 0
+      s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
+    } else s.rotation = rot
     p.x = x; p.y = y; p.visible = visible
   }
 

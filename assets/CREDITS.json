@@ -543,5 +543,36 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

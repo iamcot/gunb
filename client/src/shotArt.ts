@@ -1,8 +1,9 @@
 import { Texture } from 'pixi.js'
 
-/** `assets/mobiles/<id>/shots.json`: ảnh 3 loại đạn (vẽ nằm ngang, đầu chĩa sang phải), `length` = chiều dài khi vẽ (px bản đồ). */
-interface ShotsFile { shots: { file: string; length: number }[] }
-export interface ShotArt { tex: Texture; length: number }
+/** `assets/mobiles/<id>/shots.json`: ảnh 3 loại đạn (vẽ nằm ngang, đầu chĩa sang phải), `length` = chiều dài khi vẽ (px bản đồ),
+ *  `upright` = không xoay theo đường bay, chỉ lật trái/phải theo hướng bay (đạn có "đầu trên" như cục đất có lâu đài). */
+interface ShotsFile { shots: { file: string; length: number; upright?: boolean }[] }
+export interface ShotArt { tex: Texture; length: number; upright: boolean }
 
 const cache = new Map<string, (ShotArt | null)[]>()
 const loading = new Set<string>()
@@ -20,7 +21,7 @@ export function preloadShotArt(mobileId: string): void {
       const img = new Image()
       img.src = base + s.file
       await img.decode()
-      return { tex: Texture.from(img), length: s.length }
+      return { tex: Texture.from(img), length: s.length, upright: s.upright === true }
     }))
     cache.set(mobileId, arts)
   })().catch(() => cache.set(mobileId, [])).finally(() => loading.delete(mobileId))

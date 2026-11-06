@@ -303,5 +303,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "pilots/nam/sit.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/08-prompt-nhan-vat.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Boy Pilot in Blue Jumpsuit\" (tư thế ngồi lái): xoá nền, cắt sát, thu nhỏ"
+  },
+  {
+    "file": "pilots/nam/stand.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/08-prompt-nhan-vat.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cheerful Chibi Boy Pilot\" (tư thế đứng): xoá nền, cắt sát, thu nhỏ"
+  },
+  {
+    "file": "pilots/nam/pilot.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

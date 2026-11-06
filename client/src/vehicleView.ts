@@ -15,12 +15,12 @@ interface Rig {
   pivot: [number, number]       // điểm gắn nòng trên ảnh thân
   barrelPivot: [number, number] // tâm xoay trên ảnh nòng (nòng vẽ nằm ngang, chĩa sang phải)
   muzzle: [number, number]      // đầu nòng trên ảnh nòng
-  pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
+  pilot?: [number, number]      // chỗ phi công ngồi (điểm hông đặt lên ghế)
   reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
   barrelBehind?: boolean        // nòng vẽ sau thân (bệ súng che đuôi nòng)
   catapult?: boolean            // máy bắn đá: cần đứng yên khi ngắm (chỉ tia ngắm xoay), lúc bắn vung qua đầu rồi về
 }
-interface RigArt { rig: Rig; body: Texture; barrel: Texture }
+interface RigArt { rig: Rig; body: Texture; barrel: Texture; pilot: PilotArt | null }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
 interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number }
 
@@ -28,6 +28,24 @@ interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; fli
 const SWING_DEG = 125, SWING_UP = 0.18, SWING_HOLD = 0.12, SWING_BACK = 0.6
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
+
+/** `assets/pilots/<id>/pilot.json`: ảnh phi công ngồi, điểm hông (chuẩn hoá 0..1), chiều cao khi ngồi (px bản đồ). */
+interface PilotInfo { sit: string; hip: [number, number]; sitHeight: number }
+interface PilotArt { info: PilotInfo; sit: Texture }
+const PILOT_ID = 'nam'   // chưa có chọn nhân vật: mọi xe dùng phi công nam
+let pilotPromise: Promise<PilotArt | null> | null = null
+function loadPilot(): Promise<PilotArt | null> {
+  if (!pilotPromise) {
+    const base = `/pilots/${PILOT_ID}/`
+    pilotPromise = (async () => {
+      const res = await fetch(base + 'pilot.json')
+      if (!res.ok) return null
+      const info = await res.json() as PilotInfo
+      return { info, sit: Texture.from(await loadImage(base + info.sit)) }
+    })().catch(() => null)
+  }
+  return pilotPromise
+}
 
 async function loadImage(url: string): Promise<HTMLImageElement> {
   const img = new Image()
@@ -45,8 +63,8 @@ function loadRig(mobileId: string): Promise<RigArt | null> {
       const res = await fetch(base + 'rig.json')
       if (!res.ok) return null
       const rig = await res.json() as Rig
-      const [body, barrel] = await Promise.all([loadImage(base + rig.body), loadImage(base + rig.barrel)])
-      return { rig, body: Texture.from(body), barrel: Texture.from(barrel) }
+      const [body, barrel, pilot] = await Promise.all([loadImage(base + rig.body), loadImage(base + rig.barrel), rig.pilot ? loadPilot() : null])
+      return { rig, body: Texture.from(body), barrel: Texture.from(barrel), pilot }
     })().catch(() => null)
     rigCache.set(mobileId, p)
   }
@@ -96,6 +114,16 @@ export class VehicleViews {
     barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
     if (rig.barrelBehind) frame.addChild(barrel, body)
     else frame.addChild(body, barrel)
+    if (rig.pilot && ra.pilot) {
+      // phi công ngồi trên ghế, vẽ trên thân và dưới nòng (nòng sau thân thì vẽ trên cùng); xe lật ngược thì lật lại để phi công nhìn về phía đầu xe
+      const pi = ra.pilot.info
+      const pilot = new Sprite(ra.pilot.sit)
+      pilot.anchor.set(pi.hip[0], pi.hip[1])
+      const pk = pi.sitHeight / ra.pilot.sit.height
+      pilot.scale.set(pk * flip, pk)
+      pilot.position.set((rig.pilot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pilot[1] - rig.ground[1]) * ra.body.height * k)
+      frame.addChildAt(pilot, frame.getChildIndex(body) + 1)
+    }
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false

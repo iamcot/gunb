@@ -65,5 +65,13 @@
     "source": "Viết tay theo plan/05-prompt-asset-map.md",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "maps/dao-noi-ve/music.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Nhạc AI tạo trên ElevenLabs, file gốc bg-sound-pathway.mp3 (60 s, 192 kbps). Ghi chú ở assets/source/prompts/dao-noi-ve-music.txt",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s)"
   }
 ]

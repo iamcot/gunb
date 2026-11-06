@@ -63,6 +63,19 @@ export class TerrainView {
     this.maskSprite.texture.source.update()
   }
 
+  /** Dựng lại địa hình theo mask nhận từ server (vào lại trận, hoặc hash lệch): xoá điểm ảnh ở ô trống, giữ ảnh gốc ở ô đặc. */
+  applyMask(m: TerrainMask): void {
+    if (m.width !== this.mask.width || m.height !== this.mask.height) throw new Error('kích thước mask không khớp')
+    const img = new ImageData(new Uint8ClampedArray(this.original.data), m.width, m.height)
+    const px = img.data
+    for (let i = 0; i < m.data.length; i++) if (m.data[i] === 0) px[i * 4 + 3] = 0
+    this.ctx.putImageData(img, 0, 0)
+    this.mask.data.set(m.data)
+    this.sprite.texture.source.update()
+    this.paintOverlay(0, 0, m.width, m.height)
+    this.maskSprite.texture.source.update()
+  }
+
   private paintOverlay(x0: number, y0: number, x1: number, y1: number): void {
     const w = this.mask.width, px = this.overlayImg.data, m = this.mask.data
     for (let y = y0; y < y1; y++) {

@@ -32,11 +32,11 @@
 - [x] Sửa lỗi 1v1: người đến lượt tự chết lúc đang ngắm thì kết thúc lượt ngay (match.ts tick)
 
 ## Phase 4 – Online ⚠️
-- [ ] 4.1 Transport + phòng chờ
-- [ ] 4.2 Tải trước + màn chờ
-- [ ] 4.3 Đồng bộ lượt
-- [ ] 4.4 Phát bắn online + kiểm tra hash
-- [ ] 4.5 Rớt mạng + vào lại
+- [x] 4.1 Transport + phòng chờ — server/main.ts (http phục vụ client/dist + ws ở /ws; in địa chỉ LAN), lobby.ts (phòng, chọn đội/pháo/sẵn sàng, chủ phòng bắt đầu, chat), client/net.ts + onlineFlow.ts (nhập tên → sảnh → phòng chờ). Giao thức msgpack trong shared/protocol.ts
+- [x] 4.2 Tải trước + màn chờ — client tải map.json/terrain/nền kèm %, mỗi người báo LoadProgress, server bắt đầu khi mọi người xong hoặc quá 45 s; server tự đọc mask từ terrain.png (server/png.ts + mapLoader.ts, không thêm thư viện)
+- [x] 4.3 Đồng bộ lượt — server/matchRunner.ts giữ trận thật (tick 30 Hz, snapshot 15 Hz), client onlineMode.ts chỉ gửi Input/Fire và vẽ snapshot (làm mượt vị trí); không dự đoán phía client
+- [x] 4.4 Phát bắn online + kiểm tra hash — server gửi Shot (không kèm mask), client phát lại và so hash; lệch thì NeedTerrain → server gửi địa hình nén RLE (shared/terrain/rle.ts)
+- [x] 4.5 Rớt mạng + vào lại — token theo tab (sessionStorage), nối lại tự động; rớt mạng thì bỏ lượt của người đó, giữ chỗ 60 s rồi bị loại; vào lại nhận MatchStart + Terrain + Snapshot. Test: server/lobby.test.ts. Chạy thật: `npm run play`
 
 ## Phase 5 – Bot + hoàn thiện MVP
 - [ ] 5.1 Bot ⚠️

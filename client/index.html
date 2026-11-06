@@ -64,6 +64,17 @@
     .bar i { display: block; height: 100%; background: #4ade80; }
     .selrow { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
     .selrow .who { width: 90px; text-align: left; font-weight: 700; }
+    .online { min-width: 420px; max-width: 92vw; }
+    .online input, .online select { font-size: 15px; padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; }
+    .online .err { color: #fca5a5; min-height: 18px; margin-top: 6px; font-size: 14px; }
+    .online button:disabled { opacity: .4; cursor: not-allowed; }
+    .rooms { max-height: 40vh; overflow-y: auto; text-align: left; }
+    .rrow, .mrow, .lrow { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid #334155; }
+    .mrow > b { flex: 1; text-align: left; }
+    .lrow .bar { flex: 1; min-width: 160px; }
+    .chat { margin-top: 10px; text-align: left; }
+    #chatlog { height: 90px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 6px; font-size: 13px; margin-bottom: 6px; }
+    #chatin { width: 100%; box-sizing: border-box; }
     .scroll { max-height: 70vh; overflow-y: auto; }
   </style>
 </head>

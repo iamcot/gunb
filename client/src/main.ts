@@ -6,6 +6,7 @@ import { Fx } from './fx'
 import { HotseatMode } from './hotseatMode'
 import { Hud } from './hud'
 import { Menu } from './menu'
+import { OnlineFlow } from './onlineFlow'
 import { SelectScreen } from './selectScreen'
 import { PracticeMode } from './practiceMode'
 import { TerrainView } from './terrainView'
@@ -56,6 +57,7 @@ async function main(): Promise<void> {
   const menu = new Menu({
     onHotseat: n => chooseMobiles(n),
     onPractice: () => { setMode(new PracticeMode(ctx)) },
+    onOnline: () => startOnline(),
   })
   function setMode(m: Mode | null): void {
     mode?.destroy()
@@ -75,7 +77,24 @@ async function main(): Promise<void> {
   function startHotseat(n: number, ids: string[]): void {
     setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids }, () => startHotseat(n, ids), () => setMode(null)))
   }
-  menuBtn.addEventListener('click', () => setMode(null))
+  let online: OnlineFlow | null = null
+  function startOnline(): void {
+    menu.hide()
+    online = new OnlineFlow({
+      ctx,
+      startMode: m => setMode(m),
+      stopMode: () => { mode?.destroy(); mode = null; fx.hideProjectiles(); ctx.focus.t = 0; view.reset(); hud.setVisible(false); menuBtn.style.display = 'block' },
+      exit: () => toMenu(),
+    }, () => toMenu())
+    menuBtn.style.display = 'block'
+  }
+  /** Về menu chính từ bất cứ đâu (đóng luôn phiên online nếu có). */
+  function toMenu(): void {
+    online?.dispose()
+    online = null
+    setMode(null)
+  }
+  menuBtn.addEventListener('click', () => toMenu())
 
   let dragging = false
   let debugOn = false
@@ -84,7 +103,7 @@ async function main(): Promise<void> {
     ctx.keys.add(e.code)
     if (e.code === 'F3') { e.preventDefault(); debugOn = !debugOn; debugEl.style.display = debugOn ? 'block' : 'none'; view.maskSprite.visible = debugOn }
     else if (e.code === 'F6') { e.preventDefault(); tuning.toggle() }
-    else if (e.code === 'Escape' && mode) setMode(null)
+    else if (e.code === 'Escape' && mode) toMenu()
   })
   window.addEventListener('keyup', e => ctx.keys.delete(e.code))
   window.addEventListener('blur', () => ctx.keys.clear())

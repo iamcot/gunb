@@ -1,5 +1,7 @@
 import { Application, Container } from 'pixi.js'
 import { GAME_NAME, parseMap, type BotLevel } from '@gunb/shared'
+import { audio } from './audio'
+import { Background } from './background'
 import { Camera } from './camera'
 import type { GameCtx, Mode } from './ctx'
 import { Fx } from './fx'
@@ -35,6 +37,10 @@ async function main(): Promise<void> {
   await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, resolution: window.devicePixelRatio, autoDensity: true })
   document.getElementById('game')!.appendChild(app.canvas)
 
+  const bgImages: HTMLImageElement[] | null = map.backgrounds.length > 0
+    ? await Promise.all(map.backgrounds.map(b => loadImage(base + b.file))).catch(() => null) : null
+  const background = new Background(map, bgImages, app.screen.width, app.screen.height)
+  app.stage.addChild(background.container)
   const world = new Container()
   const fx = new Fx()
   app.stage.addChild(world)
@@ -117,7 +123,16 @@ async function main(): Promise<void> {
     mouseX = e.clientX
     mouseY = e.clientY
   })
-  window.addEventListener('resize', () => cam.resize(app.screen.width, app.screen.height))
+  window.addEventListener('resize', () => { cam.resize(app.screen.width, app.screen.height); background.resize(app.screen.width, app.screen.height) })
+
+  // Âm thanh: trình duyệt chỉ cho phát sau thao tác đầu tiên của người dùng
+  const muteBtn = document.getElementById('mutebtn') as HTMLButtonElement
+  const syncMute = (): void => { muteBtn.textContent = audio.muted ? '🔇 Tắt tiếng' : '🔊 Âm thanh' }
+  syncMute()
+  muteBtn.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); syncMute(); audio.startMusic() })
+  const firstGesture = (): void => { audio.unlock(); audio.startMusic(); window.removeEventListener('pointerdown', firstGesture); window.removeEventListener('keydown', firstGesture) }
+  window.addEventListener('pointerdown', firstGesture)
+  window.addEventListener('keydown', firstGesture)
 
   app.ticker.add(t => {
     const dt = Math.min(0.1, t.deltaMS / 1000)
@@ -136,6 +151,7 @@ async function main(): Promise<void> {
     if (ctx.keys.has('KeyS')) dy += 1
     if (dx || dy) { cam.pan(dx * PAN_SPEED * dt, dy * PAN_SPEED * dt); ctx.focus.t = 0 }
     world.position.set(-cam.x + fx.shakeX, -cam.y + fx.shakeY)
+    background.update(cam.x, cam.y)
 
     hud.setOffscreen(lead && lead.y - cam.y < 0 ? lead.x - cam.x : null, lead ? -lead.y : 0)
 

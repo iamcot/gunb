@@ -2,6 +2,7 @@ import {
   MsgType, TEAM_NAMES, TUNING, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
 } from '@gunb/shared'
+import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import type { NetClient } from './net'
@@ -113,6 +114,7 @@ export class OnlineMode implements Mode {
     this.aim.power = 0
     this.lastTurnPlayer = p.id
     this.lastDir = -9; this.lastAngle = -9; this.inputT = 1
+    if (p.id === this.start.youId) audio.turn()
     this.ctx.hud.setWind(this.match.wind)
     this.ctx.focus.x = this.tx[p.id]!; this.ctx.focus.y = this.ty[p.id]!; this.ctx.focus.t = 1.2
   }

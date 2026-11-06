@@ -2,6 +2,7 @@ import {
   BotDriver, TEAM_NAMES, TUNING, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
 } from '@gunb/shared'
+import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
@@ -64,6 +65,7 @@ export class HotseatMode implements Mode {
     this.aim.lastPower = this.lastPower.get(p.id) ?? 0
     this.aim.power = 0
     this.lastTurnPlayer = p.id
+    audio.turn()
     this.ctx.hud.setWind(this.match.wind)
     this.ctx.focus.x = p.body.x; this.ctx.focus.y = p.body.y; this.ctx.focus.t = 1.2
   }

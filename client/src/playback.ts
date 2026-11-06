@@ -1,4 +1,5 @@
 import type { ShotResult } from '@gunb/shared'
+import { audio } from './audio'
 import type { Fx } from './fx'
 import type { TerrainView } from './terrainView'
 
@@ -17,6 +18,7 @@ export class ShotPlayback {
 
   constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks) {
     this.cursor = result.paths.map(() => 0)
+    audio.fire()
   }
 
   get finished(): boolean { return this.done }
@@ -29,10 +31,10 @@ export class ShotPlayback {
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
       switch (e.kind) {
-        case 'explode': this.fx.explosion(e.x, e.y, e.r); break
+        case 'explode': this.fx.explosion(e.x, e.y, e.r); audio.explode(e.r); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
-        case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); break
-        case 'bolt': this.fx.bolt(e.x, e.y); break
+        case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
+        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         default: break
       }

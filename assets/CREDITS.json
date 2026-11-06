@@ -450,5 +450,36 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

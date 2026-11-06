@@ -574,5 +574,133 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "ui/lobby-bg.jpg",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi sang JPG chất lượng 86 để tải nhanh"
+  },
+  {
+    "file": "ui/logo.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2a trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về rộng 900 px"
+  },
+  {
+    "file": "ui/podium.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về rộng 600 px"
+  },
+  {
+    "file": "ui/random-mobile.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 4 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 256 px"
+  },
+  {
+    "file": "ui/team-blue.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 160 px"
+  },
+  {
+    "file": "ui/team-red.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 160 px"
+  },
+  {
+    "file": "ui/icons/create.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (create) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cao 128 px"
+  },
+  {
+    "file": "ui/icons/quick-join.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (quick-join) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/refresh.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (refresh) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/ready.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (ready) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/start.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (start) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/switch-team.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (switch-team) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/leave.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (leave) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/add-bot.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (add-bot) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/chat.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (chat) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/icons/remove.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 (remove) trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
   }
 ]

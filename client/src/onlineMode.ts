@@ -44,7 +44,6 @@ export class OnlineMode implements Mode {
   private lastTurnPlayer = -1
   private readonly range: AimRange = { min: 0, max: 90 }
   private focusedSelf = false
-  private lastFireSlot: ShotSlot = 0
   private lastHash: boolean | null = null
   private resyncs = 0
   private inputT = 0
@@ -94,13 +93,11 @@ export class OnlineMode implements Mode {
 
   onStats(stats: PlayerStats[]): void { this.stats = stats }
 
-  onShot(result: ShotResultNet): void {
+  onShot(result: ShotResultNet, shooterId: number, slot: number): void {
     for (const q of this.match.players) this.shownHp.set(q.id, q.hp)   // máu trước phát bắn; snapshot kế tiếp đã có máu sau
     this.aim.locked = true
-    this.vehicles.fireAnim(this.match.turnPlayerId)
-    // server không gửi loại đạn: phát của mình biết slot, của người khác tạm vẽ ảnh đạn 1
-    const shooter = currentPlayer(this.match)
-    const slot = shooter.id === this.start.youId ? this.lastFireSlot : 0
+    const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
+    this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
     }, getShotArt(shooter.mobileId, slot))
@@ -139,7 +136,6 @@ export class OnlineMode implements Mode {
     if (!this.isMyTurn() || this.playback) return
     this.lastPower.set(this.start.youId, power)
     this.aim.locked = true
-    this.lastFireSlot = slot
     this.net.send({ t: MsgType.Fire, angle, power, slot })
   }
 

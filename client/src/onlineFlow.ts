@@ -268,7 +268,7 @@ export class OnlineFlow {
       }
       case MsgType.Snapshot: this.mode?.onSnapshot(m.s as Snapshot); break
       case MsgType.Stats: this.mode?.onStats(m.stats as PlayerStats[]); break
-      case MsgType.Shot: this.mode?.onShot(m.result as ShotResultNet); break
+      case MsgType.Shot: this.mode?.onShot(m.result as ShotResultNet, Number(m.shooter), Number(m.slot)); break
       case MsgType.Error:
         this.errText = String(m.text)
         { const t = this.el?.querySelector('.err'); if (t) t.textContent = this.errText }

@@ -1,5 +1,5 @@
 import { DT_SIM, MUZZLE_DIST, SHOT_MAX_TIME_S, SHOT_SAMPLE_EVERY } from '../constants'
-import { aimDir } from '../aim'
+import { aimDir, aimRange, type AimRange } from '../aim'
 import { clamp, type Vec2 } from '../math'
 import type { MobileDef } from '../mobiles'
 import { FLYING, HIT_TERRAIN, stepProjectile, type ProjectileState } from '../physics/projectile'
@@ -29,10 +29,13 @@ interface Shell {
 interface Pending { tStart: number; angleDeg: number }
 interface Bolt { t: number; x: number; y: number; def: { damage: number; blastRadius: number; carveRadius: number } }
 
-/** Kẹp lệnh bắn về giá trị hợp lệ theo dải góc của pháo (server dùng trước khi mô phỏng). */
-export function sanitizeFire(f: FireCmd, mobile: MobileDef): FireCmd {
+const sanRange: AimRange = { min: 0, max: 90 }
+
+/** Kẹp lệnh bắn về giá trị hợp lệ theo dải góc của pháo (tính cả độ dốc với xe `slopeAim`; server dùng trước khi mô phỏng). */
+export function sanitizeFire(f: FireCmd, mobile: MobileDef, facing: 1 | -1 = 1, tilt = 0): FireCmd {
   const slot = f.slot === 1 || f.slot === 2 ? f.slot : 0
-  return { angle: Math.round(clamp(f.angle, mobile.angleMin, mobile.angleMax)), power: clamp(f.power, 0, 100), slot }
+  const r = aimRange(sanRange, mobile, facing, tilt)
+  return { angle: Math.round(clamp(f.angle, r.min, r.max)), power: clamp(f.power, 0, 100), slot }
 }
 
 /**
@@ -44,7 +47,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   if (!shooter) throw new Error('không thấy xe bắn')
   const mobile = tuning.mobiles[shooter.mobileId]
   if (!mobile) throw new Error(`không có pháo ${shooter.mobileId}`)
-  const fire = sanitizeFire(input.fire, mobile)
+  const fire = sanitizeFire(input.fire, mobile, input.facing, input.tilt)
   const def = mobile.shots[fire.slot]
   const beh = def.behavior
   const mask = input.mask.clone()
@@ -126,7 +129,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   }
 
   const spawn = (t: number, angleDeg: number): void => {
-    aimDir(dir, angleDeg, input.facing, input.tilt)
+    aimDir(dir, angleDeg, input.facing)   // góc so với phương ngang, không cộng độ dốc
     const x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
     if (mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất

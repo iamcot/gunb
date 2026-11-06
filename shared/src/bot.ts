@@ -1,6 +1,7 @@
 import { clamp } from './math'
 import { mulberry32 } from './math'
 import { currentPlayer, vehicles, weatherOf, type MatchState } from './match'
+import { aimRange } from './aim'
 import { sanitizeFire, simulateShot } from './shot/simulateShot'
 import type { ShotSlot } from './shots'
 import type { TerrainMask } from './terrain/mask'
@@ -39,6 +40,7 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
   const team = me.team
   const facing = me.body.facing
   const weather = weatherOf(state, mask.width, mask.height, tuning)
+  const range = aimRange({ min: 0, max: 90 }, def, facing, me.body.tilt)
 
   // địch sống gần nhất theo phương ngang
   let target = -1, bestDx = Infinity
@@ -50,7 +52,7 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
   const targetD = target < 0 ? 0 : (state.players[target]!.body.x - me.body.x) * facing
 
   const evaluate = (angle: number, power: number, slot: ShotSlot): Cand => {
-    const fire = sanitizeFire({ angle, power, slot }, def)
+    const fire = sanitizeFire({ angle, power, slot }, def, facing, me.body.tilt)
     const r = simulateShot({ mask, vehicles: veh, wind: state.wind, shooterId: me.id, facing, tilt: me.body.tilt, fire, skipHash: true, weather }, tuning)
     let enemy = 0, score = 0, landX = NaN
     for (const e of r.events) {
@@ -80,8 +82,8 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
   const sweep = (slot: ShotSlot): Cand => {
     let best: Cand | null = null
     const angles: number[] = []
-    for (let a = def.angleMin; a <= def.angleMax; a += cfg.angleStep) angles.push(a)
-    if (angles[angles.length - 1] !== def.angleMax) angles.push(def.angleMax)
+    for (let a = range.min; a <= range.max; a += cfg.angleStep) angles.push(a)
+    if (angles[angles.length - 1] !== range.max) angles.push(range.max)
     for (const a of angles) { const c = bestPowerFor(a, slot); if (!best || c.score > best.score) best = c }
     return best!
   }
@@ -104,7 +106,7 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
   // sai số cố ý theo mức khó
   const ea = (rng() * 2 - 1) * cfg.angleErr, ep = (rng() * 2 - 1) * cfg.powerErr
   return {
-    angle: Math.round(clamp(best.angle + ea, def.angleMin, def.angleMax)),
+    angle: Math.round(clamp(best.angle + ea, range.min, range.max)),
     power: clamp(best.power + ep, 0, 100),
     slot: best.slot, score: best.score, enemyDamage: best.enemyDamage,
   }

@@ -1,4 +1,5 @@
 import { MAX_PLAYERS, MAX_TURNS } from './constants'
+import { aimRange, type AimRange } from './aim'
 import { clamp, hashSeed, mulberry32 } from './math'
 import { createBody, stepMobile, type MobileBody, type MoveResult } from './physics/mobileMove'
 import { simulateShot, sanitizeFire } from './shot/simulateShot'
@@ -78,6 +79,7 @@ export const effectiveArmor = (p: PlayerState): number => Math.max(-0.5, p.armor
 export const mobileOf = (p: PlayerState, t: Tuning = TUNING): MobileDef => t.mobiles[p.mobileId]!
 
 const out: MoveResult = { moved: 0, damage: 0, died: false }
+const aimRng: AimRange = { min: 0, max: 90 }
 
 /** Gió của lượt `turnNo`: sinh từ seed của trận nên mọi nơi tính ra như nhau. */
 export function windForTurn(seed: number, turnNo: number): Wind {
@@ -112,7 +114,7 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     const facing: 1 | -1 = p.team === 0 ? 1 : -1
     const body = createBody(x, (gy < 0 ? opts.mask.height : gy) - r, r, facing, def.speedMul)
     body.tilt = slopeAt(opts.mask, x, body.y + r - 2 * t.move.stepUp, r * 0.8)
-    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: Math.min(def.angleMax, Math.max(def.angleMin, 45)), ss: 0, armorDebuff: { turns: 0, amount: 0 } }
+    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 } }
   })
   const state: MatchState = { seed: opts.seed, players, wind: windForTurn(opts.seed, 1), turnPlayerId: 0, turnNo: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null }
   state.turnPlayerId = pickNext(players)!.id
@@ -159,7 +161,9 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
     case 'aim': {
       if (a.id !== s.turnPlayerId || s.phase !== 'aiming') return { ok: false }
       const def = t.mobiles[currentPlayer(s).mobileId]!
-      currentPlayer(s).aimAngle = Math.round(clamp(a.angle, def.angleMin, def.angleMax))
+      const p = currentPlayer(s)
+      aimRange(aimRng, def, p.body.facing, p.body.tilt)
+      p.aimAngle = Math.round(clamp(a.angle, aimRng.min, aimRng.max))
       return { ok: true }
     }
     case 'move': {
@@ -168,6 +172,9 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       stepMobile(p.body, a.dir, a.dt, env.mask, t, out)
       p.delay += out.moved * t.move.delayPerPx
       applyBodyResult(p)
+      // đổi dốc/hướng thì dải góc đổi theo (xe slopeAim)
+      aimRange(aimRng, t.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
+      p.aimAngle = clamp(p.aimAngle, aimRng.min, aimRng.max)
       return { ok: true }
     }
     case 'fire': {
@@ -176,7 +183,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       if (!p.body.onGround) return { ok: false }
       if (a.slot === 2 && p.ss < t.ss.max) return { ok: false }   // SS chưa đầy
       const def = t.mobiles[p.mobileId]!
-      const fire = sanitizeFire({ angle: a.angle, power: a.power, slot: a.slot }, def)
+      const fire = sanitizeFire({ angle: a.angle, power: a.power, slot: a.slot }, def, p.body.facing, p.body.tilt)
       const shot = simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire, weather: weatherOf(s, env.mask.width, env.mask.height, t) }, t)
       env.mask.data.set(shot.maskAfter.data)
       if (fire.slot === 2) p.ss = 0

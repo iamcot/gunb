@@ -1,6 +1,7 @@
 import {
   MsgType, TEAM_NAMES, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
+  aimRange, type AimRange,
 } from '@gunb/shared'
 import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
@@ -40,6 +41,7 @@ export class OnlineMode implements Mode {
   private pendingMask: TerrainMask | null = null
   private gotSnapshot = false
   private lastTurnPlayer = -1
+  private readonly range: AimRange = { min: 0, max: 90 }
   private focusedSelf = false
   private lastHash: boolean | null = null
   private resyncs = 0
@@ -150,6 +152,8 @@ export class OnlineMode implements Mode {
       aim.locked = false
       const p = currentPlayer(m)
       aim.ssReady = p.ss >= TUNING.ss.max
+      const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
+      aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
       p.aimAngle = aim.angle
       this.sendInput(dt)

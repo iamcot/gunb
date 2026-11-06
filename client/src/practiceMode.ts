@@ -1,4 +1,4 @@
-import { MOBILE_IDS, TUNING, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
+import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
@@ -9,6 +9,7 @@ const HELP = '↑↓ góc · ←→ quay hướng · 1/2/3 chọn đạn · gi�
 
 /** Chế độ tập bắn (Phase 1): một xe đứng yên + 3 bia. */
 export class PracticeMode implements Mode {
+  private readonly range: AimRange = { min: 0, max: 90 }
   private readonly practice: Practice
   private readonly aim = new AimInput()
   private readonly shotBar: ShotBar
@@ -64,6 +65,9 @@ export class PracticeMode implements Mode {
 
   update(dt: number): void {
     const { ctx, practice, aim } = this
+    const def = TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!
+    const r = aimRange(this.range, def, aim.facing, practice.tilt)
+    aim.setRange(r.min, r.max)   // dải góc đổi theo dốc (xe slopeAim)
     aim.update(dt)
     practice.facing = aim.facing
     practice.setAngle(aim.angle)

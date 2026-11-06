@@ -54,5 +54,6 @@
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.
-- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (ChatGPT, nòng vẽ sau bệ `barrelBehind`), bo-loi (ChatGPT, `reverse`: quay đít bắn bằng đuôi, `barrelMax` 45°: cốc xoay trước, quá 45° cả thân nghiêng). Chưa: 9 xe còn lại, sprite phi công (`pilot` trong rig)
+- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (ChatGPT, nòng vẽ sau bệ `barrelBehind`), bo-loi (ChatGPT, `reverse`: quay đít bắn bằng đuôi, cốc 20–45° so với thân). Chưa: 9 xe còn lại, sprite phi công (`pilot` trong rig)
+- [x] Góc bắn = góc nòng so với phương ngang, không cộng độ dốc (`aimDir` trong simulateShot bỏ tilt). Thêm `aimRange` + `MobileDef.slopeAim`: Bọ Lôi 20–45° so với thân, đứng dốc quay đuôi lên thì nâng được cao hơn (server kẹp lại khi ngắm/di chuyển/bắn).
 - [x] Sửa: vào trận online camera bay tới xe đi lượt đầu (có thể là đối thủ/bot); giờ lượt đầu camera về xe của mình trước.

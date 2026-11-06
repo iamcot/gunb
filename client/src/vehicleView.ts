@@ -1,5 +1,5 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
-import { TEAM_NAMES, TUNING, aimDir, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
+import { TEAM_NAMES, TUNING, aimDir, aimRange, type AimRange, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
@@ -17,13 +17,11 @@ interface Rig {
   muzzle: [number, number]      // đầu nòng trên ảnh nòng
   pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
   reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
-  barrelMax?: number            // độ: nòng chỉ tự xoay tới góc này, cao hơn thì cả thân nghiêng thêm phần còn lại (chỉ là hình)
-  tiltPivot?: [number, number]
-  barrelBehind?: boolean        // nòng vẽ sau thân (bệ súng che đuôi nòng)  // điểm trên ảnh thân làm trục khi nghiêng cả thân (thường là chân phía đầu)
+  barrelBehind?: boolean        // nòng vẽ sau thân (bệ súng che đuôi nòng)
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; tilt: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; barrelMax: number }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1 }
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -57,6 +55,7 @@ export class VehicleViews {
   private readonly fan = new Graphics()
   private readonly views = new Map<number, View>()
   private readonly tmp: Vec2 = { x: 0, y: 0 }
+  private readonly range: AimRange = { min: 0, max: 90 }
   private bob = 0
 
   constructor(match: MatchState) {
@@ -91,18 +90,12 @@ export class VehicleViews {
     const flip = rig.reverse ? -1 : 1
     barrel.scale.set(k * flip, k)
     barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
-    const tilt = new Container()
-    const tp = rig.tiltPivot ?? rig.ground
-    const tx = (tp[0] - rig.ground[0]) * ra.body.width * k, ty = radius + (tp[1] - rig.ground[1]) * ra.body.height * k
-    tilt.pivot.set(tx, ty)
-    tilt.position.set(tx, ty)
-    if (rig.barrelBehind) tilt.addChild(barrel, body)
-    else tilt.addChild(body, barrel)
-    frame.addChild(tilt)
+    if (rig.barrelBehind) frame.addChild(barrel, body)
+    else frame.addChild(body, barrel)
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
-    v.art = { frame, tilt, body, barrel, top: radius - ra.body.height * k, flip, barrelMax: rig.barrelMax ?? 90 }
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -129,11 +122,8 @@ export class VehicleViews {
       a.frame.rotation = -b.tilt
       a.frame.scale.x = b.facing * a.flip
       a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
-      // nòng tự xoay tới barrelMax độ; góc cao hơn thì cả thân nghiêng thêm phần còn lại (phía có nòng nhấc lên)
-      const bodyDeg = Math.max(0, p.aimAngle - a.barrelMax)
-      const t = aimDir(this.tmp, bodyDeg, 1, 0)
-      a.tilt.rotation = -a.flip * Math.atan2(-t.y, t.x)
-      const d = aimDir(this.tmp, p.aimAngle - bodyDeg, 1, 0)   // hướng nòng so với thân (khung đã lật + nghiêng)
+      // góc bắn so với phương ngang; khung đã nghiêng theo dốc nên nòng so với thân = góc − độ dốc theo hướng bắn
+      const d = aimDir(this.tmp, p.aimAngle, 1, -b.facing * b.tilt)
       // xe lật ngược (reverse): khung bị lật thêm một lần và ảnh nòng cũng lật, nên góc quay đổi dấu
       a.barrel.rotation = Math.atan2(d.y * a.flip, d.x)
       this.drawLabels(v, p, hp, alive, isCur, a.top)
@@ -144,7 +134,7 @@ export class VehicleViews {
     v.body.roundRect(-r, -r * 0.6, r * 2, r * 1.2, 5).fill(alive ? TEAM_COLORS[p.team] : 0x777777).stroke({ color: TEAM_DARK[p.team], width: 2 })
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
-    const d = aimDir(this.tmp, p.aimAngle, b.facing, b.tilt)
+    const d = aimDir(this.tmp, p.aimAngle, b.facing)
     v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)
@@ -163,17 +153,18 @@ export class VehicleViews {
     v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (angleMin..angleMax của pháo) + vạch góc hiện tại của người đến lượt. */
+  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch góc hiện tại của người đến lượt. */
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan
-    const def = TUNING.mobiles[p.mobileId]!
+    const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
     g.moveTo(b.x, b.y - 4)
-    for (let a = def.angleMin; a <= def.angleMax; a += 5) {
-      const d = aimDir(this.tmp, a, b.facing, b.tilt)
+    for (let a = r.min; ; a = Math.min(a + 5, r.max)) {
+      const d = aimDir(this.tmp, a, b.facing)
       g.lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS)
+      if (a >= r.max) break
     }
     g.closePath().fill({ color: 0xffffff, alpha: 0.14 })
-    const d = aimDir(this.tmp, p.aimAngle, b.facing, b.tilt)
+    const d = aimDir(this.tmp, p.aimAngle, b.facing)
     g.moveTo(b.x, b.y - 4).lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS).stroke({ color: 0xffffff, width: 2, alpha: 0.8 })
   }
 

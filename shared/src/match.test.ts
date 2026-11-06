@@ -219,6 +219,6 @@ describe('3 pháo + thanh SS', () => {
     applyAction(s, { t: 'aim', id: 0, angle: 0 }, { mask })
     expect(s.players[0]!.aimAngle).toBe(20)
     applyAction(s, { t: 'aim', id: 0, angle: 200 }, { mask })
-    expect(s.players[0]!.aimAngle).toBe(90)
+    expect(s.players[0]!.aimAngle).toBe(45)   // Bọ Lôi đứng đất bằng: cốc chỉ nâng tới 45°
   })
 })

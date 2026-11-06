@@ -1,6 +1,7 @@
 import {
   BotDriver, TEAM_NAMES, TUNING, weatherOf, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
+  aimRange, type AimRange,
 } from '@gunb/shared'
 import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
@@ -32,6 +33,7 @@ export class HotseatMode implements Mode {
   private playback: ShotPlayback | null = null
   private settledFor = 0
   private lastTurnPlayer = -1
+  private readonly range: AimRange = { min: 0, max: 90 }
   private lastHash: boolean | null = null
   private overlay: HTMLElement | null = null
   private readonly stats
@@ -98,6 +100,8 @@ export class HotseatMode implements Mode {
       const isBot = this.bot !== null && p.team === 1
       aim.locked = isBot
       aim.ssReady = p.ss >= TUNING.ss.max
+      const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
+      aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
       if (isBot) {
         const c = this.botCmd

@@ -134,4 +134,18 @@ describe('applyAction', () => {
     expect(isSettled(s)).toBe(true)
     expect(p.hp).toBeLessThan(p.maxHp)
   })
+
+  it('1v1: người đến lượt tự rơi chết khi đang ngắm thì thắng thua ngay, không chờ hết giờ', () => {
+    const { s, mask } = make(2)
+    const p = currentPlayer(s)
+    for (let y = G; y < H; y++) mask.data.fill(0, y * W + Math.round(p.body.x) - 60, y * W + Math.round(p.body.x) + 60)   // đào thủng tới đáy: rơi khỏi bản đồ
+    let ended = false
+    for (let i = 0; i < 60 * 8 && !ended; i++) {
+      applyAction(s, { t: 'tick', dt: 1 / 60 }, { mask })
+      if (s.phase === 'resolving' && isSettled(s)) { applyAction(s, { t: 'endTurn' }, { mask }); ended = s.phase === 'ended' }
+    }
+    expect(ended).toBe(true)
+    expect(s.winner).toBe(p.team === 0 ? 1 : 0)
+    expect(s.turnTimeLeft).toBeGreaterThan(10)      // còn nhiều giờ: không phải thắng nhờ hết giờ
+  })
 })

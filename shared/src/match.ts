@@ -185,6 +185,11 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
         stepMobile(p.body, 0, a.dt, env.mask, t, out)
         applyBodyResult(p)
       }
+      // Người đến lượt tự chết (rơi) hoặc trận đã phân thắng bại: kết thúc lượt ngay, không chờ hết giờ.
+      if (s.phase === 'aiming' && (currentPlayer(s).hp <= 0 || winnerOf(s) !== null)) {
+        s.phase = 'resolving'
+        return { ok: true }
+      }
       if (s.phase === 'aiming') {
         s.turnTimeLeft -= a.dt
         if (s.turnTimeLeft <= 0) {

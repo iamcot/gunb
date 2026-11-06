@@ -17,7 +17,9 @@ Mẹo cho đồng bộ giữa các xe: tạo cùng 1 công cụ, cùng seed/styl
 
 ## Style bible (dán đầu mọi prompt)
 
-> bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. Side view, no text, no characters, no logos.
+Bản cho xe bỏ "no characters" (để AI không bỏ luôn ghế lái) và "Side view" (đã ghi kỹ trong khung thân xe).
+
+> bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. No text, no logos.
 
 ## Khung chung cho thân xe
 

@@ -50,7 +50,7 @@ Same art style, line weight and palette as the vehicle and pilot images in this 
 Same art style, line weight and palette as the vehicle and pilot images in this chat. 2D game icon: a wooden mystery crate with brass corners, a big painted question mark on the front in coral, a few small stars and a puff of smoke popping out of the slightly open lid, side view slightly from the front, chunky cute proportions. Centered, whole object visible. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no other text.
 ```
 
-## 5. Huy hiệu đội – `assets/ui/team-blue.png`, `assets/ui/team-red.png` (512×512, nền trắng)
+## 5. Huy hiệu đội – `assets/ui/team-blue.png`, `assets/ui/team-red.png` (512×512, nền trắng) ✅ đã có cả hai
 Vẽ bản Xanh trước, ưng rồi nhắn bản Đỏ: "Same emblem, same shape and details, but recolor the shield to coral red and the bird to a cream fox".
 ```
 Same art style, line weight and palette as the vehicle and pilot images in this chat. 2D game team emblem: a rounded wooden shield with a brass rim, the face painted sky blue with a cream paper-kite bird silhouette in the middle, two small crossed cartoon cannons behind the shield, a small coral ribbon at the bottom with no writing. Flat front view, centered. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text.

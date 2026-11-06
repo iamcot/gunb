@@ -301,7 +301,7 @@ export class OnlineFlow {
     for (const team of [0, 1] as const) {
       const members = r.members.filter(m => m.team === team)
       const slots = Math.max(perTeam, members.length)
-      let html = `<h4>${esc(TEAM_NAMES[team])}</h4>`
+      let html = `<h4><img src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="" onerror="this.remove()">${esc(TEAM_NAMES[team])}</h4>`
       for (let i = 0; i < slots; i++) {
         const m = members[i]
         if (!m) {

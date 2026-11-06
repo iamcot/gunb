@@ -335,5 +335,21 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 256 px"
+  },
+  {
+    "file": "ui/team-blue.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 160 px"
+  },
+  {
+    "file": "ui/team-red.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 160 px"
   }
 ]

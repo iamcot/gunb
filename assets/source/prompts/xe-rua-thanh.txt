@@ -1,0 +1,11 @@
+Rùa Thành (rua-thanh) – ảnh "Turtle Castle with Rearward Catapult" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "8. Rùa Thành" trong plan/06-prompt-xe.md, rồi nhắn thêm:
+"Turn the catapult around: the pivot stays on the shell, but the long arm must lean BACK toward the tail (left side),
+with the bucket holding the boulder resting low behind the castle tower, ready to fling forward over the turtle's head.
+Keep everything else exactly the same..."
+
+Xử lý:
+- Xoá nền trắng.
+- "Nòng" = đĩa trục vàng + cần gỗ + gầu đá; cắt theo dải dọc trục cần (giữ tháp và cờ ở thân), vá chỗ cần che bằng màu cỏ.
+- rig.json `catapult: true`: khi ngắm cần đứng yên (chỉ tia ngắm xoay); lúc bắn cần vung ~125° qua đầu rồi hạ về.
+- Thân thu về 192 px, vẽ rộng 110 (rùa to nhất, bán kính 22).

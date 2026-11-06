@@ -18,10 +18,14 @@ interface Rig {
   pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
   reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
   barrelBehind?: boolean        // nòng vẽ sau thân (bệ súng che đuôi nòng)
+  catapult?: boolean            // máy bắn đá: cần đứng yên khi ngắm (chỉ tia ngắm xoay), lúc bắn vung qua đầu rồi về
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1 }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number }
+
+/** Cú vung của máy bắn đá (chỉ là hình): góc vung (độ), thời gian vung lên / giữ / hạ về (giây). */
+const SWING_DEG = 125, SWING_UP = 0.18, SWING_HOLD = 0.12, SWING_BACK = 0.6
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -95,12 +99,13 @@ export class VehicleViews {
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip }
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1 }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
   update(dt: number, match: MatchState, shownHp: ReadonlyMap<number, number>): void {
     this.bob += dt * 6
+    for (const v of this.views.values()) if (v.art && v.art.swingT >= 0) v.art.swingT += dt
     this.fan.clear()
     for (const p of match.players) {
       const v = this.views.get(p.id)!
@@ -122,6 +127,11 @@ export class VehicleViews {
       a.frame.rotation = -b.tilt
       a.frame.scale.x = b.facing * a.flip
       a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
+      if (a.catapult) {
+        a.barrel.rotation = this.swingRad(a)
+        this.drawLabels(v, p, hp, alive, isCur, a.top)
+        return
+      }
       // góc bắn so với phương ngang; khung đã nghiêng theo dốc nên nòng so với thân = góc − độ dốc theo hướng bắn
       const d = aimDir(this.tmp, p.aimAngle, 1, -b.facing * b.tilt)
       // xe lật ngược (reverse): khung bị lật thêm một lần và ảnh nòng cũng lật, nên góc quay đổi dấu
@@ -138,6 +148,25 @@ export class VehicleViews {
     v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)
+  }
+
+  /** Phát hình vung cần (máy bắn đá) của xe `id` khi bắn; xe khác không làm gì. */
+  fireAnim(id: number): void {
+    const a = this.views.get(id)?.art
+    if (a && a.catapult) a.swingT = 0
+  }
+
+  /** Góc quay cần máy bắn đá theo thời gian vung (radian, dương = theo chiều kim đồng hồ: hất về phía trước). */
+  private swingRad(a: Art): number {
+    const t = a.swingT
+    let k = 0
+    if (t < 0) k = 0
+    else if (t < SWING_UP) { const u = t / SWING_UP; k = 1 - (1 - u) * (1 - u) }
+    else if (t < SWING_UP + SWING_HOLD) k = 1
+    else if (t < SWING_UP + SWING_HOLD + SWING_BACK) k = 1 - (t - SWING_UP - SWING_HOLD) / SWING_BACK
+    else a.swingT = -1
+    const d = aimDir(this.tmp, SWING_DEG * k, 1)
+    return Math.atan2(-d.y, d.x)
   }
 
   /** Thanh máu, tên, mũi tên lượt; `top` là mép trên của hình xe (so với tâm). */

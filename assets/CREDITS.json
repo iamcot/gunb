@@ -234,5 +234,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/rua-thanh/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-rua-thanh.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Turtle Castle with Rearward Catapult\": xoá nền, tách cần + gầu đá + đĩa trục thành bộ phận vung, vá chỗ cần che bằng màu cỏ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/rua-thanh/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-rua-thanh.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Turtle Castle with Rearward Catapult\": xoá nền, tách cần + gầu đá + đĩa trục thành bộ phận vung, vá chỗ cần che bằng màu cỏ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/rua-thanh/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

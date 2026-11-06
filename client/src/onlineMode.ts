@@ -95,6 +95,7 @@ export class OnlineMode implements Mode {
   onShot(result: ShotResultNet): void {
     for (const q of this.match.players) this.shownHp.set(q.id, q.hp)   // máu trước phát bắn; snapshot kế tiếp đã có máu sau
     this.aim.locked = true
+    this.vehicles.fireAnim(this.match.turnPlayerId)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
     })

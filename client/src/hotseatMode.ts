@@ -87,6 +87,7 @@ export class HotseatMode implements Mode {
     if (!res.ok || !res.shot) return
     addShotStats(this.stats, before, p.id, res.shot)
     this.aim.locked = true
+    this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
     })

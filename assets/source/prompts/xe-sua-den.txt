@@ -1,0 +1,7 @@
+Sứa Đèn (sua-den) – ảnh "Chibi Jellyfish Lantern Vehicle" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "7. Sứa Đèn" trong plan/06-prompt-xe.md.
+
+Xử lý:
+- Xoá nền trắng (giữ nguyên các bóng đèn sáng, không đục lỗ).
+- "Nòng" = cần đồng cong + đèn lồng (đạn là quả cầu sáng), xoay quanh đĩa vàng ở vai (908,565 ảnh gốc); nòng vẽ sau đĩa.
+- Trục nòng = từ đĩa tới tâm đèn lồng (nghiêng ~22°), xoay về nằm ngang; thân thu về 192 px.

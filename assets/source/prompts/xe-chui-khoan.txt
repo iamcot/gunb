@@ -1,0 +1,9 @@
+Chũi Khoan (chui-khoan) – ảnh "Steampunk Mole Digger Tank" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "2. Chũi Khoan" trong plan/06-prompt-xe.md, cùng chat đã vẽ Bọ Lôi và Ốc Thiết Giáp.
+
+Xử lý:
+- Xoá nền trắng, giữ cả khói ống xả.
+- "Nòng" = cả cái đầu (mũ, đèn, mắt, mõm, mũi khoan); cắt theo đường cổ phía trên vai vàng.
+  Lúc ngắm con chũi ngóc đầu lên, xoay quanh cổ (pivot), mũi khoan chĩa theo góc bắn.
+- Vá chỗ cổ bị lộ bằng màu nâu thân + viền tối.
+- Thân thu về 192 px; rig.json: pivot ở cổ, muzzle ở mũi khoan.

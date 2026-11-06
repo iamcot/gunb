@@ -119,5 +119,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/chui-khoan/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-chui-khoan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Mole Digger Tank\": xoá nền, tách cả đầu (mũ, mắt, mõm, mũi khoan) thành bộ phận xoay quanh cổ, vá cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/chui-khoan/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-chui-khoan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Mole Digger Tank\": xoá nền, tách cả đầu (mũ, mắt, mõm, mũi khoan) thành bộ phận xoay quanh cổ, vá cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/chui-khoan/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

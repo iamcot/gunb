@@ -48,6 +48,10 @@
 .gs-btn.sky { background: var(--sky); color: #fff; border-color: var(--sky-d); box-shadow: 0 4px 0 var(--sky-dd); text-shadow: 0 1px 0 #0003; }
 .gs-btn.big { font-size: 22px; padding: 12px 18px; border-radius: 16px; }
 .gs-btn.sm { font-size: 12px; padding: 3px 9px; border-width: 2px; border-radius: 8px; box-shadow: 0 2px 0 var(--earth); }
+.gs-btn .ico { height: 1.9em; margin: -0.6em 0.35em -0.6em -0.3em; vertical-align: middle; filter: drop-shadow(0 1px 1px #0004); }
+.gs-btn.big { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 10px 10px; }
+.gs-btn.big .ico { height: 46px; margin: -22px 0 0; }
+.gs-btn .ico.only { margin: -0.4em -0.2em; height: 1.5em; }
 .gs-btn .key { position: absolute; top: -9px; right: -6px; font-size: 10px; background: var(--earth); color: #ffe08a; border-radius: 6px; padding: 0 5px; }
 .gs-tabs { display: flex; gap: 4px; margin-left: auto; }
 .gs-tab { border: 2px solid var(--cream-d); background: var(--cream); color: var(--earth); border-radius: 10px; padding: 4px 12px; font-weight: 800; }
@@ -108,7 +112,7 @@
 .gs-info dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; align-content: center; }
 .gs-info dt { color: var(--earth); font-weight: 700; }
 .gs-info dd { margin: 0; font-weight: 900; color: var(--sky-dd); }
-.gs-teams { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 120px 1fr; gap: 10px; }
+.gs-teams { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 130px 1fr; gap: 10px; }
 .gs-team { min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
 .gs-team h4 { margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; color: #fff; padding: 3px; border-radius: 8px; font-size: 14px; letter-spacing: .5px; }
 .gs-team h4 img { height: 36px; margin: -8px 0 -6px; filter: drop-shadow(0 1px 1px #0005); }
@@ -138,7 +142,9 @@
 .gs-chat { display: flex; flex-direction: column; gap: 6px; height: 132px; }
 .gs-chat .log { flex: 1; min-height: 0; overflow-y: auto; background: #fff; border: 2px solid var(--cream-d); border-radius: 10px; padding: 4px 8px; font-weight: 600; font-size: 13px; user-select: text; }
 .gs-chat .log .sys { color: var(--sky-d); }
-.gs-chat input { width: 100%; }
+.gs-chat .row { display: flex; align-items: center; gap: 8px; }
+.gs-chat .row .ico { height: 34px; margin: -4px 0; }
+.gs-chat input { width: 100%; flex: 1; }
 
 .gs-detail { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .gs-detail .stage { height: 140px; }

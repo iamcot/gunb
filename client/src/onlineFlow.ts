@@ -13,6 +13,11 @@ const NAME_KEY = 'gunb.name'
 const esc = (s: string): string => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 const MOBILE_KEY = 'gunb.mobile'          // xe chọn lần trước (chỉ là tiện ích giao diện)
 const LOGO_URL = '/ui/logo.png'
+/** Icon nút đã có ảnh trong `assets/ui/icons/` (thêm tên khi có file mới). Chưa có ảnh thì dùng ký tự thay thế. */
+const ICONS = new Set(['create', 'quick-join', 'refresh', 'ready', 'start', 'switch-team', 'leave', 'add-bot', 'chat', 'remove'])
+/** `only`: nút chỉ có icon (không kèm chữ). */
+const ico = (name: string, fallback = '', only = false): string =>
+  ICONS.has(name) ? `<img class="ico${only ? ' only' : ''}" src="/ui/icons/${name}.png" alt="">` : fallback ? fallback + (only ? '' : ' ') : ''
 const TURN_TIMES = [15, 20, 30, 45]
 const TOAST_MS = 4000
 const BOT_LABEL: Record<string, string> = { easy: 'Dễ', normal: 'Vừa', hard: 'Khó' }
@@ -160,9 +165,9 @@ export class OnlineFlow {
     const el = this.panel(`<div class="gs-body">
         <div class="gs-col">
           <div class="gs-toolbar">
-            <button class="gs-btn primary" id="mk">＋ Tạo phòng</button>
-            <button class="gs-btn go" id="quick">Vào nhanh</button>
-            <button class="gs-btn sky" id="refresh">↻ Làm mới</button>
+            <button class="gs-btn primary" id="mk">${ico('create', '＋')}Tạo phòng</button>
+            <button class="gs-btn go" id="quick">${ico('quick-join')}Vào nhanh</button>
+            <button class="gs-btn sky" id="refresh">${ico('refresh', '↻')}Làm mới</button>
             <div class="gs-tabs"><button class="gs-tab" data-f="all">Tất cả</button><button class="gs-tab" data-f="wait">Đang chờ</button></div>
           </div>
           <div class="gs-rooms" id="rooms"></div>
@@ -179,7 +184,7 @@ export class OnlineFlow {
             <li>Trong phòng: chọn xe, đổi đội, bấm <b>Sẵn sàng</b>. Chủ phòng thêm máy vào chỗ trống và bấm <b>Bắt đầu</b>.</li>
           </ul></div>
           <div class="gs-spacer"></div>
-          <div class="gs-side-actions"><span></span><button class="gs-btn" id="leave">Thoát</button></div>
+          <div class="gs-side-actions"><span></span><button class="gs-btn" id="leave">${ico('leave')}Thoát</button></div>
         </div>
       </div>`, true, 'Sảnh chờ')
     fillPortraits(el)
@@ -266,7 +271,7 @@ export class OnlineFlow {
           <div class="gs-col">
             <div class="gs-box gs-info" id="rinfo"></div>
             <div class="gs-teams"><div class="gs-team t0" id="team0"></div><div class="gs-mid" id="ractions"></div><div class="gs-team t1" id="team1"></div></div>
-            <div class="gs-box gs-chat"><div class="log" id="gschat"></div><input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi"></div>
+            <div class="gs-box gs-chat"><div class="log" id="gschat"></div><div class="row">${ico('chat')}<input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi"></div></div>
           </div>
           <div class="gs-col">
             <div class="gs-box gs-detail" id="mdetail"></div>
@@ -305,7 +310,7 @@ export class OnlineFlow {
       for (let i = 0; i < slots; i++) {
         const m = members[i]
         if (!m) {
-          html += `<div class="gs-slot emptyslot"><div>Chỗ trống${isHost && editable ? `<br><button class="gs-btn sm" data-bot="${team}">＋ Thêm máy</button>` : ''}</div></div>`
+          html += `<div class="gs-slot emptyslot"><div>Chỗ trống${isHost && editable ? `<br><button class="gs-btn sm" data-bot="${team}">${ico('add-bot', '＋')}Thêm máy</button>` : ''}</div></div>`
           continue
         }
         const def = TUNING.mobiles[m.mobileId]
@@ -315,7 +320,7 @@ export class OnlineFlow {
         html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">
           <div class="pic"><img data-portrait="${esc(m.mobileId)}" alt=""><span class="fallback">${esc(def?.name ?? m.mobileId)}</span></div>
           <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${badge}</div>
-          ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">✕</button>` : ''}</div>`
+          ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">${ico('remove', '✕', true)}</button>` : ''}</div>`
       }
       el.querySelector(`#team${team}`)!.innerHTML = html
     }
@@ -325,11 +330,11 @@ export class OnlineFlow {
 
     const actions = el.querySelector('#ractions')!
     actions.innerHTML = `<div class="vs">VS</div>` +
-      (isHost ? `<button class="gs-btn primary big" id="st"${editable ? '' : ' disabled'}>Bắt đầu</button>`
-        : `<button class="gs-btn ${mine?.ready ? '' : 'go '}big" id="rd"${editable ? '' : ' disabled'}>${mine?.ready ? 'Huỷ' : 'Sẵn sàng'}</button>`) +
-      `<button class="gs-btn sky" id="team"${editable ? '' : ' disabled'}>⇄ Đổi đội</button>` +
+      (isHost ? `<button class="gs-btn primary big" id="st"${editable ? '' : ' disabled'}>${ico('start')}Bắt đầu</button>`
+        : `<button class="gs-btn ${mine?.ready ? '' : 'go '}big" id="rd"${editable ? '' : ' disabled'}>${mine?.ready ? 'Huỷ' : ico('ready') + 'Sẵn sàng'}</button>`) +
+      `<button class="gs-btn sky" id="team"${editable ? '' : ' disabled'}>${ico('switch-team', '⇄')}Đổi đội</button>` +
       (isHost && editable ? `<select id="blv" title="Mức máy khi thêm vào chỗ trống">${(['easy', 'normal', 'hard'] as const).map(l => `<option value="${l}"${l === this.botLevel ? ' selected' : ''}>Máy: ${BOT_LABEL[l]}</option>`).join('')}</select>` : '')
-    actions.insertAdjacentHTML('beforeend', '<button class="gs-btn" id="lv">Rời phòng</button>')
+    actions.insertAdjacentHTML('beforeend', `<button class="gs-btn" id="lv">${ico('leave')}Rời phòng</button>`)
     actions.querySelector('#lv')!.addEventListener('click', () => { this.net?.send({ t: MsgType.LeaveRoom }) })
     actions.querySelector('#st')?.addEventListener('click', () => this.net?.send({ t: MsgType.StartGame }))
     actions.querySelector('#rd')?.addEventListener('click', () => this.net?.send({ t: MsgType.SetSeat, ready: !mine?.ready }))

@@ -57,7 +57,7 @@ Same art style, line weight and palette as the vehicle and pilot images in this 
 ```
 
 ## 6. Bộ icon nút – `assets/ui/icons/<tên>.png` (mỗi icon 512×512, nền trắng)
-Vẽ từng icon một, cùng chat, câu đầu giữ nguyên để các icon đồng bộ. Thay phần `<VẬT>` theo bảng.
+Vẽ từng icon một, cùng chat, câu đầu giữ nguyên để các icon đồng bộ. Thay phần `<VẬT>` theo bảng. Có file mới thì thêm tên vào `ICONS` trong `client/src/onlineFlow.ts`.
 
 ```
 Same art style, line weight and palette as the vehicle and pilot images in this chat. 2D game UI icon, same style as the previous icons in this chat: <VẬT>. Chunky cute proportions, bold simple silhouette readable at 48 pixels, slight 3/4 front view, centered, whole object visible. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text.
@@ -65,16 +65,16 @@ Same art style, line weight and palette as the vehicle and pilot images in this 
 
 | File | Nút | `<VẬT>` |
 |---|---|---|
-| `create.png` | Tạo phòng | a small wooden signpost with a coral flag being planted into a tuft of grass, a tiny hammer leaning on it |
-| `quick-join.png` | Vào nhanh | a brass cannon firing a cream paper airplane with speed lines |
-| `refresh.png` | Làm mới | two curved coral arrows chasing each other in a circle around a small cloud |
-| `ready.png` | Sẵn sàng | a raised cartoon gauntlet hand giving a thumbs up, brass cuff, small sparkle |
-| `start.png` | Bắt đầu | a lit cannon fuse with a bright spark and a puff of smoke, cannonball about to launch |
-| `switch-team.png` | Đổi đội | two small shields, one sky blue and one coral red, swapping places with curved arrows between them |
-| `leave.png` | Rời phòng | a wooden door half open with a coral arrow pointing out |
-| `add-bot.png` | Thêm máy | a cute round little robot head with a brass antenna and a green plus badge |
-| `remove.png` | Bỏ máy | a coral round badge with a cream cross, brass rim |
-| `chat.png` | Chat | a cream speech bubble with three brown dots, a small paper kite tail |
+| `create.png` ✅ | Tạo phòng | a small wooden signpost with a coral flag being planted into a tuft of grass, a tiny hammer leaning on it |
+| `quick-join.png` ✅ | Vào nhanh | a brass cannon firing a cream paper airplane with speed lines |
+| `refresh.png` ✅ | Làm mới | two curved coral arrows chasing each other in a circle around a small cloud |
+| `ready.png` ✅ | Sẵn sàng | a raised cartoon gauntlet hand giving a thumbs up, brass cuff, small sparkle |
+| `start.png` ✅ | Bắt đầu | a lit cannon fuse with a bright spark and a puff of smoke, cannonball about to launch |
+| `switch-team.png` ✅ | Đổi đội | two small shields, one sky blue and one coral red, swapping places with curved arrows between them |
+| `leave.png` ✅ | Rời phòng | a wooden door half open with a coral arrow pointing out |
+| `add-bot.png` ✅ | Thêm máy | a cute round little robot head with a brass antenna and a green plus badge |
+| `remove.png` ✅ | Bỏ máy | a coral round badge with brass rim and a big cream horizontal minus bar in the middle (a minus sign, NOT a plus sign) |
+| `chat.png` ✅ | Chat | a cream speech bubble with three brown dots, a small paper kite tail |
 
 ---
 

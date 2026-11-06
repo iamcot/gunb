@@ -165,5 +165,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-dieu-hau-giay.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Whimsical Bamboo Hawk Cart\": xoá nền, tách đầu chim + nỏ + mũi tên (cả đoạn cổ trên) thành nòng xoay quanh cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-dieu-hau-giay.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Whimsical Bamboo Hawk Cart\": xoá nền, tách đầu chim + nỏ + mũi tên (cả đoạn cổ trên) thành nòng xoay quanh cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

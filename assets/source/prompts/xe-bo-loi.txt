@@ -9,4 +9,4 @@ Xử lý (Python/PIL/scipy):
 - Khớp tròn vàng giữ lại trên thân, là tâm xoay (pivot).
 - Thu thân về 192 px rộng, nòng cùng tỉ lệ.
 - rig.json: reverse=true (quay đít về phía địch khi bắn).
-- rig.json: aimTilt=35 (khi ngắm cả thân nghiêng tới 35°, nhấc đít lên, trục ở chân phía đầu = tiltPivot), góc cao hơn thì cốc xoay thêm.
+- rig.json: barrelMax=30 (cốc tự xoay tới 30° khi thân đứng ngang; góc cao hơn thì cả thân nghiêng thêm, nhấc đít lên, trục ở chân phía đầu = tiltPivot).

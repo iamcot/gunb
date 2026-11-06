@@ -9,4 +9,4 @@ export const MAX_SLOPE_DEG = 55        // dốc hơn thì không leo được
 export const FALL_DAMAGE_PER_PX = 0.15
 export const MAX_PLAYERS = 8
 export const MAX_TURNS = 60
-export const SERVER_PORT = 8081
+export const SERVER_PORT = 4001

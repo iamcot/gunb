@@ -12,5 +12,19 @@
     "source": "Sinh bằng scripts/gen-test-map.mjs",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "maps/dao-noi/terrain.png",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs (đảo nổi, seed cố định)",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "maps/dao-noi/map.json",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

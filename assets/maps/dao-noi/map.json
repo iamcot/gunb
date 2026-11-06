@@ -1,0 +1,18 @@
+{
+  "id": "dao-noi",
+  "name": "Đảo nổi",
+  "width": 2400,
+  "height": 1200,
+  "terrain": "terrain.png",
+  "backgrounds": [],
+  "spawnZones": {
+    "A": {
+      "x1": 420,
+      "x2": 880
+    },
+    "B": {
+      "x1": 1520,
+      "x2": 1980
+    }
+  }
+}

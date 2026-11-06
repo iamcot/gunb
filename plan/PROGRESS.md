@@ -38,6 +38,8 @@
 - [x] 4.4 Phát bắn online + kiểm tra hash — server gửi Shot (không kèm mask), client phát lại và so hash; lệch thì NeedTerrain → server gửi địa hình nén RLE (shared/terrain/rle.ts)
 - [x] 4.5 Rớt mạng + vào lại — token theo tab (sessionStorage), nối lại tự động; rớt mạng thì bỏ lượt của người đó, giữ chỗ 60 s rồi bị loại; vào lại nhận MatchStart + Terrain + Snapshot. Test: server/lobby.test.ts. Chạy thật: `npm run play`
 
+- [x] Bản đồ phẳng "Đảo nổi" (assets/maps/dao-noi, sinh bởi gen-test-map.mjs) làm mặc định để test khoét đất; thu-nghiem giữ lại
+
 ## Phase 5 – Bot + hoàn thiện MVP
 - [ ] 5.1 Bot ⚠️
 - [ ] 5.2 Thêm bot vào phòng + chế độ offline

@@ -24,7 +24,7 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 
 async function main(): Promise<void> {
   document.getElementById('title')!.textContent = GAME_NAME
-  const mapId = new URLSearchParams(location.search).get('map') ?? 'thu-nghiem'
+  const mapId = new URLSearchParams(location.search).get('map') ?? 'dao-noi'
   const base = `/maps/${mapId}/`
   const map = parseMap(await (await fetch(base + 'map.json')).json())
   const img = await loadImage(base + map.terrain)

@@ -116,7 +116,7 @@ export class MatchRunner {
     const { maskAfter: _drop, ...net } = res.shot
     this.held.dir = 0
     this.resolveWait = res.shot.endT + SHOT_PLAYBACK_PAD
-    this.broadcast({ t: MsgType.Shot, result: net } as never)
+    this.broadcast({ t: MsgType.Shot, result: net, shooter: seat.id, slot: s } as never)
     this.snapshotNow()
   }
 

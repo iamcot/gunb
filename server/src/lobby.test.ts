@@ -80,6 +80,8 @@ describe('Lobby', () => {
     shooter.say({ t: MsgType.Fire, angle: 45, power: 60, slot: 0 } as never)
     const shot = a.last(MsgType.Shot)!.result as { terrainHashAfter: string | number; endT: number }
     expect(b.last(MsgType.Shot)).toBeTruthy()
+    expect(b.last(MsgType.Shot)!.shooter).toBeTypeOf('number')
+    expect([0, 1, 2]).toContain(b.last(MsgType.Shot)!.slot)
     expect(shot.terrainHashAfter).toBe(runner.mask.hash())
     expect(runner.state.phase).toBe('resolving')
     for (let i = 0; i < 600 && runner.state.phase === 'resolving'; i++) lobby.stepRoom(roomId, 1 / 30)

@@ -26,7 +26,7 @@ export enum MsgType {
   Fire = 16,          // C→S  {angle, power, slot}
   Skip = 17,          // C→S
   Snapshot = 18,      // S→C  {s: Snapshot}
-  Shot = 19,          // S→C  {result: ShotResultNet}
+  Shot = 19,          // S→C  {result: ShotResultNet, shooter, slot}
   NeedTerrain = 20,   // C→S
   Terrain = 21,       // S→C  {w, h, rle}
   Error = 22,         // S→C  {text}
@@ -78,7 +78,8 @@ export interface ChatMsgIn { t: MsgType.ChatMsg; from: string; text: string }
 export interface LoadingMsg { t: MsgType.Loading; members: { pid: number; pct: number; ready: boolean }[] }
 export interface MatchStartMsg { t: MsgType.MatchStart; seed: number; mapId: string; turnTime: number; players: MatchPlayerInfo[]; youId: number }
 export interface SnapshotMsg { t: MsgType.Snapshot; s: Snapshot }
-export interface ShotMsg { t: MsgType.Shot; result: ShotResultNet }
+/** `shooter` = id người bắn, `slot` = loại đạn (client vẽ đúng ảnh đạn). */
+export interface ShotMsg { t: MsgType.Shot; result: ShotResultNet; shooter: number; slot: ShotSlot }
 export interface TerrainMsg { t: MsgType.Terrain; w: number; h: number; rle: Uint8Array }
 export interface AddBotMsg { t: MsgType.AddBot; level: BotLevel; team: 0 | 1 }
 export interface RemoveBotMsg { t: MsgType.RemoveBot; pid: number }

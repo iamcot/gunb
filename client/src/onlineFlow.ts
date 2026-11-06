@@ -1,6 +1,6 @@
 import {
   MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
-  type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type Snapshot, type ShotResultNet, type TerrainMask,
+  type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
 import { NetClient, type NetStatus } from './net'
@@ -173,14 +173,20 @@ export class OnlineFlow {
       const team = isMe && r.status === 'lobby'
         ? `<button data-team>${TEAM_NAMES[m.team]} ⇄</button>` : `<span>${TEAM_NAMES[m.team]}</span>`
       return `<div class="mrow"><b style="color:${TEAM_COLOR[m.team]}">${esc(m.name)}${m.pid === r.hostPid ? ' ★' : ''}${isMe ? ' (bạn)' : ''}</b>${team}${mob}
-        <span>${!m.connected ? 'mất kết nối' : m.ready || m.pid === r.hostPid ? '✔ sẵn sàng' : '…'}</span></div>`
+        <span>${!m.connected ? 'mất kết nối' : m.ready || m.pid === r.hostPid ? '✔ sẵn sàng' : '…'}</span>${m.bot && r.hostPid === me ? `<button data-rm="${m.pid}">✕</button>` : ''}</div>`
     }).join('')
+    el.querySelectorAll<HTMLButtonElement>('[data-rm]').forEach(b => b.addEventListener('click', () => this.net?.send({ t: MsgType.RemoveBot, pid: Number(b.dataset.rm) })))
     el.querySelector('[data-team]')?.addEventListener('click', () => this.net?.send({ t: MsgType.SetSeat, team: mine!.team === 0 ? 1 : 0 }))
     el.querySelector<HTMLSelectElement>('[data-mob]')?.addEventListener('change', e => this.net?.send({ t: MsgType.SetSeat, mobileId: (e.target as HTMLSelectElement).value }))
     const actions = el.querySelector('#ractions')!
     const isHost = r.hostPid === me
     actions.innerHTML = `<button id="lv">Rời phòng</button>` +
       (isHost ? `<button id="st">Bắt đầu</button>` : `<button id="rd">${mine?.ready ? 'Bỏ sẵn sàng' : 'Sẵn sàng'}</button>`)
+    if (isHost && r.status === 'lobby') {
+      actions.insertAdjacentHTML('afterbegin', `<select id="blv"><option value="easy">Dễ</option><option value="normal" selected>Vừa</option><option value="hard">Khó</option></select><button id="b0">+ Máy (Xanh)</button><button id="b1">+ Máy (Đỏ)</button>`)
+      for (const t of [0, 1] as const) actions.querySelector(`#b${t}`)!.addEventListener('click', () =>
+        this.net?.send({ t: MsgType.AddBot, level: (actions.querySelector('#blv') as HTMLSelectElement).value, team: t }))
+    }
     actions.querySelector('#lv')!.addEventListener('click', () => { this.net?.send({ t: MsgType.LeaveRoom }) })
     actions.querySelector('#st')?.addEventListener('click', () => this.net?.send({ t: MsgType.StartGame }))
     actions.querySelector('#rd')?.addEventListener('click', () => this.net?.send({ t: MsgType.SetSeat, ready: !mine?.ready }))
@@ -261,6 +267,7 @@ export class OnlineFlow {
         break
       }
       case MsgType.Snapshot: this.mode?.onSnapshot(m.s as Snapshot); break
+      case MsgType.Stats: this.mode?.onStats(m.stats as PlayerStats[]); break
       case MsgType.Shot: this.mode?.onShot(m.result as ShotResultNet); break
       case MsgType.Error:
         this.errText = String(m.text)

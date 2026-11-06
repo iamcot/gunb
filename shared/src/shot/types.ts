@@ -26,6 +26,8 @@ export interface ShotInput {
   facing: 1 | -1
   tilt: number        // radian
   fire: FireCmd
+  /** Bỏ tính hash địa hình sau phát bắn (terrainHashAfter = 0). Dành cho bot thử nhiều phát bắn, nơi chỉ cần sát thương. */
+  skipHash?: boolean
 }
 
 export type ShotEvent =

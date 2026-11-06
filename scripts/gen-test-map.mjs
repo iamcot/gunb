@@ -105,8 +105,8 @@ writeMap('thu-nghiem', 'Bản đồ thử nghiệm', solid, { A: { x1: 100, x2: 
     const thick = 70 + 330 * Math.pow(1 - t * t, 0.6) + Math.sin(x / 23 + phase) * 14 + Math.sin(x / 71) * 22
     for (let y = surf; y < Math.min(H, surf + thick); y++) isl[y * W + x] = 1
   }
-  // hai đảo nhỏ phía trên và dưới để thử đạn bay xa / rơi
-  for (const [ox, oy, hw] of [[620, 300, 120], [1800, 330, 120]]) {
+  // hai đảo nhỏ ngoài rìa (ngoài vùng xuất phát) để thử đạn bay xa
+  for (const [ox, oy, hw] of [[200, 380, 90], [2200, 400, 90]]) {
     for (let x = ox - hw; x < ox + hw; x++) {
       const t = (x - ox) / hw
       const thick = 30 + 70 * Math.sqrt(1 - t * t)

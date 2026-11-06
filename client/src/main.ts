@@ -1,5 +1,5 @@
 import { Application, Container } from 'pixi.js'
-import { GAME_NAME, parseMap } from '@gunb/shared'
+import { GAME_NAME, parseMap, type BotLevel } from '@gunb/shared'
 import { Camera } from './camera'
 import type { GameCtx, Mode } from './ctx'
 import { Fx } from './fx'
@@ -56,6 +56,7 @@ async function main(): Promise<void> {
   const menuBtn = document.getElementById('menubtn') as HTMLButtonElement
   const menu = new Menu({
     onHotseat: n => chooseMobiles(n),
+    onVsBot: (n, level) => chooseMobiles(n, level),
     onPractice: () => { setMode(new PracticeMode(ctx)) },
     onOnline: () => startOnline(),
   })
@@ -67,15 +68,15 @@ async function main(): Promise<void> {
     if (m) { menu.hide(); menuBtn.style.display = 'block' } else { view.reset(); menu.show(); menuBtn.style.display = 'none'; hud.setVisible(false) }
   }
   let select: SelectScreen | null = null
-  function chooseMobiles(n: number): void {
+  function chooseMobiles(n: number, botLevel?: BotLevel): void {
     menu.hide()
     select = new SelectScreen(n, {
-      onStart: ids => { select?.destroy(); select = null; startHotseat(n, ids) },
+      onStart: ids => { select?.destroy(); select = null; startHotseat(n, ids, botLevel) },
       onBack: () => { select?.destroy(); select = null; menu.show() },
     })
   }
-  function startHotseat(n: number, ids: string[]): void {
-    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids }, () => startHotseat(n, ids), () => setMode(null)))
+  function startHotseat(n: number, ids: string[], botLevel?: BotLevel): void {
+    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids, botLevel }, () => startHotseat(n, ids, botLevel), () => setMode(null)))
   }
   let online: OnlineFlow | null = null
   function startOnline(): void {

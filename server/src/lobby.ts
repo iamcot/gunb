@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import {
   MAX_PLAYERS, MOBILE_IDS, MsgType, decodeMsg, encodeMsg,
-  type Msg, type RoomInfo, type RoomMember, type RoomStatus, type RoomSummary, type Team,
+  type BotLevel, type Msg, type RoomInfo, type RoomMember, type RoomStatus, type RoomSummary, type Team,
 } from '@gunb/shared'
 import { MatchRunner, RECONNECT_GRACE_S } from './matchRunner'
 import { listMapIds, loadMap } from './mapLoader'
@@ -13,7 +13,7 @@ const MAX_CHAT = 200
 /** Cổng gửi nhị phân tối thiểu để test không cần ws thật. */
 export interface Conn { send(data: Uint8Array): void; close(): void }
 
-interface Member { pid: number; team: Team; mobileId: string; ready: boolean; pct: number; loaded: boolean }
+interface Member { pid: number; team: Team; mobileId: string; ready: boolean; pct: number; loaded: boolean; bot?: BotLevel; botName?: string }
 
 interface Client { pid: number; name: string; token: string; conn: Conn | null; roomId: string | null; offlineAt: number }
 
@@ -33,6 +33,7 @@ export class Lobby {
   private readonly byConn = new Map<Conn, Client>()
   private nextPid = 1
   private nextRoom = 1
+  private nextBot = 1
   /** Chỉ test mới đổi: bước tick của MatchRunner không tự chạy. */
   constructor(private readonly opts: { autoTick?: boolean } = {}) {}
 
@@ -74,6 +75,8 @@ export class Lobby {
       case MsgType.LeaveRoom: this.leaveRoom(c); this.sendList(c); break
       case MsgType.SetSeat: this.setSeat(c, m); break
       case MsgType.StartGame: this.startGame(c); break
+      case MsgType.AddBot: this.addBot(c, m); break
+      case MsgType.RemoveBot: this.removeBot(c, Number(m.pid)); break
       case MsgType.Chat: this.chat(c, m); break
       case MsgType.LoadProgress: this.loadProgress(c, m); break
       case MsgType.Input: { const r = this.runnerOf(c); if (r) r.onInput(c.pid, Number(m.dir), Number(m.angle)); break }
@@ -127,6 +130,7 @@ export class Lobby {
 
   private info(r: Room): RoomInfo {
     const members: RoomMember[] = r.members.map(m => {
+      if (m.bot) return { pid: m.pid, name: m.botName!, team: m.team, mobileId: m.mobileId, ready: true, connected: true, bot: m.bot }
       const c = this.clients.get(m.pid)
       return { pid: m.pid, name: c?.name ?? '?', team: m.team, mobileId: m.mobileId, ready: m.ready, connected: !!c?.conn }
     })
@@ -181,10 +185,10 @@ export class Lobby {
   }
 
   private afterMemberGone(room: Room): void {
-    const live = room.members.filter(m => this.clients.get(m.pid)?.roomId === room.id)
+    const live = room.members.filter(m => !m.bot && this.clients.get(m.pid)?.roomId === room.id)
     if (room.status === 'playing') {
       // phòng đang chơi: còn ai ở lại (kể cả rớt mạng chờ vào lại) thì giữ
-      if (room.members.length === 0) this.closeRoom(room)
+      if (!room.members.some(m => !m.bot)) this.closeRoom(room)
       else this.pushRoom(room)
     } else if (live.length === 0) this.closeRoom(room)
     else {
@@ -199,6 +203,29 @@ export class Lobby {
     room.runner?.stop()
     if (room.loadTimer) clearTimeout(room.loadTimer)
     this.rooms.delete(room.id)
+    this.broadcastList()
+  }
+
+  private addBot(c: Client, m: Msg): void {
+    const room = c.roomId ? this.rooms.get(c.roomId) : undefined
+    if (!room || room.status !== 'lobby' || room.hostPid !== c.pid) return
+    if (room.members.length >= room.max) return this.err(c, 'Phòng đã đầy')
+    const level: BotLevel = m.level === 'easy' || m.level === 'hard' ? m.level : 'normal'
+    const n = this.nextBot++
+    const label = { easy: 'Dễ', normal: 'Vừa', hard: 'Khó' }[level]
+    room.members.push({
+      pid: -n, team: m.team === 1 ? 1 : 0, mobileId: MOBILE_IDS[n % MOBILE_IDS.length]!, ready: true, pct: 100, loaded: true,
+      bot: level, botName: `Máy ${n} (${label})`,
+    })
+    this.pushRoom(room)
+    this.broadcastList()
+  }
+
+  private removeBot(c: Client, pid: number): void {
+    const room = c.roomId ? this.rooms.get(c.roomId) : undefined
+    if (!room || room.status !== 'lobby' || room.hostPid !== c.pid) return
+    room.members = room.members.filter(x => !(x.bot && x.pid === pid))
+    this.pushRoom(room)
     this.broadcastList()
   }
 
@@ -230,7 +257,7 @@ export class Lobby {
     if (t0 === 0 || t0 === room.members.length) return this.err(c, 'Hai đội đều phải có người')
     if (!room.members.every(m => m.pid === room.hostPid || m.ready)) return this.err(c, 'Còn người chưa sẵn sàng')
     room.status = 'loading'
-    for (const m of room.members) { m.pct = 0; m.loaded = false }
+    for (const m of room.members) { m.pct = m.bot ? 100 : 0; m.loaded = !!m.bot }
     this.pushRoom(room)
     this.pushLoading(room)
     room.loadTimer = setTimeout(() => this.launch(room), LOAD_TIMEOUT_S * 1000)
@@ -270,7 +297,7 @@ export class Lobby {
     }
     room.status = 'playing'
     const seed = (Math.random() * 0xffffffff) >>> 0
-    const players = room.members.map(m => ({ pid: m.pid, name: this.clients.get(m.pid)?.name ?? '?', team: m.team, mobileId: m.mobileId }))
+    const players = room.members.map(m => ({ pid: m.pid, name: m.bot ? m.botName! : this.clients.get(m.pid)?.name ?? '?', team: m.team, mobileId: m.mobileId, bot: m.bot }))
     const runner = new MatchRunner({
       seed, mask: map.mask, mapId: room.mapId, zones: map.meta.spawnZones, players, turnTime: room.turnTime,
       send: (pid, msg) => this.sendPid(pid, msg),
@@ -278,7 +305,7 @@ export class Lobby {
     })
     room.runner = runner
     // người đã rớt mạng từ lúc tải: coi như rớt mạng
-    for (const m of room.members) if (!this.clients.get(m.pid)?.conn) runner.onDisconnect(m.pid)
+    for (const m of room.members) if (!m.bot && !this.clients.get(m.pid)?.conn) runner.onDisconnect(m.pid)
     if (this.opts.autoTick === false) runner.sendAll()
     else runner.start()
     this.pushRoom(room)
@@ -292,10 +319,10 @@ export class Lobby {
       if (!this.rooms.has(room.id)) return
       room.runner = null
       room.status = 'lobby'
-      room.members = room.members.filter(m => !!this.clients.get(m.pid)?.conn)
+      room.members = room.members.filter(m => m.bot || !!this.clients.get(m.pid)?.conn)
       for (const m of room.members) m.ready = false
-      if (room.members.length === 0) return this.closeRoom(room)
-      if (!room.members.some(m => m.pid === room.hostPid)) room.hostPid = room.members[0]!.pid
+      if (!room.members.some(m => !m.bot)) return this.closeRoom(room)
+      if (!room.members.some(m => m.pid === room.hostPid)) room.hostPid = room.members.find(m => !m.bot)!.pid
       this.pushRoom(room)
       this.broadcastList()
     }, 8000).unref?.()

@@ -116,4 +116,31 @@ describe('Lobby', () => {
     a.say({ t: MsgType.NeedTerrain } as never)
     expect(a.all(MsgType.Terrain).length).toBe(before + 1)
   })
+
+  it('chủ phòng thêm bot: bot tự ngắm và bắn khi tới lượt, bot không cần tải/sẵn sàng', () => {
+    const lobby = new Lobby({ autoTick: false })
+    const a = new Fake(lobby)
+    a.hello('An')
+    a.say({ t: MsgType.CreateRoom, name: 'p', max: 2, mapId: 'thu-nghiem', turnTime: 20 } as never)
+    const roomId = lobby.roomIds()[0]!
+    a.say({ t: MsgType.AddBot, level: 'easy', team: 1 } as never)
+    const room = a.last(MsgType.RoomState)!.room as { members: { bot?: string; ready: boolean; team: number }[] }
+    expect(room.members[1]).toMatchObject({ bot: 'easy', ready: true, team: 1 })
+    a.say({ t: MsgType.StartGame } as never)
+    a.say({ t: MsgType.LoadProgress, pct: 100, ready: true } as never)
+    const runner = lobby.runnerOfRoom(roomId)!
+    expect(runner).toBeTruthy()
+    // đến lượt người: bỏ lượt để tới bot
+    if (runner.state.turnPlayerId === 0) a.say({ t: MsgType.Skip } as never)
+    let shots = 0
+    for (let i = 0; i < 30 * 40 && shots === 0; i++) { lobby.stepRoom(roomId, 1 / 30); shots = a.all(MsgType.Shot).length }
+    expect(shots).toBe(1)
+  })
+
+  it('người thường không thêm được bot', () => {
+    const { b, lobby } = setup()
+    b.say({ t: MsgType.AddBot, level: 'hard', team: 0 } as never)
+    expect(lobby.roomIds()).toHaveLength(1)
+    expect((b.last(MsgType.RoomState)!.room as { members: unknown[] }).members).toHaveLength(2)
+  })
 })

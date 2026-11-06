@@ -1,10 +1,11 @@
 import {
   MsgType, TEAM_NAMES, TUNING, applySnapshot, createMatch, currentPlayer,
-  type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type Snapshot, type Team, type TerrainMask,
+  type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import type { NetClient } from './net'
+import { resultsHtml } from './results'
 import { ShotPlayback } from './playback'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
@@ -42,6 +43,7 @@ export class OnlineMode implements Mode {
   private lastDir = -9
   private lastAngle = -9
   private overlay: HTMLElement | null = null
+  private stats: PlayerStats[] | null = null
   private readonly players: MatchPlayerInfo[]
 
   constructor(private readonly ctx: GameCtx, private readonly net: NetClient, private readonly start: MatchStartMsg, mask: TerrainMask, private readonly onLeave: () => void) {
@@ -79,6 +81,8 @@ export class OnlineMode implements Mode {
     // xe của mình đang ngắm: giữ góc đang chỉnh trên máy (không bị snapshot cũ kéo lùi)
     if (this.isMyTurn()) currentPlayer(m).aimAngle = this.aim.angle
   }
+
+  onStats(stats: PlayerStats[]): void { this.stats = stats }
 
   onShot(result: ShotResultNet): void {
     for (const q of this.match.players) this.shownHp.set(q.id, q.hp)   // máu trước phát bắn; snapshot kế tiếp đã có máu sau
@@ -174,10 +178,7 @@ export class OnlineMode implements Mode {
     const m = this.match
     const el = document.createElement('div')
     el.className = 'overlay'
-    const title = m.winner === -1 ? 'Hoà!' : `${TEAM_NAMES[m.winner as Team]} thắng!`
-    const esc = (s: string): string => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
-    const rows = m.players.map(p => `<tr><td>${esc(p.name)}</td><td>${p.hp > 0 ? Math.round(p.hp) + ' HP' : 'đã hạ'}</td></tr>`).join('')
-    el.innerHTML = `<div class="panel"><h2>${title}</h2><table>${rows}</table><p>Tự về phòng chờ sau vài giây…</p><div class="row"><button id="leave">Rời phòng</button></div></div>`
+    el.innerHTML = `<div class="panel" style="max-width:92vw">${resultsHtml(m, this.stats)}<p>Tự về phòng chờ (giữ nguyên đội) sau vài giây…</p><div class="row"><button id="leave">Rời phòng</button></div></div>`
     el.querySelector('#leave')!.addEventListener('click', () => { this.net.send({ t: MsgType.LeaveRoom }); this.onLeave() })
     document.body.appendChild(el)
     this.overlay = el

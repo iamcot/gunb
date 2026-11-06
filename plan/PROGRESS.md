@@ -41,10 +41,10 @@
 - [x] Bản đồ phẳng "Đảo nổi" (assets/maps/dao-noi, sinh bởi gen-test-map.mjs) làm mặc định để test khoét đất; thu-nghiem giữ lại
 
 ## Phase 5 – Bot + hoàn thiện MVP
-- [ ] 5.1 Bot ⚠️
-- [ ] 5.2 Thêm bot vào phòng + chế độ offline
-- [ ] 5.3 Kết thúc trận + bảng điểm
-- [ ] 5.4 Bản đồ đầu tiên "thật"
+- [x] 5.1 Bot — shared/bot.ts: `planShot` (mô phỏng thật: quét góc, chia đôi lực, tinh chỉnh; 3 mức Dễ/Vừa/Khó với sai số cố ý) + `BotDriver` (ngắm dần, đi tới địch nếu không có phát nào trúng, rồi bắn). Khó trúng ~82%, ~58 ms/lần; test: trong dải góc, xác định, không sửa trận, <100 ms. `ShotInput.skipHash` để bot bỏ tính hash
+- [x] 5.2 Bot vào phòng + chế độ offline — chủ phòng bấm "+ Máy" (chọn mức, đội) / ✕ để bỏ; menu "Chơi với máy" 1v1..4v4 (người đội Xanh, máy đội Đỏ), chạy hoàn toàn trên trình duyệt
+- [x] 5.3 Bảng kết quả — shared/stats.ts (sát thương, hạ gục, số phát, vụ nổ sát địch nhất), client/results.ts; online: server gửi Stats khi hết trận, về phòng chờ giữ nguyên đội sau 8 s
+- [ ] 5.4 Bản đồ đầu tiên "thật" (cần ảnh địa hình + nền + nhạc: chờ asset từ bạn hoặc AI theo 03-assets.md)
 
 ## Phase 6–9
 Chưa tách task chi tiết; xem `02-phases.md`.

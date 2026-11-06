@@ -1,6 +1,6 @@
 import {
-  MsgType, TUNING, applyAction, createDefaultTuning, createMatch, currentPlayer, encodeMaskRle, isSettled, snapshotOf,
-  type MatchPlayerInfo, type MatchState, type ShotSlot, type Team, type TerrainMask, type Tuning,
+  BotDriver, MsgType, addShotStats, newStats, TUNING, applyAction, createDefaultTuning, createMatch, currentPlayer, encodeMaskRle, isSettled, snapshotOf,
+  type BotCmd, type BotLevel, type MatchPlayerInfo, type MatchState, type ShotSlot, type Team, type TerrainMask, type Tuning,
 } from '@gunb/shared'
 
 export const TICK_S = 1 / 30
@@ -10,7 +10,7 @@ const SHOT_PLAYBACK_PAD = 1.0     // s chờ thêm sau khi phát lại phát b�
 const NO_SHOT_WAIT = 0.4
 export const RECONNECT_GRACE_S = 60
 
-export interface RunnerPlayer { pid: number; name: string; team: Team; mobileId: string }
+export interface RunnerPlayer { pid: number; name: string; team: Team; mobileId: string; bot?: BotLevel }
 
 export interface RunnerOptions {
   seed: number
@@ -25,7 +25,7 @@ export interface RunnerOptions {
   tuning?: Tuning
 }
 
-interface Seat { id: number; pid: number; connected: boolean; offlineFor: number }
+interface Seat { id: number; pid: number; connected: boolean; offlineFor: number; bot: BotDriver | null }
 
 /**
  * Chạy một trận trên server: giữ MatchState + mask thật, nhận lệnh của người đến lượt, mô phỏng, phát snapshot/kết quả phát bắn.
@@ -34,6 +34,7 @@ interface Seat { id: number; pid: number; connected: boolean; offlineFor: number
 export class MatchRunner {
   readonly state: MatchState
   readonly mask: TerrainMask
+  readonly stats = newStats(0)
   private readonly tuning: Tuning
   private readonly seats: Seat[]
   private readonly info: MatchPlayerInfo[]
@@ -42,6 +43,7 @@ export class MatchRunner {
   private settledFor = 0
   private tickNo = 0
   private lastTurnKey = ''
+  private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0 }
   private timer: ReturnType<typeof setInterval> | null = null
   private ended = false
 
@@ -53,7 +55,8 @@ export class MatchRunner {
       seed: opts.seed, mask: this.mask, spawnZones: opts.zones, tuning: this.tuning,
       players: opts.players.map(p => ({ name: p.name, team: p.team, mobileId: p.mobileId })),
     })
-    this.seats = opts.players.map((p, i) => ({ id: i, pid: p.pid, connected: true, offlineFor: 0 }))
+    this.stats.push(...newStats(opts.players.length))
+    this.seats = opts.players.map((p, i) => ({ id: i, pid: p.pid, connected: true, offlineFor: 0, bot: p.bot ? new BotDriver(p.bot) : null }))
     this.info = opts.players.map((p, i) => ({ id: i, pid: p.pid, name: p.name, team: p.team, mobileId: p.mobileId }))
     this.held.angle = currentPlayer(this.state).aimAngle
   }
@@ -109,6 +112,7 @@ export class MatchRunner {
     const s = slot === 1 || slot === 2 ? slot : 0
     const res = applyAction(this.state, { t: 'fire', id: seat.id, angle, power, slot: s }, { mask: this.mask, tuning: this.tuning })
     if (!res.ok || !res.shot) return
+    addShotStats(this.stats, this.state, seat.id, res.shot)
     const { maskAfter: _drop, ...net } = res.shot
     this.held.dir = 0
     this.resolveWait = res.shot.endT + SHOT_PLAYBACK_PAD
@@ -160,7 +164,15 @@ export class MatchRunner {
     if (s.phase === 'aiming') {
       const cur = currentPlayer(s)
       const seat = this.seats[cur.id]!
-      if (!seat.connected) {
+      if (seat.bot) {
+        const c = this.botCmd
+        seat.bot.step(s, this.mask, this.tuning, dt, c)
+        applyAction(s, { t: 'aim', id: cur.id, angle: c.angle }, env)
+        if (c.dir !== 0) applyAction(s, { t: 'move', id: cur.id, dir: c.dir, dt }, env)
+        applyAction(s, { t: 'tick', dt }, env)
+        if (c.fire) this.onFire(seat.pid, c.angle, c.power, c.slot)
+        else if ((s.phase as string) === 'resolving') { this.resolveWait = NO_SHOT_WAIT; force = true }   // hết giờ
+      } else if (!seat.connected) {
         // người đến lượt đang rớt mạng: bỏ lượt (cộng delay phạt)
         applyAction(s, { t: 'skip', id: cur.id }, env)
         this.resolveWait = NO_SHOT_WAIT
@@ -189,6 +201,7 @@ export class MatchRunner {
       }
     }
     if ((s.phase as string) === 'ended') {
+      this.broadcast({ t: MsgType.Stats, stats: this.stats } as never)
       this.snapshotNow()
       this.ended = true
       this.stop()

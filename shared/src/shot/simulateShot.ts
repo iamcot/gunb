@@ -188,5 +188,5 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }
 
   events.sort((a, b) => a.t - b.t)   // sort ổn định: giữ thứ tự sinh ra khi cùng t
-  return { paths: shells.map(s => s.path), events, endT: t, terrainHashAfter: mask.hash(), maskAfter: mask }
+  return { paths: shells.map(s => s.path), events, endT: t, terrainHashAfter: input.skipHash ? 0 : mask.hash(), maskAfter: mask }
 }

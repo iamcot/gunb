@@ -2,6 +2,8 @@ import { decode, encode } from '@msgpack/msgpack'
 import type { ShotResult } from './shot/types'
 import type { ShotSlot } from './shots'
 import type { Snapshot } from './netState'
+import type { BotLevel } from './bot'
+import type { PlayerStats } from './stats'
 
 /** Số loại message. Thêm loại mới ở cuối, không đổi số cũ. */
 export enum MsgType {
@@ -28,6 +30,9 @@ export enum MsgType {
   NeedTerrain = 20,   // C→S
   Terrain = 21,       // S→C  {w, h, rle}
   Error = 22,         // S→C  {text}
+  AddBot = 23,        // C→S  {level, team}  (chủ phòng)
+  RemoveBot = 24,     // C→S  {pid}          (chủ phòng)
+  Stats = 25,         // S→C  {stats}        (khi hết trận)
 }
 
 export interface Msg {
@@ -37,7 +42,7 @@ export interface Msg {
 
 export type RoomStatus = 'lobby' | 'loading' | 'playing' | 'ended'
 
-export interface RoomMember { pid: number; name: string; team: 0 | 1; mobileId: string; ready: boolean; connected: boolean }
+export interface RoomMember { pid: number; name: string; team: 0 | 1; mobileId: string; ready: boolean; connected: boolean; bot?: BotLevel }
 
 export interface RoomInfo {
   id: string
@@ -75,6 +80,9 @@ export interface MatchStartMsg { t: MsgType.MatchStart; seed: number; mapId: str
 export interface SnapshotMsg { t: MsgType.Snapshot; s: Snapshot }
 export interface ShotMsg { t: MsgType.Shot; result: ShotResultNet }
 export interface TerrainMsg { t: MsgType.Terrain; w: number; h: number; rle: Uint8Array }
+export interface AddBotMsg { t: MsgType.AddBot; level: BotLevel; team: 0 | 1 }
+export interface RemoveBotMsg { t: MsgType.RemoveBot; pid: number }
+export interface StatsMsg { t: MsgType.Stats; stats: PlayerStats[] }
 export interface ErrorMsg { t: MsgType.Error; text: string }
 
 export function encodeMsg<T extends { t: MsgType }>(msg: T): Uint8Array {

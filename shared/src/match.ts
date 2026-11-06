@@ -131,7 +131,7 @@ function kill(p: PlayerState): void {
   p.body.alive = false
 }
 
-function vehicles(s: MatchState): ShotVehicle[] {
+export function vehicles(s: MatchState): ShotVehicle[] {
   return s.players.map(p => ({ id: p.id, mobileId: p.mobileId, x: p.body.x, y: p.body.y, radius: p.body.radius, hp: p.hp, armor: effectiveArmor(p) }))
 }
 

@@ -1,25 +1,71 @@
 import { Container, Graphics, Sprite } from 'pixi.js'
 import type { ShotArt } from './shotArt'
 
-interface Boom { g: Graphics; age: number; r: number }
+interface Boom { x: number; y: number; age: number; r: number }
 interface Bolt { g: Graphics; age: number }
 
-const BOOM_S = 0.4
+/** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
+interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean }
+const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 5
+
+// Thông số hình ảnh của vụ nổ (chỉ là hình, không ảnh hưởng gameplay)
+const BOOM_S = 0.4          // phần "lõi" vụ nổ: playback chờ hết phần này mới chuyển lượt
+const BOOM_LIFE = 0.6       // chớp sáng + sóng xung kích tắt hẳn
+const FLASH_S = 0.12
 const BOLT_S = 0.3
 const BOLT_HEIGHT = 900
+const MAX_PARTICLES = 700
+const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
+const SMOKE_RISE = 40       // px/s khói bay lên
+const DIRT_FALLBACK = 0x8a5a36
 
-/** Hiệu ứng tạm: đạn đang bay (nhiều viên), vòng nổ mở rộng, tia sét, rung màn hình. */
+const FIRE_HOT = 0xfff3b0, FIRE_MID = 0xff8a20, FIRE_COOL = 0xa8280e
+
+function lerpColor(a: number, b: number, k: number): number {
+  const ar = a >> 16, ag = (a >> 8) & 255, ab = a & 255
+  const r = ar + ((b >> 16) - ar) * k, g = ag + (((b >> 8) & 255) - ag) * k, bl = ab + ((b & 255) - ab) * k
+  return (r << 16) | (g << 8) | (bl | 0)
+}
+/** Đổi độ sáng màu (k < 1 tối đi). */
+function shade(c: number, k: number): number {
+  const r = Math.min(255, ((c >> 16) * k) | 0), g = Math.min(255, (((c >> 8) & 255) * k) | 0), b = Math.min(255, ((c & 255) * k) | 0)
+  return (r << 16) | (g << 8) | b
+}
+const rnd = (a: number, b: number): number => a + Math.random() * (b - a)
+
+/** Hiệu ứng tạm: đạn đang bay (nhiều viên), vụ nổ (chớp, cầu lửa, sóng xung kích, khói, mảnh đất, tia lửa), tia sét, khói đầu nòng, bụi bánh xe, rung màn hình. */
 export class Fx {
   readonly container = new Container()
   shakeX = 0
   shakeY = 0
   private booms: Boom[] = []
+  /** Lớp thường: khói, mảnh đất, bụi. */
+  private readonly back = new Graphics()
+  /** Lớp cầu lửa (hoà trộn thường để không cháy trắng trên nền trời sáng). */
+  private readonly fire = new Graphics()
+  /** Lớp cộng sáng: tia lửa, chớp, sóng xung kích, than hồng. */
+  private readonly glow = new Graphics()
+  private readonly parts: Particle[] = []
+  private nextPart = 0
   private bolts: Bolt[] = []
   private shake = 0
   private readonly shells: Graphics[] = []
   private readonly shellSprites: Sprite[] = []
   private shellArt: ShotArt | null = null
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
+
+  constructor() {
+    this.glow.blendMode = 'add'
+    this.container.addChild(this.back, this.fire, this.glow)
+    for (let i = 0; i < MAX_PARTICLES; i++) this.parts.push({ kind: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 1, size: 1, color: 0, alive: false })
+  }
+
+  /** Lấy một hạt từ vùng nhớ (vòng tròn: hết chỗ thì đè hạt cũ nhất). */
+  private spawn(kind: number, x: number, y: number, vx: number, vy: number, life: number, size: number, color: number): void {
+    const p = this.parts[this.nextPart]!
+    this.nextPart = (this.nextPart + 1) % MAX_PARTICLES
+    p.kind = kind; p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.age = 0; p.life = life; p.size = size; p.color = color; p.alive = true
+  }
 
   /** Ảnh đạn cho phát bắn sắp phát lại (null = đạn tròn mặc định). */
   setShellArt(art: ShotArt | null): void {
@@ -67,12 +113,56 @@ export class Fx {
     return null
   }
 
-  explosion(x: number, y: number, r: number, shake = true): void {
-    const g = new Graphics()
-    g.position.set(x, y)
-    this.container.addChild(g)
-    this.booms.push({ g, age: 0, r })
+  /** Vụ nổ bán kính `r`. `dirt` = màu đất tại chỗ nổ (null = nổ giữa không trung, không bắn mảnh đất). */
+  explosion(x: number, y: number, r: number, shake = true, dirt: number | null = DIRT_FALLBACK): void {
+    this.booms.push({ x, y, age: 0, r })
     if (shake) this.shake = Math.max(this.shake, Math.min(14, r / 5))
+    const nFire = 6 + Math.round(r / 6)
+    for (let i = 0; i < nFire; i++) {
+      const a = Math.random() * Math.PI * 2, d = Math.random() * r * 0.45, sp = rnd(20, 70) * (r / 40)
+      this.spawn(P_FIRE, x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * sp, Math.sin(a) * sp - 30, rnd(0.3, 0.55), r * rnd(0.22, 0.4), FIRE_HOT)
+    }
+    const nSmoke = 4 + Math.round(r / 10)
+    for (let i = 0; i < nSmoke; i++) {
+      const a = Math.random() * Math.PI * 2, d = Math.random() * r * 0.5
+      this.spawn(P_SMOKE, x + Math.cos(a) * d, y + Math.sin(a) * d - r * 0.2, rnd(-15, 15), -rnd(0.6, 1.4) * SMOKE_RISE, rnd(1.0, 1.7), r * rnd(0.25, 0.4), Math.random() < 0.5 ? 0x3b3531 : 0x524a44)
+    }
+    const nSpark = 8 + Math.round(r / 5)
+    for (let i = 0; i < nSpark; i++) {
+      const a = -Math.PI * rnd(0.05, 0.95), sp = rnd(220, 560)
+      this.spawn(P_SPARK, x, y, Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.25, 0.5), rnd(1.2, 2.2), Math.random() < 0.5 ? 0xffe08a : 0xffb347)
+    }
+    if (dirt !== null) {
+      const nDebris = 8 + Math.round(r / 4)
+      for (let i = 0; i < nDebris; i++) {
+        const a = -Math.PI * rnd(0.08, 0.92), sp = rnd(140, 420)
+        this.spawn(P_DEBRIS, x + rnd(-r, r) * 0.4, y + rnd(-r, r) * 0.3, Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.8, 1.4), rnd(1.6, 4.2), shade(dirt, rnd(0.55, 1.1)))
+      }
+      // than hồng còn cháy âm ỉ dọc đáy hố
+      const nEmber = 5 + Math.round(r / 8)
+      for (let i = 0; i < nEmber; i++) {
+        const a = Math.PI * rnd(0.1, 0.9)
+        this.spawn(P_EMBER, x + Math.cos(a) * r, y + Math.sin(a) * r, 0, 0, rnd(0.7, 1.4), rnd(1.2, 2.4), 0xff7a1a)
+      }
+    }
+  }
+
+  /** Khói + chớp lửa ở đầu nòng lúc bắn; `dir` = hướng bay ban đầu (radian, trục màn hình). */
+  muzzle(x: number, y: number, dir: number): void {
+    const cx = Math.cos(dir), cy = Math.sin(dir)
+    for (let i = 0; i < 5; i++) {
+      const sp = rnd(40, 160)
+      this.spawn(P_FIRE, x + cx * 4, y + cy * 4, cx * sp + rnd(-20, 20), cy * sp + rnd(-20, 20), rnd(0.08, 0.16), rnd(4, 8), FIRE_HOT)
+    }
+    for (let i = 0; i < 6; i++) {
+      const sp = rnd(15, 70)
+      this.spawn(P_SMOKE, x + cx * 6, y + cy * 6, cx * sp + rnd(-12, 12), cy * sp - rnd(5, 20), rnd(0.5, 0.9), rnd(4, 7), 0x8c847c)
+    }
+  }
+
+  /** Một cụm bụi nhỏ dưới bánh xe khi di chuyển. */
+  dust(x: number, y: number, dirX: number): void {
+    for (let i = 0; i < 2; i++) this.spawn(P_DUST, x + rnd(-3, 3), y - rnd(0, 3), -dirX * rnd(10, 35), -rnd(10, 30), rnd(0.35, 0.6), rnd(2.5, 4.5), 0xc9b08a)
   }
 
   /** Tia sét giáng thẳng xuống (x, y) từ trên cao. */
@@ -91,14 +181,65 @@ export class Fx {
   }
 
   update(dt: number): void {
+    const back = this.back, fire = this.fire, glow = this.glow
+    back.clear()
+    fire.clear()
+    glow.clear()
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt
-      const k = b.age / BOOM_S
-      if (k >= 1) { b.g.destroy(); this.booms.splice(i, 1); continue }
-      b.g.clear()
-      b.g.circle(0, 0, b.r * (0.3 + 0.7 * k)).fill({ color: 0xffb030, alpha: 0.7 * (1 - k) })
-      b.g.circle(0, 0, b.r * (0.15 + 0.5 * k)).fill({ color: 0xfff2b0, alpha: 0.9 * (1 - k) })
+      if (b.age >= BOOM_LIFE) { this.booms.splice(i, 1); continue }
+      // chớp sáng
+      if (b.age < FLASH_S) {
+        const f = 1 - b.age / FLASH_S
+        glow.circle(b.x, b.y, b.r * (0.35 + 0.5 * (1 - f))).fill({ color: 0xfff6d0, alpha: 0.55 * f })
+      }
+      // sóng xung kích: vòng mỏng nở nhanh rồi tan
+      const k = b.age / BOOM_LIFE, e = 1 - (1 - k) * (1 - k) * (1 - k)
+      glow.circle(b.x, b.y, b.r * (0.5 + 1.3 * e)).stroke({ color: 0xffe2a8, width: Math.max(1, 4 * (1 - k)), alpha: 0.5 * (1 - k) })
+    }
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = this.parts[i]!
+      if (!p.alive) continue
+      p.age += dt
+      if (p.age >= p.life) { p.alive = false; continue }
+      const k = p.age / p.life
+      switch (p.kind) {
+        case P_FIRE: {
+          p.vx *= 1 - 3 * dt; p.vy = p.vy * (1 - 3 * dt) - 40 * dt
+          p.x += p.vx * dt; p.y += p.vy * dt
+          const c = k < 0.35 ? lerpColor(FIRE_HOT, FIRE_MID, k / 0.35) : lerpColor(FIRE_MID, FIRE_COOL, (k - 0.35) / 0.65)
+          fire.circle(p.x, p.y, p.size * (0.7 + 0.6 * k) * (1 - 0.5 * k * k)).fill({ color: c, alpha: 0.95 * (1 - k * k) })
+          break
+        }
+        case P_SMOKE: case P_DUST: {
+          p.vx *= 1 - 1.5 * dt; p.vy *= 1 - 1.2 * dt
+          if (p.kind === P_SMOKE) p.vy -= 12 * dt
+          p.x += p.vx * dt; p.y += p.vy * dt
+          const fadeIn = Math.min(1, p.age / 0.12)
+          back.circle(p.x, p.y, p.size * (1 + 1.2 * k)).fill({ color: p.color, alpha: (p.kind === P_SMOKE ? 0.5 : 0.45) * fadeIn * (1 - k) })
+          break
+        }
+        case P_SPARK: {
+          p.vy += GRAVITY * 0.6 * dt
+          p.x += p.vx * dt; p.y += p.vy * dt
+          glow.moveTo(p.x - p.vx * 0.025, p.y - p.vy * 0.025).lineTo(p.x, p.y).stroke({ color: p.color, width: p.size, alpha: 1 - k })
+          break
+        }
+        case P_DEBRIS: {
+          p.vy += GRAVITY * dt
+          p.x += p.vx * dt; p.y += p.vy * dt
+          const s = p.size
+          back.rect(p.x - s / 2, p.y - s / 2, s, s).fill({ color: p.color, alpha: k < 0.75 ? 1 : (1 - k) / 0.25 })
+          break
+        }
+        case P_EMBER: {
+          const fl = 0.6 + 0.4 * Math.sin(p.age * 30 + i)
+          glow.circle(p.x, p.y, p.size).fill({ color: lerpColor(0xffc060, p.color, k), alpha: fl * (1 - k) })
+          break
+        }
+        default: break
+      }
     }
     for (let i = this.bolts.length - 1; i >= 0; i--) {
       const b = this.bolts[i]!
@@ -111,5 +252,9 @@ export class Fx {
     this.shakeY = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
   }
 
-  get busy(): boolean { return this.booms.length > 0 || this.bolts.length > 0 }
+  /** Còn phần chính của vụ nổ / tia sét đang chạy (khói, mảnh đất bay tiếp không tính, để không làm chậm lượt). */
+  get busy(): boolean {
+    for (const b of this.booms) if (b.age < BOOM_S) return true
+    return this.bolts.length > 0
+  }
 }

@@ -11,6 +11,7 @@ export class Hud {
   private readonly offscreen: HTMLElement
   private readonly root: HTMLElement
   private readonly helpEl: HTMLElement
+  private windKey = ''
 
   constructor() {
     const root = document.createElement('div')
@@ -52,9 +53,17 @@ export class Hud {
     this.lastEl.style.display = lastPower > 0 ? 'block' : 'none'
   }
 
-  setWind(w: Wind): void {
-    this.windNum.textContent = windMagnitude(w).toFixed(0)
-    this.windArrow.style.transform = `rotate(${Math.atan2(w.y, w.x)}rad)`
+  /**
+   * Mũi tên chỉ hướng gió ĐẨY viên đạn đang chọn: `windFactor` âm (Diều Hâu Giấy) thì mũi tên đảo chiều và có chữ "ngược".
+   * Gọi mỗi frame được (chỉ đụng DOM khi đổi).
+   */
+  setWind(w: Wind, windFactor = 1): void {
+    const key = `${w.x},${w.y},${windFactor < 0}`
+    if (key === this.windKey) return
+    this.windKey = key
+    const flip = windFactor < 0 ? -1 : 1
+    this.windNum.innerHTML = windMagnitude(w).toFixed(0) + (flip < 0 ? ' <small>(đạn đi ngược)</small>' : '')
+    this.windArrow.style.transform = `rotate(${Math.atan2(w.y * flip, w.x * flip)}rad)`
     this.windArrow.style.opacity = windMagnitude(w) === 0 ? '0.25' : '1'
   }
 

@@ -70,6 +70,7 @@ export class PracticeMode implements Mode {
     practice.draw()
     ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     this.shotBar.update(TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!, aim.slot, 100, 100)
+    ctx.hud.setWind(this.wind, TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!.shots[aim.slot].windFactor)
     if (this.playback && this.playback.update(dt)) {
       this.lastHash = this.playback.hashMatches
       this.playback = null

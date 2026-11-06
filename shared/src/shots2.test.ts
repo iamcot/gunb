@@ -139,3 +139,18 @@ describe('thời tiết', () => {
     expect(firstExplode(r).x).toBeGreaterThan(1150)
   })
 })
+
+describe('hướng gió', () => {
+  it('gió +x đẩy đạn sang phải ở mọi pháo có windFactor dương, bắn trái hay phải; chỉ pháo windFactor âm mới ngược', () => {
+    for (const def of Object.values(tuning.mobiles)) {
+      for (const facing of [1, -1] as const) {
+        const land = (wx: number): number => {
+          const r = simulateShot({ mask: flat(), vehicles: [{ ...veh(0, def.id, facing === 1 ? 600 : 1800) }], wind: { x: wx, y: 0 }, shooterId: 0, facing, tilt: 0, fire: { angle: 45, power: 60, slot: 0 } }, tuning)
+          return firstExplode(r).x
+        }
+        const pushedRight = land(15) > land(-15)
+        expect(pushedRight, `${def.id} facing ${facing}`).toBe(def.shots[0].windFactor > 0)
+      }
+    }
+  })
+})

@@ -168,6 +168,7 @@ export class OnlineMode implements Mode {
     this.turnHud.update(m)
     const cur = currentPlayer(m)
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
+    ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
     this.shotBar.setVisible(m.phase !== 'ended')
     if (m.phase === 'ended' && !this.playback && !this.overlay) this.showEnd()
   }

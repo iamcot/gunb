@@ -15,6 +15,7 @@
   | `01-kha-thi.md` | Phân tích tính khả thi làm trên web, rủi ro, độ khó từng mảng |
   | `02-phases.md` | Kế hoạch chi tiết theo giai đoạn, từng task có tiêu chí nghiệm thu |
   | `03-assets.md` | Cách tìm / tự làm asset, license, quy trình ghi nguồn |
+  | `04-the-gioi.md` | Tên xe, nhân vật, cấp bậc |
   | `PROGRESS.md` | Đánh dấu task đã xong |
 
 ## Mục tiêu

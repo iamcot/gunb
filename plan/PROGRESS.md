@@ -54,4 +54,4 @@
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.
-- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (Dreamina, nòng gắn ở buồng lái). Chưa: 9 xe còn lại, sprite phi công (`pilot` trong rig)
+- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (Dreamina, nòng gắn ở buồng lái), bo-loi (ChatGPT, `reverse`: quay đít bắn bằng đuôi). Chưa: 9 xe còn lại, sprite phi công (`pilot` trong rig)

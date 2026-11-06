@@ -16,10 +16,11 @@ interface Rig {
   barrelPivot: [number, number] // tâm xoay trên ảnh nòng (nòng vẽ nằm ngang, chĩa sang phải)
   muzzle: [number, number]      // đầu nòng trên ảnh nòng
   pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
+  reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1 }
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -84,13 +85,14 @@ export class VehicleViews {
     body.position.set(0, radius)
     const barrel = new Sprite(ra.barrel)
     barrel.anchor.set(rig.barrelPivot[0], rig.barrelPivot[1])
-    barrel.scale.set(k)
+    const flip = rig.reverse ? -1 : 1
+    barrel.scale.set(k * flip, k)
     barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
     frame.addChild(body, barrel)
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k }
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -115,10 +117,11 @@ export class VehicleViews {
     if (v.art) {
       const a = v.art
       a.frame.rotation = -b.tilt
-      a.frame.scale.x = b.facing
+      a.frame.scale.x = b.facing * a.flip
       a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
       const d = aimDir(this.tmp, p.aimAngle, 1, 0)   // hướng nòng trong khung của xe (đã lật + nghiêng)
-      a.barrel.rotation = Math.atan2(d.y, d.x)
+      // xe lật ngược (reverse): khung bị lật thêm một lần và ảnh nòng cũng lật, nên góc quay đổi dấu
+      a.barrel.rotation = Math.atan2(d.y * a.flip, d.x)
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
     }

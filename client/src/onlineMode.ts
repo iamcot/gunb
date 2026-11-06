@@ -3,7 +3,7 @@ import {
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
   aimRange, type AimRange,
 } from '@gunb/shared'
-import { getShotArt } from './shotArt'
+import { getShotArt, getShotSfx } from './shotArt'
 import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
@@ -100,7 +100,7 @@ export class OnlineMode implements Mode {
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
-    }, getShotArt(shooter.mobileId, slot))
+    }, getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 
   /** Địa hình đầy đủ từ server (vào lại trận hoặc sau khi hash lệch). Nếu đang phát lại thì chờ xong mới áp. */

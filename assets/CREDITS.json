@@ -702,5 +702,12 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "audio/sounds.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

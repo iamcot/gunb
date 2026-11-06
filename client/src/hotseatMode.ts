@@ -3,7 +3,7 @@ import {
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
   aimRange, type AimRange,
 } from '@gunb/shared'
-import { getShotArt } from './shotArt'
+import { getShotArt, getShotSfx } from './shotArt'
 import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
@@ -91,7 +91,7 @@ export class HotseatMode implements Mode {
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
-    }, getShotArt(p.mobileId, slot))
+    }, getShotArt(p.mobileId, slot), getShotSfx(p.mobileId, slot))
   }
 
   update(dt: number): void {

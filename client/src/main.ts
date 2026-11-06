@@ -59,6 +59,7 @@ async function main(): Promise<void> {
   }
 
   let mode: Mode | null = null
+  const battleMusic = { kind: 'battle', mapUrl: map.music ? base + map.music : null } as const
   const menuBtn = document.getElementById('menubtn') as HTMLButtonElement
   const menu = new Menu({
     onHotseat: n => chooseMobiles(n),
@@ -72,6 +73,7 @@ async function main(): Promise<void> {
     fx.hideProjectiles()
     // chế độ mới đã đặt điểm camera trong constructor (lượt đầu) nên không xoá; chỉ xoá khi về menu
     if (!m) ctx.focus.t = 0
+    audio.setMusicScene(m ? battleMusic : { kind: 'lobby' })
     if (m) { menu.hide(); menuBtn.style.display = 'block' } else { view.reset(); menu.show(); menuBtn.style.display = 'none'; hud.setVisible(false) }
   }
   let select: SelectScreen | null = null
@@ -91,7 +93,7 @@ async function main(): Promise<void> {
     online = new OnlineFlow({
       ctx,
       startMode: m => setMode(m),
-      stopMode: () => { mode?.destroy(); mode = null; fx.hideProjectiles(); ctx.focus.t = 0; view.reset(); hud.setVisible(false); menuBtn.style.display = 'block' },
+      stopMode: () => { audio.setMusicScene({ kind: 'lobby' }); mode?.destroy(); mode = null; fx.hideProjectiles(); ctx.focus.t = 0; view.reset(); hud.setVisible(false); menuBtn.style.display = 'block' },
       exit: () => toMenu(),
     }, () => toMenu())
     menuBtn.style.display = 'block'
@@ -130,8 +132,8 @@ async function main(): Promise<void> {
   const muteBtn = document.getElementById('mutebtn') as HTMLButtonElement
   const syncMute = (): void => { muteBtn.textContent = audio.muted ? '🔇 Tắt tiếng' : '🔊 Âm thanh' }
   syncMute()
-  muteBtn.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); syncMute(); audio.startMusic() })
-  const firstGesture = (): void => { audio.unlock(); audio.startMusic(); window.removeEventListener('pointerdown', firstGesture); window.removeEventListener('keydown', firstGesture) }
+  muteBtn.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); syncMute() })
+  const firstGesture = (): void => { audio.unlock(); window.removeEventListener('pointerdown', firstGesture); window.removeEventListener('keydown', firstGesture) }
   window.addEventListener('pointerdown', firstGesture)
   window.addEventListener('keydown', firstGesture)
 

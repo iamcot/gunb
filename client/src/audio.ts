@@ -1,8 +1,21 @@
-/** Âm thanh bằng Web Audio, tạo hoàn toàn bằng code (không có file nào cần ghi nguồn). Gồm hiệu ứng bắn/nổ/trúng/đổi lượt và nhạc nền lặp. */
+/** Âm thanh bằng Web Audio. Ưu tiên file (.ogg) nếu có: nhạc sảnh/trận chung trong `assets/audio/sounds.json`, nhạc bản đồ theo `music` của map.json,
+ *  tiếng bắn/nổ từng loại đạn theo `fire`/`boom`/`bolt` trong `assets/mobiles/<id>/shots.json`. Thiếu file thì dùng âm thanh tạo bằng code (bên dưới). */
 
 const STORE_KEY = 'gunb.mute'
-const MUSIC_VOL = 0.05
-const SFX_VOL = 0.5
+const MUSIC_VOL = 0.05        // nhạc tạo bằng code
+const SFX_VOL = 0.5           // tiếng tạo bằng code
+const MUSIC_FILE_VOL = 0.3    // nhạc từ file (file đã chuẩn hoá khá to)
+const SFX_FILE_VOL = 0.7      // tiếng từ file
+const MUSIC_FADE = 0.8        // s, chuyển bài
+const SAME_SFX_GAP = 0.05     // s, cùng một tiếng không phát chồng sát nhau (vd. 7 gai nổ gần như cùng lúc)
+const MANIFEST_URL = '/audio/sounds.json'
+
+/** `assets/audio/sounds.json`: tên file (trong `assets/audio/`), mục nào không có thì dùng tiếng tạo bằng code. */
+interface SoundsFile { music?: { lobby?: string; battle?: string }; sfx?: { turn?: string; hit?: string } }
+/** URL tiếng của một loại đạn (từ shots.json của xe). */
+export interface ShotSfx { fire?: string; boom?: string; bolt?: string }
+/** Nhạc đang cần: sảnh (menu, phòng chờ) hoặc trận (`mapUrl` = nhạc riêng của bản đồ nếu có). */
+export type MusicScene = { kind: 'lobby' } | { kind: 'battle'; mapUrl: string | null }
 // Giai điệu: 4 hợp âm (Am F C G) × 8 nốt gam ngũ cung, tốc độ 96 bpm
 const BPM = 96
 const CHORDS = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]
@@ -17,11 +30,27 @@ class AudioEngine {
   private nextNote = 0
   private step = 0
   private timer = 0
+  /** Tiếng đã giải mã theo URL; null = đang tải/giải mã hoặc lỗi. */
+  private readonly samples = new Map<string, AudioBuffer | null>()
+  /** Đã tải xong nhưng chưa có AudioContext để giải mã (trước thao tác đầu tiên). */
+  private readonly pending = new Map<string, ArrayBuffer>()
+  private readonly lastPlayed = new Map<string, number>()
+  private manifest: SoundsFile = {}
+  private scene: MusicScene = { kind: 'lobby' }
+  private track: { url: string; src: AudioBufferSourceNode; gain: GainNode } | null = null
   muted = false
 
   constructor() {
     try { this.muted = localStorage.getItem(STORE_KEY) === '1' } catch { /* bỏ qua */ }
+    void fetch(MANIFEST_URL).then(r => (r.ok ? r.json() : {}) as Promise<SoundsFile>).then(m => {
+      this.manifest = m
+      const urls = [m.music?.lobby, m.music?.battle, m.sfx?.turn, m.sfx?.hit]
+      for (const f of urls) if (f) this.load(this.audioUrl(f))
+      this.applyMusic()
+    }).catch(() => { /* không có manifest: dùng tiếng tạo bằng code */ })
   }
+
+  private audioUrl(file: string): string { return '/audio/' + file }
 
   /** Gọi trong sự kiện click/phím đầu tiên (trình duyệt chặn âm thanh trước đó). */
   unlock(): void {
@@ -38,6 +67,87 @@ class AudioEngine {
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1   // chỉ để tạo tiếng ồn, không ảnh hưởng gameplay
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume()
+    for (const [url, data] of this.pending) this.decode(url, data)
+    this.pending.clear()
+    this.applyMusic()
+  }
+
+  /** Tải trước một file âm thanh (gọi nhiều lần không sao). Giải mã ngay nếu đã có AudioContext. */
+  load(url: string): void {
+    if (this.samples.has(url)) return
+    this.samples.set(url, null)
+    void fetch(url).then(r => { if (!r.ok) throw new Error(String(r.status)); return r.arrayBuffer() }).then(data => {
+      if (this.ctx) this.decode(url, data)
+      else this.pending.set(url, data)
+    }).catch(() => console.warn('[audio] không tải được', url))
+  }
+
+  private decode(url: string, data: ArrayBuffer): void {
+    void this.ctx!.decodeAudioData(data).then(buf => {
+      this.samples.set(url, buf)
+      if (this.track?.url !== url && this.musicUrl() === url) this.applyMusic()
+    }).catch(() => console.warn('[audio] không giải mã được', url))
+  }
+
+  /** Phát file nếu đã sẵn sàng; trả false để nơi gọi dùng tiếng tạo bằng code. */
+  private play(url: string | undefined, vol: number): boolean {
+    const c = this.ctx
+    if (!url || !c || !this.master) return false
+    const buf = this.samples.get(url)
+    if (!buf) return false
+    const last = this.lastPlayed.get(url)
+    if (last !== undefined && c.currentTime - last < SAME_SFX_GAP) return true
+    this.lastPlayed.set(url, c.currentTime)
+    const src = c.createBufferSource(), g = c.createGain()
+    src.buffer = buf
+    g.gain.value = vol
+    src.connect(g).connect(this.master)
+    src.start()
+    return true
+  }
+
+  /** Đổi nhạc theo cảnh (sảnh / trận). Có file thì phát lặp file, không thì nhạc tạo bằng code. */
+  setMusicScene(scene: MusicScene): void {
+    this.scene = scene
+    const url = this.musicUrl()
+    if (url) this.load(url)
+    this.applyMusic()
+  }
+
+  private musicUrl(): string | null {
+    const m = this.manifest.music
+    if (this.scene.kind === 'battle') return this.scene.mapUrl ?? (m?.battle ? this.audioUrl(m.battle) : null)
+    return m?.lobby ? this.audioUrl(m.lobby) : null
+  }
+
+  private applyMusic(): void {
+    const c = this.ctx
+    if (!c || !this.master) return
+    const url = this.musicUrl()
+    if (url && this.track?.url === url) return
+    if (!url && !this.track && this.musicOn) return
+    let buf: AudioBuffer | null = null
+    if (url) {
+      buf = this.samples.get(url) ?? null
+      if (!buf) return   // đang tải: giữ nhạc cũ, decode xong sẽ gọi lại
+    }
+    if (this.track) {
+      const { src, gain } = this.track
+      gain.gain.setValueAtTime(gain.gain.value, c.currentTime)
+      gain.gain.linearRampToValueAtTime(0, c.currentTime + MUSIC_FADE)
+      src.stop(c.currentTime + MUSIC_FADE + 0.05)
+      this.track = null
+    }
+    if (!buf || !url) { this.startMusic(); return }
+    this.stopMusic()
+    const src = c.createBufferSource(), gain = c.createGain()
+    src.buffer = buf
+    src.loop = true
+    gain.gain.setValueAtTime(0, c.currentTime)
+    gain.gain.linearRampToValueAtTime(MUSIC_FILE_VOL, c.currentTime + MUSIC_FADE)
+    src.connect(gain).connect(this.master)
+    src.start()
+    this.track = { url, src, gain }
   }
 
   setMuted(m: boolean): void {
@@ -75,18 +185,34 @@ class AudioEngine {
     src.start(t0); src.stop(t0 + dur)
   }
 
-  fire(): void { this.tone(320, 0.22, 'sawtooth', 0.25 * SFX_VOL, 70); this.noise(0.18, 0.35 * SFX_VOL, 3000, 300) }
-  /** `r` = bán kính vụ nổ (px): to hơn thì trầm và dài hơn. */
-  explode(r: number): void {
+  fire(url?: string): void {
+    if (this.play(url, SFX_FILE_VOL)) return
+    this.tone(320, 0.22, 'sawtooth', 0.25 * SFX_VOL, 70); this.noise(0.18, 0.35 * SFX_VOL, 3000, 300)
+  }
+  /** `r` = bán kính vụ nổ (px): to hơn thì trầm và dài hơn (chỉ với tiếng tạo bằng code). */
+  explode(r: number, url?: string): void {
+    if (this.play(url, SFX_FILE_VOL)) return
     const k = Math.min(1.6, Math.max(0.6, r / 40))
     this.noise(0.5 * k, 0.8 * SFX_VOL, 2500, 120)
     this.tone(110 / k, 0.4 * k, 'sine', 0.6 * SFX_VOL, 35)
   }
-  hit(): void { this.tone(520, 0.12, 'square', 0.18 * SFX_VOL, 180) }
-  bolt(): void { this.noise(0.35, 0.7 * SFX_VOL, 9000, 400); this.tone(1400, 0.25, 'sawtooth', 0.2 * SFX_VOL, 120) }
-  turn(): void { this.tone(660, 0.1, 'triangle', 0.25 * SFX_VOL); this.tone(880, 0.14, 'triangle', 0.25 * SFX_VOL, 880, 0.1) }
+  hit(): void {
+    const f = this.manifest.sfx?.hit
+    if (f && this.play(this.audioUrl(f), SFX_FILE_VOL)) return
+    this.tone(520, 0.12, 'square', 0.18 * SFX_VOL, 180)
+  }
+  bolt(url?: string): void {
+    if (this.play(url, SFX_FILE_VOL)) return
+    this.noise(0.35, 0.7 * SFX_VOL, 9000, 400); this.tone(1400, 0.25, 'sawtooth', 0.2 * SFX_VOL, 120)
+  }
+  turn(): void {
+    const f = this.manifest.sfx?.turn
+    if (f && this.play(this.audioUrl(f), SFX_FILE_VOL)) return
+    this.tone(660, 0.1, 'triangle', 0.25 * SFX_VOL); this.tone(880, 0.14, 'triangle', 0.25 * SFX_VOL, 880, 0.1)
+  }
 
-  startMusic(): void {
+  /** Nhạc tạo bằng code (dùng khi cảnh hiện tại không có file nhạc). */
+  private startMusic(): void {
     if (this.musicOn || !this.ctx) return
     this.musicOn = true
     this.nextNote = this.ctx.currentTime + 0.1
@@ -94,7 +220,7 @@ class AudioEngine {
     this.timer = window.setInterval(() => this.schedule(), 200)
   }
 
-  stopMusic(): void { this.musicOn = false; window.clearInterval(this.timer) }
+  private stopMusic(): void { this.musicOn = false; window.clearInterval(this.timer) }
 
   /** Xếp lịch các nốt trong 0.6 s tới (lặp vô hạn, không cần file). */
   private schedule(): void {

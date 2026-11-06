@@ -21,13 +21,13 @@ Mẹo cho đồng bộ giữa các xe: tạo cùng 1 công cụ, cùng seed/styl
 
 ## Khung chung cho thân xe
 
-> {style bible}. 2D game sprite of a small cute armored artillery vehicle, **{mô tả xe}**, strict side view facing right, chunky toy-like proportions, compact body fits in a 4:3 frame, small wheels or legs at the bottom, **an empty open cockpit with one small seat and a low windshield for a pilot, {vị trí ghế}, the seat is empty**, a round mounting socket next to the cockpit where a cannon attaches, **no cannon barrel**, big expressive eye, smooth hand-painted look, **not pixel art**, plain solid white background, centered, full body visible, no shadow on the ground.
+> {style bible}. 2D game sprite of a small cute armored artillery vehicle, **{mô tả xe}**, **flat 2D, strict orthographic side profile facing right, no perspective, no 3D, no depth, only the near side visible (one tread / one row of wheels, one eye)**, chunky toy-like proportions, compact body fits in a 4:3 frame, small wheels or legs at the bottom, **an empty open cockpit with one small seat and a low windshield for a pilot, {vị trí ghế}, the seat is empty**, a round mounting socket next to the cockpit where a cannon attaches, **no cannon barrel**, big expressive eye, smooth hand-painted look, **not pixel art**, plain solid white background, centered, full body visible, no shadow on the ground.
 
 **Vì sao ghế trống:** phi công (Tí Gió, Bà Sáu Khoan...) sẽ là sprite riêng đặt vào ghế, để sau này thay trang phục/nhân vật không phải vẽ lại xe. Ghi thêm `pilot` (điểm ngồi) vào `rig.json`. Nếu AI vẫn vẽ người ngồi trong ghế: thêm *"unoccupied seat, nobody inside"*.
 
 ## Khung chung cho nòng
 
-> {style bible}. 2D game sprite of a single detached cannon barrel, **{mô tả nòng}**, horizontal pointing right, round pivot joint at the left end, isolated, plain solid white background, no shadow.
+> {style bible}. 2D game sprite of a single detached cannon barrel, **{mô tả nòng}**, flat 2D side profile, no perspective, horizontal pointing right, round pivot joint at the left end, isolated, plain solid white background, no shadow.
 
 ## Từng xe
 
@@ -84,6 +84,6 @@ Mẹo cho đồng bộ giữa các xe: tạo cùng 1 công cụ, cùng seed/styl
 ## Gợi ý khi kết quả chưa ưng
 - Ra cảnh nền/đất: thêm *"isolated sprite, nothing else in the image"*.
 - Ra pixel art: thêm *"smooth hand-painted, not pixel art, no pixelation"*.
-- Ra góc 3/4: nhấn *"strict flat side profile, orthographic"*.
+- Ra góc 3/4 / trông như 3D (thấy cả 2 bên xích, 2 mắt, khối có chiều sâu): nhấn *"flat 2D, strict orthographic side profile, no perspective, no depth"*; thêm vào negative prompt (nếu công cụ có): *"3d, isometric, three-quarter view, perspective, pixel art"*.
 - Nòng dính vào thân dù đã ghi "no cannon": cứ để, gửi mình, mình tách và đo `pivot`/`muzzle`.
 - Gửi ảnh vào thread này, mình sẽ xoá nền, cắt khít, resize 1x/2x và tạo `rig.json`.

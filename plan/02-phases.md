@@ -96,9 +96,9 @@ Thông số từng pháo trong `shared/src/mobiles/<id>.ts`: `hp, armor, width, 
 
 | Id (tên tạm) | Vai trò | Đạn 1 | Đạn 2 | SS |
 |---|---|---|---|---|
-| `oc-sen` Ốc Sên Thép | cân bằng, dễ chơi | 1 quả nổ vừa | 2 quả bắn liền nhau | quả lớn khoét hố sâu |
-| `chuot-chui` Chuột Chũi Khoan | phá địa hình | đạn khoan xuyên đất 1 đoạn rồi nổ | đạn đào rãnh ngang | mũi khoan lớn đục thẳng xuống |
-| `bo-dien` Bọ Cánh Cứng Điện | bào giáp | đạn điện giảm giáp mục tiêu 2 lượt | đạn tách 3 khi tới đỉnh quỹ đạo | sét giáng thẳng xuống từ điểm nổ |
+| `oc-thiet-giap` Ốc Thiết Giáp | cân bằng, dễ chơi | 1 quả nổ vừa | 2 quả bắn liền nhau | quả lớn khoét hố sâu |
+| `chui-khoan` Chũi Khoan | phá địa hình | đạn khoan xuyên đất 1 đoạn rồi nổ | đạn đào rãnh ngang | mũi khoan lớn đục thẳng xuống |
+| `bo-loi` Bọ Lôi | bào giáp | đạn điện giảm giáp mục tiêu 2 lượt | đạn tách 3 khi tới đỉnh quỹ đạo | sét giáng thẳng xuống từ điểm nổ |
 
 ### 3.1 Hệ thống "behavior" cho đạn
 - **Làm:** `shot/behaviors/*.ts`: `basic`, `burst` (n quả cách nhau Δt), `splitAtApex(n, spreadDeg)`, `drill(len)`, `roller` (lăn theo mặt đất – để Phase 6), `lightning` (tia dọc từ điểm nổ), `armorBreak(turns)`. Mỗi behavior là hàm thuần thêm event vào ShotResult.
@@ -156,7 +156,7 @@ Thông số từng pháo trong `shared/src/mobiles/<id>.ts`: `hp, armor, width, 
 
 ## Phase 6 – Nội dung
 
-- 6.1 Thêm pháo (mỗi pháo 1 task): gợi ý ý tưởng gốc: **Cua Lăn** (đạn lăn theo địa hình), **Diều Giấy** (đạn chịu gió ngược, gió càng mạnh càng bay xa), **Nhím Chùm** (đạn tỏa 5 hướng), **Sứa Bóng Đèn** (đạn bay chậm, xuyên đất mỏng), **Rùa Pháo Đài** (máu trâu, dải góc hẹp, đạn đắp đất làm tường), và 1–2 **pháo ẩn** mở khoá ngẫu nhiên khi chọn "Ngẫu nhiên".
+- 6.1 Thêm pháo (mỗi pháo 1 task): danh sách đầy đủ ở `plan/04-the-gioi.md`; ý tưởng: **Cua Lăn** (đạn lăn theo địa hình), **Diều Hâu Giấy** (đạn chịu gió ngược, gió càng mạnh càng bay xa), **Nhím Chùm** (đạn tỏa 5 hướng), **Sứa Đèn** (đạn bay chậm, xuyên đất mỏng), **Rùa Thành** (máu trâu, dải góc hẹp, đạn đắp đất làm tường), và 2 **pháo ẩn** (**Long Ngư Cơ**, **Kỳ Lân Sắt**) mở khoá ngẫu nhiên khi chọn "Ngẫu nhiên".
 - 6.2 Thêm bản đồ (mỗi bản đồ 1 task): mỗi bản đồ có 1 đặc điểm: hang ngầm nhiều tầng, cầu treo mỏng dễ gãy, đảo nổi giữa trời, đáy là dung nham/nước...; có biến thể "A/B" (lật ngang, đổi vùng xuất phát).
 - 6.3 Sự kiện thời tiết (mỗi lượt có xác suất xuất hiện ở một cột x ngẫu nhiên, đạn đi qua thì bị ảnh hưởng): **Cột lốc** (đẩy đạn lên), **Mây giông** (đạn đi qua phóng thêm sét), **Gương nước** (đổi hướng gió của đạn), **Cổng đôi** (đạn vào cổng này ra cổng kia). Đều là thiết kế của mình.
 - 6.4 Bảng chỉnh cân bằng: chạy bot đấu bot hàng nghìn ván (script `npm run balance`) xuất tỷ lệ thắng theo pháo.

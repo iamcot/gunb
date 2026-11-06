@@ -12,23 +12,24 @@
 - [x] 0.4 Định dạng bản đồ + bản đồ thử + render tĩnh — map/types+parseMap, scripts/gen-test-map.mjs (PNG tự ghi bằng zlib, không thêm thư viện), client Pixi 8.6.6 + camera (chuột phải kéo / WASD) + F3; assets.test.ts kiểm tra CREDITS.json
 
 ## Phase 1 – Bắn offline ⚠️
-- [ ] 1.1 stepProjectile + va chạm mask
-- [ ] 1.2 simulateShot + ShotResult
-- [ ] 1.3 Điều khiển ngắm + thanh lực
-- [ ] 1.4 Playback + camera theo đạn + hiệu ứng tạm
-- [ ] 1.5 Gió + bia tập bắn + bảng chỉnh số F6
+- [x] 1.1 stepProjectile + va chạm mask — physics/projectile.ts (Euler bán ẩn, quét đoạn ≤1px); test tầm xa v²/g sai số <1%, không xuyên tấm 2px
+- [x] 1.2 simulateShot + ShotResult — shot/simulateShot.ts (đạn `basic`, quỹ đạo [t,x,y], events explode/carve/damage/out, hash sau bắn); thông số trong tuning.ts + shots.ts; sanitizeFire; aim.ts, wind.ts
+- [x] 1.3 Điều khiển ngắm + thanh lực — client/input.ts (↑↓ giữ để tăng tốc, ←→ quay hướng, Space tích lực), hud.ts (góc, lực + vạch lực lần trước, gió)
+- [x] 1.4 Playback + camera theo đạn + hiệu ứng tạm — playback.ts, fx.ts (vòng nổ + rung), terrainView.ts (hố + viền cháy, lớp phủ mask F3), mũi tên khi đạn bay quá mép trên
+- [x] 1.5 Gió + bia tập bắn + bảng chỉnh số F6 — practice.ts (xe + 3 bia, chọn chỗ đứng phẳng nhất), G/H/R, tuningPanel.ts (F6, Copy JSON); xe chưa rơi khi mất đất (Phase 2)
 
 ## Phase 2 – Xe + lượt (hotseat) ⚠️
-- [ ] 2.1 mobileMove
-- [ ] 2.2 Xe hiển thị + nòng xoay
-- [ ] 2.3 Trạng thái trận + reducer
-- [ ] 2.4 Delay + thứ tự lượt + đồng hồ lượt
-- [ ] 2.5 Hotseat 2v2 + kết thúc trận
+- [x] 2.1 mobileMove — physics/mobileMove.ts (đi theo dốc ≤55°, dừng trước vách, nhiên liệu, rơi + sát thương, rơi khỏi đáy chết); thông số trong tuning.move; 7 test
+- [x] 2.2 Xe hiển thị + nòng xoay — client/vehicleView.ts (thân nghiêng theo dốc, nòng, tên + thanh máu, mũi tên lượt, hình quạt dải góc); sprite thật để Phase 3+
+- [x] 2.3 Trạng thái trận + reducer — match.ts (createMatch spawn có seed, ưu tiên chỗ ≤30°; applyAction aim/move/fire/skip/tick/endTurn; sửa trực tiếp state + mask, không I/O); 9 test
+- [x] 2.4 Delay + thứ tự lượt + đồng hồ lượt — turn/delay.ts (hoà delay: lâu chưa đi hơn, rồi id), turnHud.ts (đồng hồ, nhiên liệu, danh sách lượt); hết giờ cộng delay phạt
+- [x] 2.5 Hotseat 2v2 + kết thúc trận — menu 1v1..4v4 + Tập bắn, hotseatMode.ts, bảng kết quả + Ván mới; Esc về menu. Mask hiển thị và mask trận tách riêng, so hash để phát hiện lệch
 
 ## Phase 3 – 3 pháo đầu tiên + SS
-- [ ] 3.1 Hệ thống behavior cho đạn
-- [ ] 3.2 Thanh SS
-- [ ] 3.3 Chọn pháo + HUD đạn
+- [x] 3.1 Hệ thống behavior cho đạn — shots.ts (Behavior: basic, burst, splitAtApex, drill [theo vận tốc/ngang/xuống], lightning + armorBreak), mobiles/*.ts (Ốc Thiết Giáp, Chũi Khoan, Bọ Lôi, thông số trong Tuning.mobiles), simulateShot nhiều viên đạn + vụ nổ trễ; mỗi behavior có test. `roller` để Phase 6
+- [x] 3.2 Thanh SS — PlayerState.ss, cộng theo sát thương gây ra/nhận + mỗi lượt (tuning.ss), đầy mới bắn được đạn SS, dùng xong về 0; 5 test
+- [x] 3.3 Chọn pháo + HUD đạn — selectScreen.ts (thẻ chỉ số + Ngẫu nhiên), shotBar.ts (1/2/3, delay, thanh SS), F6 chỉnh theo pháo/đạn, tập bắn đổi pháo bằng M
+- [x] Sửa lỗi 1v1: người đến lượt tự chết lúc đang ngắm thì kết thúc lượt ngay (match.ts tick)
 
 ## Phase 4 – Online ⚠️
 - [ ] 4.1 Transport + phòng chờ

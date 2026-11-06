@@ -80,7 +80,7 @@ export class Practice {
     body.roundRect(-SHOOTER_R, -SHOOTER_R * 0.6, SHOOTER_R * 2, SHOOTER_R * 1.2, 5).fill(s.hp > 0 ? 0x3b82f6 : 0x555555).stroke({ color: 0x0a2a5e, width: 2 })
     barrel.clear()
     barrel.position.set(s.x, s.y)
-    const d = aimDir(this.dirTmp, this.angle, this.facing, tilt)
+    const d = aimDir(this.dirTmp, this.angle, this.facing)   // góc so với phương ngang
     barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
     barrel.circle(0, -4, 5).fill(0x1e293b)
   }

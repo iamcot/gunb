@@ -32,17 +32,30 @@
 - [x] Sửa lỗi 1v1: người đến lượt tự chết lúc đang ngắm thì kết thúc lượt ngay (match.ts tick)
 
 ## Phase 4 – Online ⚠️
-- [ ] 4.1 Transport + phòng chờ
-- [ ] 4.2 Tải trước + màn chờ
-- [ ] 4.3 Đồng bộ lượt
-- [ ] 4.4 Phát bắn online + kiểm tra hash
-- [ ] 4.5 Rớt mạng + vào lại
+- [x] 4.1 Transport + phòng chờ — server/main.ts (http phục vụ client/dist + ws ở /ws; in địa chỉ LAN), lobby.ts (phòng, chọn đội/pháo/sẵn sàng, chủ phòng bắt đầu, chat), client/net.ts + onlineFlow.ts (nhập tên → sảnh → phòng chờ). Giao thức msgpack trong shared/protocol.ts
+- [x] 4.2 Tải trước + màn chờ — client tải map.json/terrain/nền kèm %, mỗi người báo LoadProgress, server bắt đầu khi mọi người xong hoặc quá 45 s; server tự đọc mask từ terrain.png (server/png.ts + mapLoader.ts, không thêm thư viện)
+- [x] 4.3 Đồng bộ lượt — server/matchRunner.ts giữ trận thật (tick 30 Hz, snapshot 15 Hz), client onlineMode.ts chỉ gửi Input/Fire và vẽ snapshot (làm mượt vị trí); không dự đoán phía client
+- [x] 4.4 Phát bắn online + kiểm tra hash — server gửi Shot (không kèm mask), client phát lại và so hash; lệch thì NeedTerrain → server gửi địa hình nén RLE (shared/terrain/rle.ts)
+- [x] 4.5 Rớt mạng + vào lại — token theo tab (sessionStorage), nối lại tự động; rớt mạng thì bỏ lượt của người đó, giữ chỗ 60 s rồi bị loại; vào lại nhận MatchStart + Terrain + Snapshot. Test: server/lobby.test.ts. Chạy thật: `npm run play`
+
+- [x] Bản đồ phẳng "Đảo nổi" (assets/maps/dao-noi, sinh bởi gen-test-map.mjs) làm mặc định để test khoét đất; thu-nghiem giữ lại
 
 ## Phase 5 – Bot + hoàn thiện MVP
-- [ ] 5.1 Bot ⚠️
-- [ ] 5.2 Thêm bot vào phòng + chế độ offline
-- [ ] 5.3 Kết thúc trận + bảng điểm
-- [ ] 5.4 Bản đồ đầu tiên "thật"
+- [x] 5.1 Bot — shared/bot.ts: `planShot` (mô phỏng thật: quét góc, chia đôi lực, tinh chỉnh; 3 mức Dễ/Vừa/Khó với sai số cố ý) + `BotDriver` (ngắm dần, đi tới địch nếu không có phát nào trúng, rồi bắn). Khó trúng ~82%, ~58 ms/lần; test: trong dải góc, xác định, không sửa trận, <100 ms. `ShotInput.skipHash` để bot bỏ tính hash
+- [x] 5.2 Bot vào phòng + chế độ offline — chủ phòng bấm "+ Máy" (chọn mức, đội) / ✕ để bỏ; menu "Chơi với máy" 1v1..4v4 (người đội Xanh, máy đội Đỏ), chạy hoàn toàn trên trình duyệt
+- [x] 5.3 Bảng kết quả — shared/stats.ts (sát thương, hạ gục, số phát, vụ nổ sát địch nhất), client/results.ts; online: server gửi Stats khi hết trận, về phòng chờ giữ nguyên đội sau 8 s
+- [ ] 5.4 Bản đồ đầu tiên "thật" — phần code đã xong: nền parallax (client/background.ts, dùng `backgrounds` của map.json, không có thì tự vẽ), âm thanh + nhạc nền tạo bằng code (client/audio.ts, nút 🔊 bật/tắt). CÒN: ảnh địa hình + nền + nhạc thật theo `plan/05-prompt-asset-map.md`, và đọc `music` từ map.json khi có file. Ảnh Dreamina đã có: assets/maps/dao-noi-ve (terrain + 3 lớp nền, chưa có nhạc, chưa đặt làm mặc định; đã đặt làm map mặc định trong client; nhạc music.ogg đã có nhưng client chưa phát)
 
-## Phase 6–9
+## Phase 6 – Nội dung
+- [x] 6.1 Thêm 5 pháo — Cua Lăn (roller), Diều Hâu Giấy (windFactor âm), Nhím Chùm (spread), Sứa Đèn (pierce), Rùa Thành (build, đắp đất: event `fill`, `TerrainMask.fillCircle`); mỗi hành vi có test (shots2.test.ts). Pháo ẩn Long Ngư Cơ / Kỳ Lân Sắt chưa làm
+- [ ] 6.2 Thêm bản đồ — chưa làm (cần ảnh; có thể làm bản sinh bằng code)
+- [x] 6.3 Thời tiết — shared/weather.ts: Cột lốc, Mây giông, Gương nước, Cổng đôi; suy ra từ seed+lượt (không cần đồng bộ thêm), chance trong `Tuning.weather`; client vẽ + chữ báo (weatherView.ts)
+- [x] 6.4 Cân bằng — `npm run balance` (bot đấu bot, mọi cặp pháo), kết quả `plan/balance-report.md`; đã chỉnh 3 vòng
+
+## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.
+- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (ChatGPT, nòng vẽ sau bệ `barrelBehind`), bo-loi (ChatGPT, `reverse`: quay đít bắn bằng đuôi, cốc 20–45° so với thân), chui-khoan (ChatGPT, cả đầu + mũi khoan ngóc lên theo góc), cua-lan (ChatGPT, tay kìm cầm đá xoay quanh đĩa vai), dieu-hau-giay (ChatGPT, đầu chim + nỏ ngóc theo góc), nhim-chum (ChatGPT, quạt 5 ống xoay quanh đĩa), sua-den (ChatGPT, cần đèn lồng xoay quanh đĩa), rua-thanh (ChatGPT, máy bắn đá: ngắm chỉ xoay tia, bắn thì cần vung `catapult`), long-ngu-co và ky-lan-sat (ChatGPT, đầu xoay theo góc; chưa có MobileDef nên chưa vào trận). Phi công nam (`assets/pilots/nam/`, ChatGPT) ngồi vào ghế mọi xe theo `pilot` trong rig. Chưa: phi công nữ, chọn nhân vật, item – prompt ở `plan/08-prompt-nhan-vat.md`
+- [x] Góc bắn = góc nòng so với phương ngang, không cộng độ dốc (`aimDir` trong simulateShot bỏ tilt). Thêm `aimRange` + `MobileDef.slopeAim`: Bọ Lôi 20–45° so với thân, đứng dốc quay đuôi lên thì nâng được cao hơn (server kẹp lại khi ngắm/di chuyển/bắn).
+- [x] Sửa: vào trận chơi máy / 2 người 1 máy camera không về xe (setMode trong main.ts xoá điểm camera mà constructor HotseatMode vừa đặt); giờ chỉ xoá khi về menu.
+- [x] Ảnh đạn: `assets/mobiles/<id>/shots.json` + shot-1..3.png (vẽ nằm ngang chĩa phải, xoay theo hướng bay; client/shotArt.ts). Tin Shot từ server có thêm `shooter` + `slot` (shared/protocol.ts) để client vẽ đúng ảnh đạn và cú vung máy bắn đá của người bắn. Đã có: oc-thiet-giap, chui-khoan, bo-loi, cua-lan, dieu-hau-giay, nhim-chum, sua-den, rua-thanh (đủ 8 xe). `upright: true` trong shots.json = không xoay theo đường bay, chỉ lật trái/phải (dùng cho Tường đất, Núi đá của Rùa Thành).
+- [x] Sửa: vào trận online camera bay tới xe đi lượt đầu (có thể là đối thủ/bot); giờ lượt đầu camera về xe của mình trước.

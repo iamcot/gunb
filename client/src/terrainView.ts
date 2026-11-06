@@ -2,6 +2,8 @@ import { Sprite, Texture } from 'pixi.js'
 import { TerrainMask, type DirtyRect } from '@gunb/shared'
 
 /** Địa hình trên màn hình: canvas màu + mask va chạm, luôn khoét cùng một hố. Có lớp phủ mask (F3) để đối chiếu. */
+const DIRT = '#8a5a36'
+
 export class TerrainView {
   readonly canvas: HTMLCanvasElement
   readonly mask: TerrainMask
@@ -54,12 +56,46 @@ export class TerrainView {
     }
   }
 
+  /** Đắp đất (Rùa Thành): vẽ hình tròn đất + vòng cỏ mỏng, mask đắp cùng tâm/bán kính. */
+  fill(x: number, y: number, r: number): void {
+    const c = this.ctx
+    const cx = Math.round(x), cy = Math.round(y), cr = Math.round(r)
+    c.save()
+    c.fillStyle = DIRT
+    c.beginPath(); c.arc(cx + 0.5, cy + 0.5, cr + 0.5, 0, Math.PI * 2); c.fill()
+    c.strokeStyle = 'rgba(70,160,60,0.9)'; c.lineWidth = 3
+    c.beginPath(); c.arc(cx + 0.5, cy + 0.5, cr - 1, Math.PI * 1.1, Math.PI * 1.9); c.stroke()
+    c.restore()
+    this.sprite.texture.source.update()
+    const d = this.mask.fillCircle(cx, cy, cr, this.dirty)
+    if (d.x1 > d.x0 && d.y1 > d.y0) {
+      this.paintOverlay(d.x0, d.y0, d.x1, d.y1)
+      this.maskSprite.texture.source.update()
+    }
+  }
+
   /** Đưa địa hình về như ban đầu (phím R ở chế độ tập). */
   reset(): void {
     this.ctx.putImageData(this.original, 0, 0)
     this.mask.data.set(this.originalMask.data)
     this.sprite.texture.source.update()
     this.paintOverlay(0, 0, this.mask.width, this.mask.height)
+    this.maskSprite.texture.source.update()
+  }
+
+  /** Dựng lại địa hình theo mask nhận từ server (vào lại trận, hoặc hash lệch): xoá điểm ảnh ở ô trống, giữ ảnh gốc ở ô đặc. */
+  applyMask(m: TerrainMask): void {
+    if (m.width !== this.mask.width || m.height !== this.mask.height) throw new Error('kích thước mask không khớp')
+    const img = new ImageData(new Uint8ClampedArray(this.original.data), m.width, m.height)
+    const px = img.data
+    for (let i = 0; i < m.data.length; i++) {
+      if (m.data[i] === 0) px[i * 4 + 3] = 0
+      else if (px[i * 4 + 3]! <= 127) { px[i * 4] = 138; px[i * 4 + 1] = 90; px[i * 4 + 2] = 54; px[i * 4 + 3] = 255 }   // đất đắp thêm (không có trong ảnh gốc)
+    }
+    this.ctx.putImageData(img, 0, 0)
+    this.mask.data.set(m.data)
+    this.sprite.texture.source.update()
+    this.paintOverlay(0, 0, m.width, m.height)
     this.maskSprite.texture.source.update()
   }
 

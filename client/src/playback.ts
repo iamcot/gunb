@@ -1,5 +1,7 @@
 import type { ShotResult } from '@gunb/shared'
+import { audio } from './audio'
 import type { Fx } from './fx'
+import type { ShotArt } from './shotArt'
 import type { TerrainView } from './terrainView'
 
 export interface PlaybackHooks {
@@ -15,8 +17,10 @@ export class ShotPlayback {
   private done = false
   private readonly cursor: number[]
 
-  constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks) {
+  constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks, art: ShotArt | null = null) {
     this.cursor = result.paths.map(() => 0)
+    fx.setShellArt(art)
+    audio.fire()
   }
 
   get finished(): boolean { return this.done }
@@ -29,10 +33,11 @@ export class ShotPlayback {
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
       switch (e.kind) {
-        case 'explode': this.fx.explosion(e.x, e.y, e.r); break
+        case 'explode': this.fx.explosion(e.x, e.y, e.r); audio.explode(e.r); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
-        case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); break
-        case 'bolt': this.fx.bolt(e.x, e.y); break
+        case 'fill': this.view.fill(e.x, e.y, e.r); break
+        case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
+        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         default: break
       }
@@ -63,6 +68,6 @@ export class ShotPlayback {
     const f = t1 > t0 ? (this.t - t0) / (t1 - t0) : 0
     const x0 = path[i * 3 + 1] as number, y0 = path[i * 3 + 2] as number
     const x1 = path[(i + 1) * 3 + 1] as number, y1 = path[(i + 1) * 3 + 2] as number
-    this.fx.setProjectile(k, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, true)
+    this.fx.setProjectile(k, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, true, Math.atan2(y1 - y0, x1 - x0))
   }
 }

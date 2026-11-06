@@ -1,0 +1,8 @@
+Kỳ Lân Sắt (ky-lan-sat, xe ẩn) – ảnh "Mechanical Unicorn War Mount" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "10. Kỳ Lân Sắt" trong plan/06-prompt-xe.md.
+
+Xử lý:
+- Xoá nền trắng.
+- "Nòng" = đầu + sừng xoắn vàng + đĩa vàng ở má (xoay quanh tâm đĩa 910,300 ảnh gốc), vẽ trên thân; bờm giữ ở thân. Đạn bắn ra từ đầu sừng; sừng (~21° lên) xoay về nằm ngang.
+- Thân thu về 192 px.
+- Lưu ý: shared/ chưa có MobileDef cho xe này nên ảnh chưa xuất hiện trong trận; thêm xe vào shared/src/mobiles là tự dùng ảnh.

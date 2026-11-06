@@ -1,4 +1,5 @@
-import { MOBILE_IDS, TUNING, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
+import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
+import { getShotArt, preloadShotArt } from './shotArt'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
@@ -9,6 +10,7 @@ const HELP = '↑↓ góc · ←→ quay hướng · 1/2/3 chọn đạn · gi�
 
 /** Chế độ tập bắn (Phase 1): một xe đứng yên + 3 bia. */
 export class PracticeMode implements Mode {
+  private readonly range: AimRange = { min: 0, max: 90 }
   private readonly practice: Practice
   private readonly aim = new AimInput()
   private readonly shotBar: ShotBar
@@ -44,6 +46,7 @@ export class PracticeMode implements Mode {
     this.mobileIdx = i
     const def = TUNING.mobiles[MOBILE_IDS[i]!]!
     this.practice.setMobile(def.id)
+    preloadShotArt(def.id)
     this.aim.setRange(def.angleMin, def.angleMax)
   }
 
@@ -59,17 +62,21 @@ export class PracticeMode implements Mode {
     aim.locked = true
     this.playback = new ShotPlayback(result, ctx.view, ctx.fx, {
       onDamage: (id, _amount, hpAfter) => practice.applyDamage(id, hpAfter),
-    })
+    }, getShotArt(MOBILE_IDS[this.mobileIdx]!, slot))
   }
 
   update(dt: number): void {
     const { ctx, practice, aim } = this
+    const def = TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!
+    const r = aimRange(this.range, def, aim.facing, practice.tilt)
+    aim.setRange(r.min, r.max)   // dải góc đổi theo dốc (xe slopeAim)
     aim.update(dt)
     practice.facing = aim.facing
     practice.setAngle(aim.angle)
     practice.draw()
     ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     this.shotBar.update(TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!, aim.slot, 100, 100)
+    ctx.hud.setWind(this.wind, TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!.shots[aim.slot].windFactor)
     if (this.playback && this.playback.update(dt)) {
       this.lastHash = this.playback.hashMatches
       this.playback = null

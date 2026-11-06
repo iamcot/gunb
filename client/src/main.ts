@@ -1,11 +1,14 @@
 import { Application, Container } from 'pixi.js'
-import { GAME_NAME, parseMap } from '@gunb/shared'
+import { GAME_NAME, parseMap, type BotLevel } from '@gunb/shared'
+import { audio } from './audio'
+import { Background } from './background'
 import { Camera } from './camera'
 import type { GameCtx, Mode } from './ctx'
 import { Fx } from './fx'
 import { HotseatMode } from './hotseatMode'
 import { Hud } from './hud'
 import { Menu } from './menu'
+import { OnlineFlow } from './onlineFlow'
 import { SelectScreen } from './selectScreen'
 import { PracticeMode } from './practiceMode'
 import { TerrainView } from './terrainView'
@@ -23,7 +26,7 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 
 async function main(): Promise<void> {
   document.getElementById('title')!.textContent = GAME_NAME
-  const mapId = new URLSearchParams(location.search).get('map') ?? 'thu-nghiem'
+  const mapId = new URLSearchParams(location.search).get('map') ?? 'dao-noi-ve'
   const base = `/maps/${mapId}/`
   const map = parseMap(await (await fetch(base + 'map.json')).json())
   const img = await loadImage(base + map.terrain)
@@ -34,6 +37,10 @@ async function main(): Promise<void> {
   await app.init({ resizeTo: window, backgroundAlpha: 0, antialias: false, resolution: window.devicePixelRatio, autoDensity: true })
   document.getElementById('game')!.appendChild(app.canvas)
 
+  const bgImages: HTMLImageElement[] | null = map.backgrounds.length > 0
+    ? await Promise.all(map.backgrounds.map(b => loadImage(base + b.file))).catch(() => null) : null
+  const background = new Background(map, bgImages, app.screen.width, app.screen.height)
+  app.stage.addChild(background.container)
   const world = new Container()
   const fx = new Fx()
   app.stage.addChild(world)
@@ -55,27 +62,47 @@ async function main(): Promise<void> {
   const menuBtn = document.getElementById('menubtn') as HTMLButtonElement
   const menu = new Menu({
     onHotseat: n => chooseMobiles(n),
+    onVsBot: (n, level) => chooseMobiles(n, level),
     onPractice: () => { setMode(new PracticeMode(ctx)) },
+    onOnline: () => startOnline(),
   })
   function setMode(m: Mode | null): void {
     mode?.destroy()
     mode = m
     fx.hideProjectiles()
-    ctx.focus.t = 0
+    // chế độ mới đã đặt điểm camera trong constructor (lượt đầu) nên không xoá; chỉ xoá khi về menu
+    if (!m) ctx.focus.t = 0
     if (m) { menu.hide(); menuBtn.style.display = 'block' } else { view.reset(); menu.show(); menuBtn.style.display = 'none'; hud.setVisible(false) }
   }
   let select: SelectScreen | null = null
-  function chooseMobiles(n: number): void {
+  function chooseMobiles(n: number, botLevel?: BotLevel): void {
     menu.hide()
     select = new SelectScreen(n, {
-      onStart: ids => { select?.destroy(); select = null; startHotseat(n, ids) },
+      onStart: ids => { select?.destroy(); select = null; startHotseat(n, ids, botLevel) },
       onBack: () => { select?.destroy(); select = null; menu.show() },
     })
   }
-  function startHotseat(n: number, ids: string[]): void {
-    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids }, () => startHotseat(n, ids), () => setMode(null)))
+  function startHotseat(n: number, ids: string[], botLevel?: BotLevel): void {
+    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids, botLevel }, () => startHotseat(n, ids, botLevel), () => setMode(null)))
   }
-  menuBtn.addEventListener('click', () => setMode(null))
+  let online: OnlineFlow | null = null
+  function startOnline(): void {
+    menu.hide()
+    online = new OnlineFlow({
+      ctx,
+      startMode: m => setMode(m),
+      stopMode: () => { mode?.destroy(); mode = null; fx.hideProjectiles(); ctx.focus.t = 0; view.reset(); hud.setVisible(false); menuBtn.style.display = 'block' },
+      exit: () => toMenu(),
+    }, () => toMenu())
+    menuBtn.style.display = 'block'
+  }
+  /** Về menu chính từ bất cứ đâu (đóng luôn phiên online nếu có). */
+  function toMenu(): void {
+    online?.dispose()
+    online = null
+    setMode(null)
+  }
+  menuBtn.addEventListener('click', () => toMenu())
 
   let dragging = false
   let debugOn = false
@@ -84,7 +111,7 @@ async function main(): Promise<void> {
     ctx.keys.add(e.code)
     if (e.code === 'F3') { e.preventDefault(); debugOn = !debugOn; debugEl.style.display = debugOn ? 'block' : 'none'; view.maskSprite.visible = debugOn }
     else if (e.code === 'F6') { e.preventDefault(); tuning.toggle() }
-    else if (e.code === 'Escape' && mode) setMode(null)
+    else if (e.code === 'Escape' && mode) toMenu()
   })
   window.addEventListener('keyup', e => ctx.keys.delete(e.code))
   window.addEventListener('blur', () => ctx.keys.clear())
@@ -97,7 +124,16 @@ async function main(): Promise<void> {
     mouseX = e.clientX
     mouseY = e.clientY
   })
-  window.addEventListener('resize', () => cam.resize(app.screen.width, app.screen.height))
+  window.addEventListener('resize', () => { cam.resize(app.screen.width, app.screen.height); background.resize(app.screen.width, app.screen.height) })
+
+  // Âm thanh: trình duyệt chỉ cho phát sau thao tác đầu tiên của người dùng
+  const muteBtn = document.getElementById('mutebtn') as HTMLButtonElement
+  const syncMute = (): void => { muteBtn.textContent = audio.muted ? '🔇 Tắt tiếng' : '🔊 Âm thanh' }
+  syncMute()
+  muteBtn.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); syncMute(); audio.startMusic() })
+  const firstGesture = (): void => { audio.unlock(); audio.startMusic(); window.removeEventListener('pointerdown', firstGesture); window.removeEventListener('keydown', firstGesture) }
+  window.addEventListener('pointerdown', firstGesture)
+  window.addEventListener('keydown', firstGesture)
 
   app.ticker.add(t => {
     const dt = Math.min(0.1, t.deltaMS / 1000)
@@ -116,6 +152,7 @@ async function main(): Promise<void> {
     if (ctx.keys.has('KeyS')) dy += 1
     if (dx || dy) { cam.pan(dx * PAN_SPEED * dt, dy * PAN_SPEED * dt); ctx.focus.t = 0 }
     world.position.set(-cam.x + fx.shakeX, -cam.y + fx.shakeY)
+    background.update(cam.x, cam.y)
 
     hud.setOffscreen(lead && lead.y - cam.y < 0 ? lead.x - cam.x : null, lead ? -lead.y : 0)
 

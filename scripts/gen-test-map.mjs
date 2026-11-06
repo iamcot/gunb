@@ -1,4 +1,4 @@
-// Sinh bản đồ thử nghiệm: assets/maps/thu-nghiem/{terrain.png,map.json}. Chạy: npm run gen-test-map
+// Sinh bản đồ thử nghiệm: assets/maps/{thu-nghiem,dao-noi}/{terrain.png,map.json}. Chạy: npm run gen-test-map
 // Không dùng thư viện ngoài: tự ghi PNG RGBA bằng zlib. Kết quả xác định (seed cố định).
 import { deflateSync } from 'node:zlib'
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const W = 2400, H = 1200, SEED = 20260611
-const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'maps', 'thu-nghiem')
+const mapsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'maps')
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -41,6 +41,7 @@ for (let i = 0; i < 9; i++) {
 }
 
 // Tô màu: cỏ ở lớp trên cùng, đất nâu bên dưới có nhiễu nhẹ
+function colorize(solid) {
 const rgba = Buffer.alloc(W * H * 4)
 for (let x = 0; x < W; x++) {
   let depth = 0
@@ -55,6 +56,9 @@ for (let x = 0; x < W; x++) {
   }
 }
 
+return rgba
+}
+
 // --- ghi PNG ---
 const crcTable = new Uint32Array(256)
 for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crcTable[n] = c >>> 0 }
@@ -65,6 +69,7 @@ function chunk(type, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(td))
   return Buffer.concat([len, td, crc])
 }
+function encodePng(rgba) {
 const ihdr = Buffer.alloc(13)
 ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 6   // 8 bit, RGBA
 const raw = Buffer.alloc((W * 4 + 1) * H)
@@ -73,11 +78,40 @@ const png = Buffer.concat([
   Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0)),
 ])
+return png
+}
 
-mkdirSync(outDir, { recursive: true })
-writeFileSync(join(outDir, 'terrain.png'), png)
-writeFileSync(join(outDir, 'map.json'), JSON.stringify({
-  id: 'thu-nghiem', name: 'Bản đồ thử nghiệm', width: W, height: H, terrain: 'terrain.png', backgrounds: [],
-  spawnZones: { A: { x1: 100, x2: 600 }, B: { x1: 1800, x2: 2300 } },
-}, null, 2) + '\n')
-console.log(`đã ghi ${outDir} (${(png.length / 1024).toFixed(0)} KB)`)
+function writeMap(id, name, solid, spawnZones) {
+  const png = encodePng(colorize(solid))
+  const outDir = join(mapsDir, id)
+  mkdirSync(outDir, { recursive: true })
+  writeFileSync(join(outDir, 'terrain.png'), png)
+  writeFileSync(join(outDir, 'map.json'), JSON.stringify({ id, name, width: W, height: H, terrain: 'terrain.png', backgrounds: [], spawnZones }, null, 2) + '\n')
+  console.log(`đã ghi ${outDir} (${(png.length / 1024).toFixed(0)} KB)`)
+}
+
+writeMap('thu-nghiem', 'Bản đồ thử nghiệm', solid, { A: { x1: 100, x2: 600 }, B: { x1: 1800, x2: 2300 } })
+
+// --- Đảo nổi: một mặt phẳng rộng lơ lửng giữa trời (rơi ra ngoài/đáy là chết), để thử khoét đất ---
+{
+  const r2 = mulberry32(SEED + 1)
+  const isl = new Uint8Array(W * H)
+  const cx = W / 2, halfW = 980, top = 520
+  const phase = r2() * Math.PI * 2
+  for (let x = 0; x < W; x++) {
+    const t = (x - cx) / halfW
+    if (Math.abs(t) >= 1) continue
+    const surf = Math.round(top + Math.sin(x / 47 + phase) * 4 + Math.sin(x / 190 + phase * 2) * 7)
+    const thick = 70 + 330 * Math.pow(1 - t * t, 0.6) + Math.sin(x / 23 + phase) * 14 + Math.sin(x / 71) * 22
+    for (let y = surf; y < Math.min(H, surf + thick); y++) isl[y * W + x] = 1
+  }
+  // hai đảo nhỏ ngoài rìa (ngoài vùng xuất phát) để thử đạn bay xa
+  for (const [ox, oy, hw] of [[200, 380, 90], [2200, 400, 90]]) {
+    for (let x = ox - hw; x < ox + hw; x++) {
+      const t = (x - ox) / hw
+      const thick = 30 + 70 * Math.sqrt(1 - t * t)
+      for (let y = oy; y < oy + thick; y++) isl[y * W + x] = 1
+    }
+  }
+  writeMap('dao-noi', 'Đảo nổi', isl, { A: { x1: 420, x2: 880 }, B: { x1: 1520, x2: 1980 } })
+}

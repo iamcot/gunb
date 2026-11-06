@@ -1,4 +1,5 @@
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, Sprite } from 'pixi.js'
+import type { ShotArt } from './shotArt'
 
 interface Boom { g: Graphics; age: number; r: number }
 interface Bolt { g: Graphics; age: number }
@@ -16,25 +17,48 @@ export class Fx {
   private bolts: Bolt[] = []
   private shake = 0
   private readonly shells: Graphics[] = []
+  private readonly shellSprites: Sprite[] = []
+  private shellArt: ShotArt | null = null
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
 
-  /** Đặt vị trí/hiện-ẩn viên đạn thứ `i` (tạo mới nếu chưa có). */
-  setProjectile(i: number, x: number, y: number, visible: boolean): void {
+  /** Ảnh đạn cho phát bắn sắp phát lại (null = đạn tròn mặc định). */
+  setShellArt(art: ShotArt | null): void {
+    this.shellArt = art
+    for (const s of this.shellSprites) if (art) { s.texture = art.tex; s.scale.set(art.length / art.tex.width) }
+  }
+
+  /** Đặt vị trí/hiện-ẩn viên đạn thứ `i` (tạo mới nếu chưa có); `rot` = hướng bay (radian, theo trục màn hình). */
+  setProjectile(i: number, x: number, y: number, visible: boolean, rot = 0): void {
     while (this.shells.length <= i) {
       const g = new Graphics().circle(0, 0, 5).fill(0x111111).stroke({ color: 0xffffff, width: 1.5 })
       g.visible = false
       this.container.addChild(g)
       this.shells.push(g)
+      const s = new Sprite()
+      s.anchor.set(0.5)
+      s.visible = false
+      if (this.shellArt) { s.texture = this.shellArt.tex; s.scale.set(this.shellArt.length / this.shellArt.tex.width) }
+      this.container.addChild(s)
+      this.shellSprites.push(s)
       this.shellPos.push({ x: 0, y: 0, visible: false })
     }
-    const g = this.shells[i]!, p = this.shellPos[i]!
-    g.visible = visible
+    const g = this.shells[i]!, s = this.shellSprites[i]!, p = this.shellPos[i]!
+    const art = this.shellArt !== null
+    g.visible = visible && !art
+    s.visible = visible && art
     g.position.set(x, y)
+    s.position.set(x, y)
+    const a = this.shellArt
+    if (a && a.upright) {
+      const k = a.length / a.tex.width
+      s.rotation = 0
+      s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
+    } else s.rotation = rot
     p.x = x; p.y = y; p.visible = visible
   }
 
   hideProjectiles(): void {
-    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellPos[i]!.visible = false }
+    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false }
   }
 
   /** Viên đạn đầu tiên đang hiện (camera bám theo), hoặc null. */

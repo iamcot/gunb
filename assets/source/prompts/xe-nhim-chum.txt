@@ -1,0 +1,7 @@
+Nhím Chùm (nhim-chum) – ảnh "Chibi Hedgehog Tank with Coral-Barreled Launcher" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "6. Nhím Chùm" trong plan/06-prompt-xe.md.
+
+Xử lý:
+- Xoá nền trắng.
+- "Nòng" = quạt 5 ống phóng gai, xoay quanh tâm đĩa vàng (602,452 ảnh gốc, bán kính ~97); đĩa giữ ở thân, nòng vẽ sau đĩa.
+- Xoay để ống giữa nằm ngang (gốc nghiêng ~14°), thân thu về 192 px.

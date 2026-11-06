@@ -1,0 +1,12 @@
+Công cụ: ChatGPT (tạo ảnh). File gốc: "Side-View Robotic Beetle with Golden Launcher.png" (1536x1024), sửa tiếp từ "Cute Sky-Blue Beetle Blaster.png" (cốc nhìn ngang, quả cầu thụt vào), vốn sửa từ ảnh "Whimsical Electric Beetle Mech.png" bằng lệnh edit bỏ đuôi dài.
+
+Prompt: plan/06-prompt-xe.md, mục 3. Bọ Lôi (bản tiếng Anh, bắn từ đít, không đuôi) + lệnh edit:
+"Edit this image: remove the long segmented tail completely. Keep everything else exactly the same. Put the golden cup launcher with the glowing lightning orb directly on the rear end of the body, hugging the abdomen, opening straight backward to the left, exactly level with the head on the same horizontal axis, mirroring the head on the opposite end. Keep the big round golden pivot joint behind it. Plain white background."
+
+Xử lý (Python/PIL/scipy):
+- Xoá nền trắng.
+- Tách cốc + quả cầu sét (phần bên trái khớp tròn vàng) thành barrel.png, lật ngang cho chĩa +x.
+- Khớp tròn vàng giữ lại trên thân, là tâm xoay (pivot).
+- Thu thân về 192 px rộng, nòng cùng tỉ lệ.
+- rig.json: reverse=true (quay đít về phía địch khi bắn).
+- Ngắm: cốc chỉ nâng 20–45° so với thân (shared/src/mobiles/boLoi.ts, slopeAim). Muốn bắn cao hơn phải quay đuôi lên dốc; thân chỉ nghiêng theo dốc.

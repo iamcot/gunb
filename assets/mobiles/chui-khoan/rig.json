@@ -1,0 +1,10 @@
+{
+  "body": "body.png",
+  "barrel": "barrel.png",
+  "width": 88,
+  "ground": [0.5,  1.0],
+  "pivot": [0.7741,  0.5701],
+  "barrelPivot": [0.1425,  0.5619],
+  "muzzle": [1.0012,  0.6896],
+  "pilot": [0.5278,  0.392]
+}

@@ -1,0 +1,6 @@
+{
+  "sit": "sit.png",
+  "stand": "stand.png",
+  "hip": [0.3, 0.8],
+  "sitHeight": 32
+}

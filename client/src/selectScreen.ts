@@ -20,7 +20,7 @@ export class SelectScreen {
           const d = TUNING.mobiles[id]!
           return `<div class="card${k === pick ? ' sel' : ''}" data-p="${i}" data-k="${k}"><b>${d.name}</b><div style="opacity:.7;margin-bottom:4px">${d.role}</div>
             <div>Máu ${d.hp}</div>${bar(d.hp / 120)}<div>Giáp ${Math.round(d.armor * 100)}%</div>${bar(d.armor / 0.2)}<div>Cơ động</div>${bar((d.fuel * d.speedMul) / 160)}
-            <span style="opacity:.7">Góc ${d.angleMin}–${d.angleMax}° · ${d.shots.map(s => s.name).join(' / ')}</span></div>`
+            <span style="opacity:.7">Góc ${d.angleMin}–${d.angleMax}°${d.slopeAim ? ' (theo thân, đứng dốc để nâng cao hơn)' : ''} · ${d.shots.map(s => s.name).join(' / ')}</span></div>`
         }).join('')
         return `<div class="selrow"><div class="who" style="color:${team === 0 ? '#60a5fa' : '#f87171'}">${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}</div><div class="cards">${cards}</div></div>`
       }).join('')

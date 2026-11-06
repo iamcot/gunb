@@ -1,0 +1,6 @@
+Style bible: bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. Side view, no text, no characters, no logos.
+
+Several distant small floating islands with tiny trees and waterfalls falling into the void, hazy blueish tint (atmospheric perspective), plain solid white background (to be made transparent), panoramic.
+
+Công cụ: Dreamina (gói free).
+Xử lý: tách 2 đảo nhỏ có thác bên trái (bỏ vách núi tiền cảnh + watermark), xoá nền bằng mô hình nền bậc 2 + alpha mềm, rải 5 bản (co/lật) lên 2400x700 trong suốt.

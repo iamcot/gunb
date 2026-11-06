@@ -25,6 +25,7 @@ export const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t
 
 export const degToRad = (d: number): number => (d * Math.PI) / 180
+export const radToDeg = (r: number): number => (r * 180) / Math.PI
 
 /** RNG có seed (mulberry32). Trả về hàm cho số trong [0, 1). */
 export function mulberry32(seed: number): () => number {

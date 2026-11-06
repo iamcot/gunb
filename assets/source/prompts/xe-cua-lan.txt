@@ -1,0 +1,7 @@
+Cua Lăn (cua-lan) – ảnh "Chibi Crab Crusher with Boulder Claw" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "4. Cua Lăn" trong plan/06-prompt-xe.md, cùng chat đã vẽ các xe trước.
+
+Xử lý:
+- Xoá nền trắng, kể cả các khe trắng kẹt giữa kìm và cục đá.
+- "Nòng" = cánh tay vàng + kìm + cục đá (đạn lăn), xoay quanh tâm đĩa vàng ở vai; nòng vẽ sau thân để đĩa che khớp.
+- Xoay nòng về nằm ngang (gốc nghiêng ~13°), thân thu về 192 px.

@@ -1,0 +1,6 @@
+Style bible: bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. Side view, no text, no characters, no logos.
+
+Side-view cross-section of a large floating island in the sky, flat grassy top surface with tiny gentle bumps, thick layered earth and rock underneath tapering to a rounded bottom with a few hanging roots and small stalactites, a few embedded boulders, island spans about 80% of the image width, plain solid white background, wide 2:1 aspect ratio, no shadows on the background.
+
+Công cụ: Dreamina (gói free).
+Xử lý: tách nền trời/trắng thành trong suốt (lấy thành phần liền lớn nhất, bỏ watermark + mảnh vụn), co 0.672 ngang / 0.504 dọc (ép dẹt 0.75), canh giữa, mặt đảo x≈416..1984 ở y≈390, dày giữa ~470px, alpha nhị phân 0/255. Script: tách nền + fit (Python/PIL/scipy).

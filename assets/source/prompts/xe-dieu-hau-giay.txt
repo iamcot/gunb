@@ -1,0 +1,8 @@
+Diều Hâu Giấy (dieu-hau-giay) – ảnh "Whimsical Bamboo Hawk Cart" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "5. Diều Hâu Giấy" trong plan/06-prompt-xe.md.
+
+Xử lý:
+- Xoá nền trắng.
+- "Nòng" = đầu chim + nỏ tre trên đầu + mũi tên giấy ở mỏ, cắt ngang cổ (y≈545 ảnh gốc); xoay quanh giữa vết cắt.
+  Mũi tên trong ảnh đã nằm ngang nên không cần xoay.
+- Thân thu về 192 px.

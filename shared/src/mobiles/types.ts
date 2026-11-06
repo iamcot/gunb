@@ -11,5 +11,6 @@ export interface MobileDef {
   fuel: number                  // px đi được mỗi lượt
   angleMin: number
   angleMax: number
+  slopeAim?: boolean            // dải góc tính theo thân xe: muốn góc cao hơn phải đứng dốc (xem aimRange)
   shots: [ShotDef, ShotDef, ShotDef]   // đạn 1, đạn 2, đạn SS
 }

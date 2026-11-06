@@ -12,5 +12,567 @@
     "source": "Sinh bằng scripts/gen-test-map.mjs",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "maps/dao-noi/terrain.png",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs (đảo nổi, seed cố định)",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "maps/dao-noi/map.json",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "maps/dao-noi-ve/terrain.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-terrain.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-1-far.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-1-far.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-2-mid.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-2-mid.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-3-near.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-3-near.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/map.json",
+    "author": "Dự án gunb",
+    "source": "Viết tay theo plan/05-prompt-asset-map.md",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "maps/dao-noi-ve/music.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Nhạc AI tạo trên ElevenLabs, file gốc bg-sound-pathway.mp3 (60 s, 192 kbps). Ghi chú ở assets/source/prompts/dao-noi-ve-music.txt",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cute Steampunk Snail Tank\": xoá nền, tách nòng khỏi bệ (nòng vẽ sau bệ, nối dài đuôi nòng vào trong bệ), nòng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cute Steampunk Snail Tank\": xoá nền, tách nòng khỏi bệ (nòng vẽ sau bệ, nối dài đuôi nòng vào trong bệ), nòng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/bo-loi/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/bo-loi/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/bo-loi/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/chui-khoan/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-chui-khoan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Mole Digger Tank\": xoá nền, tách cả đầu (mũ, mắt, mõm, mũi khoan) thành bộ phận xoay quanh cổ, vá cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/chui-khoan/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-chui-khoan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Mole Digger Tank\": xoá nền, tách cả đầu (mũ, mắt, mõm, mũi khoan) thành bộ phận xoay quanh cổ, vá cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/chui-khoan/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/cua-lan/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cua-lan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Crab Crusher with Boulder Claw\": xoá nền (cả khe trắng trong kìm), tách cánh tay kìm + cục đá thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/cua-lan/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cua-lan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Crab Crusher with Boulder Claw\": xoá nền (cả khe trắng trong kìm), tách cánh tay kìm + cục đá thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/cua-lan/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-dieu-hau-giay.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Whimsical Bamboo Hawk Cart\": xoá nền, tách đầu chim + nỏ + mũi tên (cả đoạn cổ trên) thành nòng xoay quanh cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-dieu-hau-giay.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Whimsical Bamboo Hawk Cart\": xoá nền, tách đầu chim + nỏ + mũi tên (cả đoạn cổ trên) thành nòng xoay quanh cổ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/nhim-chum/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-nhim-chum.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Hedgehog Tank with Coral-Barreled Launcher\": xoá nền, tách quạt 5 ống phóng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay ống giữa về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/nhim-chum/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-nhim-chum.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Hedgehog Tank with Coral-Barreled Launcher\": xoá nền, tách quạt 5 ống phóng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay ống giữa về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/nhim-chum/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/sua-den/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-sua-den.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Jellyfish Lantern Vehicle\": xoá nền, tách cần đèn + đèn lồng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/sua-den/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-sua-den.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Jellyfish Lantern Vehicle\": xoá nền, tách cần đèn + đèn lồng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/sua-den/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/rua-thanh/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-rua-thanh.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Turtle Castle with Rearward Catapult\": xoá nền, tách cần + gầu đá + đĩa trục thành bộ phận vung, vá chỗ cần che bằng màu cỏ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/rua-thanh/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-rua-thanh.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Turtle Castle with Rearward Catapult\": xoá nền, tách cần + gầu đá + đĩa trục thành bộ phận vung, vá chỗ cần che bằng màu cỏ, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/rua-thanh/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/long-ngu-co/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-long-ngu-co.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Golden Dragon-Carp Airship\": xoá nền, tách đầu rồng + cổ + bờm thành nòng xoay quanh đĩa vàng ở cổ (nòng vẽ sau đĩa), hướng phun lửa xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/long-ngu-co/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-long-ngu-co.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Golden Dragon-Carp Airship\": xoá nền, tách đầu rồng + cổ + bờm thành nòng xoay quanh đĩa vàng ở cổ (nòng vẽ sau đĩa), hướng phun lửa xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/long-ngu-co/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/ky-lan-sat/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-ky-lan-sat.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mechanical Unicorn War Mount\": xoá nền, tách đầu + sừng + đĩa vàng ở má thành nòng xoay quanh đĩa, hướng sừng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/ky-lan-sat/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-ky-lan-sat.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mechanical Unicorn War Mount\": xoá nền, tách đầu + sừng + đĩa vàng ở má thành nòng xoay quanh đĩa, hướng sừng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/ky-lan-sat/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "pilots/nam/sit.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/08-prompt-nhan-vat.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Boy Pilot in Blue Jumpsuit\" (tư thế ngồi lái): xoá nền, cắt sát, thu nhỏ"
+  },
+  {
+    "file": "pilots/nam/stand.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/08-prompt-nhan-vat.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cheerful Chibi Boy Pilot\" (tư thế đứng): xoá nền, cắt sát, thu nhỏ"
+  },
+  {
+    "file": "pilots/nam/pilot.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 1)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Brass Shells in Formation\": xoá nền, cắt riêng từng viên (đạn đôi lấy 1 viên), thu nhỏ"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 1)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Brass Shells in Formation\": xoá nền, cắt riêng từng viên (đạn đôi lấy 1 viên), thu nhỏ"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 1)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Brass Shells in Formation\": xoá nền, cắt riêng từng viên (đạn đôi lấy 1 viên), thu nhỏ"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/chui-khoan/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Drill Projectiles Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/chui-khoan/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Drill Projectiles Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/chui-khoan/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Drill Projectiles Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/chui-khoan/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/bo-loi/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/cua-lan/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 4)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cua-lan/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 4)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cua-lan/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 4)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cua-lan/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 5)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Origami Flight: Darts and Eagle\": xoá nền, cắt riêng từng viên (phi tiêu đôi lấy 1 chiếc), thu nhỏ"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/sua-den/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 8)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Cartoon Floating Island Ruins Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/rua-thanh/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

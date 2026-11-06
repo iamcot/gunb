@@ -47,6 +47,8 @@
     .th-dot { width: 10px; height: 10px; border-radius: 50%; }
     .th-name { flex: 1; }
     .th-mob { opacity: .6; font-size: 10px; }
+    #weather { position: fixed; top: 44px; left: 50%; transform: translateX(-50%); background: #0f172acc; color: #fff; padding: 5px 14px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 4; }
+    #mutebtn { position: fixed; top: 8px; left: 215px; font-size: 12px; padding: 3px 10px; z-index: 5; }
     #menubtn { position: fixed; top: 8px; left: 110px; font-size: 12px; padding: 3px 10px; display: none; }
 
     #shotbar { position: fixed; left: 12px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
@@ -56,14 +58,27 @@
     #shotbar button small { display: block; opacity: .7; font-size: 11px; }
     .sb-key { display: inline-block; background: #fff3; border-radius: 4px; padding: 0 6px; margin-right: 4px; }
     .ss-fill { position: absolute; left: 0; bottom: 0; height: 4px; background: #38bdf8; }
-    .cards { display: flex; gap: 8px; }
-    .card { flex: 1; min-width: 150px; background: #0f172a; border: 2px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; cursor: pointer; }
+    .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+    .card { flex: 1 1 150px; max-width: 190px; min-width: 150px; background: #0f172a; border: 2px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; cursor: pointer; }
     .card.sel { border-color: #ffe14d; }
     .card b { font-size: 14px; }
     .bar { height: 5px; background: #fff2; border-radius: 3px; margin: 2px 0 5px; overflow: hidden; }
     .bar i { display: block; height: 100%; background: #4ade80; }
     .selrow { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
     .selrow .who { width: 90px; text-align: left; font-weight: 700; }
+    .online { min-width: 420px; max-width: 92vw; }
+    .online input, .online select { font-size: 15px; padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; }
+    .online .err { color: #fca5a5; min-height: 18px; margin-top: 6px; font-size: 14px; }
+    .online button:disabled { opacity: .4; cursor: not-allowed; }
+    .rooms { max-height: 40vh; overflow-y: auto; text-align: left; }
+    .rrow, .mrow, .lrow { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid #334155; }
+    .mrow > b { flex: 1; text-align: left; }
+    .lrow .bar { flex: 1; min-width: 160px; }
+    .chat { margin-top: 10px; text-align: left; }
+    #chatlog { height: 90px; overflow-y: auto; background: #0f172a; border-radius: 6px; padding: 6px; font-size: 13px; margin-bottom: 6px; }
+    #chatin { width: 100%; box-sizing: border-box; }
+    table.results th { font-size: 12px; opacity: .7; padding: 3px 10px; }
+    .panel select { font-size: 15px; padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; }
     .scroll { max-height: 70vh; overflow-y: auto; }
   </style>
 </head>
@@ -72,6 +87,7 @@
   <div id="title"></div>
   <div id="debug"></div>
   <button id="menubtn">Menu (Esc)</button>
+  <button id="mutebtn">🔊 Âm thanh</button>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

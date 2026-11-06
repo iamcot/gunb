@@ -1,5 +1,6 @@
 import { FALL_DAMAGE_PER_PX, GRAVITY, MAX_SLOPE_DEG, POWER_CHARGE_S, TURN_TIME_S, WIND_SCALE } from './constants'
 import { createDefaultMobiles, type MobileDef } from './mobiles'
+import { defaultWeatherTuning, type WeatherTuning } from './weather'
 
 /** Thông số gameplay chỉnh được lúc chạy (bảng F6). Mọi logic đọc từ đây, không hardcode. */
 export interface Tuning {
@@ -10,6 +11,7 @@ export interface Tuning {
   move: MoveTuning
   turn: TurnTuning
   ss: SsTuning
+  weather: WeatherTuning
 }
 
 export interface MoveTuning {
@@ -44,6 +46,7 @@ export function createDefaultTuning(): Tuning {
     move: { speed: 90, maxSlopeDeg: MAX_SLOPE_DEG, stepUp: 14, snapDown: 8, fallDamagePerPx: FALL_DAMAGE_PER_PX, fallSafePx: 24, delayPerPx: 0.2 },
     turn: { timeS: TURN_TIME_S, timeoutPenalty: 150 },
     ss: { max: 100, perDamageDealt: 0.6, perDamageTaken: 0.4, perTurn: 8 },
+    weather: defaultWeatherTuning(),
   }
 }
 
@@ -59,4 +62,5 @@ export function resetTuning(): void {
   TUNING.move = d.move
   TUNING.turn = d.turn
   TUNING.ss = d.ss
+  TUNING.weather = d.weather
 }

@@ -1,0 +1,18 @@
+Công cụ: Dreamina (gói free). Ảnh chọn: dreamina-2026-11-06-4947 (thân + nòng chung một ảnh).
+
+Prompt (theo plan/06-prompt-xe.md, bản có ghế lái trống, 2D phẳng):
+bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. No text, no logos. 2D game sprite of a small cute armored artillery vehicle, a mechanical snail with a big riveted spiral metal shell in coral and cream, soft green body with two eye stalks, small tank treads underneath, flat 2D, strict orthographic side profile facing right, no perspective, no 3D, no depth, only the near side visible (one tread, one eye), chunky toy-like proportions, compact body fits in a 4:3 frame, an empty open cockpit with one small seat and a low windshield for a pilot, cockpit seat on the front of the body in front of the shell behind the eye stalks, the seat is empty, a round mounting socket next to the cockpit where a cannon attaches, no cannon barrel, smooth hand-painted look, not pixel art, plain solid white background, centered, full body visible, no shadow on the ground
+(Người dùng có thêm tiền tố "exact same chunky bold outline hand-painted..." trong Dreamina.)
+
+Xử lý (Python/PIL/scipy):
+- Xoá nền trắng (vùng sáng ít bão hoà nối với mép ảnh), bỏ watermark/badge.
+- Tách nòng (vùng xám/xanh trong đa giác quanh nòng) thành barrel.png, xoay -13.4° cho nằm ngang.
+- Vá chỗ vỏ ốc bị nòng che bằng màu vỏ (median) + viền đen.
+- Thu thân về 192 px rộng (2x của 96), nòng cùng tỉ lệ.
+- rig.json: điểm gắn nòng dời xuống buồng lái (trước ghế) để phi công cầm súng.
+
+
+# Bản đang dùng (06/11/2026)
+Ảnh "Cute Steampunk Snail Tank" vẽ bằng ChatGPT theo prompt tiếng Anh trong plan/06-prompt-xe.md.
+Xử lý: tách nòng vàng khỏi bệ (cắt theo trục nòng, trục xoay = đĩa tròn của bệ), nòng xoay về nằm ngang,
+đuôi nòng nối dài vào trong bệ; rig.json barrelBehind=true để bệ che đuôi nòng khi nòng ngóc lên.

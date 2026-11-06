@@ -1,0 +1,17 @@
+{
+  "name": "gunb",
+  "private": true,
+  "version": "0.0.1",
+  "workspaces": ["shared", "server", "client"],
+  "scripts": {
+    "dev": "node dev.mjs",
+    "build": "npm run build -w client",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client",
+    "test": "vitest run",
+    "gen-test-map": "node scripts/gen-test-map.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  }
+}

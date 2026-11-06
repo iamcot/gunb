@@ -1,0 +1,12 @@
+// Hằng số khởi điểm (xem plan/00-overview.md). Chỉnh bằng bảng F6 ở Phase 1.
+export const DT_SIM = 1 / 120          // bước mô phỏng đạn (s)
+export const GRAVITY = 420             // px/s²
+export const WIND_MAX = 26             // độ lớn gió tối đa (đơn vị hiển thị)
+export const WIND_SCALE = 6            // px/s² cho 1 đơn vị gió
+export const TURN_TIME_S = 20
+export const MOVE_FUEL_PER_TURN = 120  // px đi ngang được mỗi lượt
+export const MAX_SLOPE_DEG = 55        // dốc hơn thì không leo được
+export const FALL_DAMAGE_PER_PX = 0.15
+export const MAX_PLAYERS = 8
+export const MAX_TURNS = 60
+export const SERVER_PORT = 8081

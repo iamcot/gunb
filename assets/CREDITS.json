@@ -481,5 +481,36 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 6)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Colorful Rocket Drill Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/nhim-chum/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

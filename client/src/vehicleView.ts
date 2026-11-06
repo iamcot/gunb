@@ -17,10 +17,12 @@ interface Rig {
   muzzle: [number, number]      // đầu nòng trên ảnh nòng
   pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
   reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
+  aimTilt?: number              // độ: khi ngắm, cả thân nghiêng theo góc bắn tới tối đa chừng này, phần còn lại do nòng xoay (chỉ là hình)
+  tiltPivot?: [number, number]  // điểm trên ảnh thân làm trục khi nghiêng cả thân (thường là chân phía đầu)
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1 }
+interface Art { frame: Container; tilt: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; maxTilt: number }
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -88,11 +90,17 @@ export class VehicleViews {
     const flip = rig.reverse ? -1 : 1
     barrel.scale.set(k * flip, k)
     barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
-    frame.addChild(body, barrel)
+    const tilt = new Container()
+    const tp = rig.tiltPivot ?? rig.ground
+    const tx = (tp[0] - rig.ground[0]) * ra.body.width * k, ty = radius + (tp[1] - rig.ground[1]) * ra.body.height * k
+    tilt.pivot.set(tx, ty)
+    tilt.position.set(tx, ty)
+    tilt.addChild(body, barrel)
+    frame.addChild(tilt)
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip }
+    v.art = { frame, tilt, body, barrel, top: radius - ra.body.height * k, flip, maxTilt: rig.aimTilt ?? 0 }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -119,7 +127,11 @@ export class VehicleViews {
       a.frame.rotation = -b.tilt
       a.frame.scale.x = b.facing * a.flip
       a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
-      const d = aimDir(this.tmp, p.aimAngle, 1, 0)   // hướng nòng trong khung của xe (đã lật + nghiêng)
+      // nghiêng cả thân theo góc bắn (tối đa maxTilt độ), phía có nòng nhấc lên; phần góc còn lại do nòng xoay
+      const bodyDeg = Math.min(p.aimAngle, a.maxTilt)
+      const t = aimDir(this.tmp, bodyDeg, 1, 0)
+      a.tilt.rotation = -a.flip * Math.atan2(-t.y, t.x)
+      const d = aimDir(this.tmp, p.aimAngle - bodyDeg, 1, 0)   // hướng nòng so với thân (khung đã lật + nghiêng)
       // xe lật ngược (reverse): khung bị lật thêm một lần và ảnh nòng cũng lật, nên góc quay đổi dấu
       a.barrel.rotation = Math.atan2(d.y * a.flip, d.x)
       this.drawLabels(v, p, hp, alive, isCur, a.top)

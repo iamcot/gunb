@@ -10,3 +10,9 @@ Xử lý (Python/PIL/scipy):
 - Vá chỗ vỏ ốc bị nòng che bằng màu vỏ (median) + viền đen.
 - Thu thân về 192 px rộng (2x của 96), nòng cùng tỉ lệ.
 - rig.json: điểm gắn nòng dời xuống buồng lái (trước ghế) để phi công cầm súng.
+
+
+# Bản đang dùng (06/11/2026)
+Ảnh "Cute Steampunk Snail Tank" vẽ bằng ChatGPT theo prompt tiếng Anh trong plan/06-prompt-xe.md.
+Xử lý: tách nòng vàng khỏi bệ (cắt theo trục nòng, trục xoay = đĩa tròn của bệ), nòng xoay về nằm ngang,
+đuôi nòng nối dài vào trong bệ; rig.json barrelBehind=true để bệ che đuôi nòng khi nòng ngóc lên.

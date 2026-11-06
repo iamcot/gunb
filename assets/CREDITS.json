@@ -76,19 +76,19 @@
   },
   {
     "file": "mobiles/oc-thiet-giap/body.png",
-    "author": "IamCoT (tạo bằng Dreamina)",
+    "author": "IamCoT (tạo bằng ChatGPT)",
     "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
-    "license": "AI (Dreamina, gói free)",
+    "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách nòng khỏi thân, vá vỏ ốc chỗ nòng che, nòng xoay về nằm ngang, thu về 192 px (thân)"
+    "modified": "Ảnh \"Cute Steampunk Snail Tank\": xoá nền, tách nòng khỏi bệ (nòng vẽ sau bệ, nối dài đuôi nòng vào trong bệ), nòng xoay về nằm ngang, thu về 192 px (thân)"
   },
   {
     "file": "mobiles/oc-thiet-giap/barrel.png",
-    "author": "IamCoT (tạo bằng Dreamina)",
+    "author": "IamCoT (tạo bằng ChatGPT)",
     "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
-    "license": "AI (Dreamina, gói free)",
+    "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách nòng khỏi thân, vá vỏ ốc chỗ nòng che, nòng xoay về nằm ngang, thu về 192 px (thân)"
+    "modified": "Ảnh \"Cute Steampunk Snail Tank\": xoá nền, tách nòng khỏi bệ (nòng vẽ sau bệ, nối dài đuôi nòng vào trong bệ), nòng xoay về nằm ngang, thu về 192 px (thân)"
   },
   {
     "file": "mobiles/oc-thiet-giap/rig.json",

@@ -18,7 +18,8 @@ interface Rig {
   pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
   reverse?: boolean             // xe bắn bằng đuôi: khi ngắm thì quay đít về phía địch (ảnh bị lật so với hướng bắn)
   barrelMax?: number            // độ: nòng chỉ tự xoay tới góc này, cao hơn thì cả thân nghiêng thêm phần còn lại (chỉ là hình)
-  tiltPivot?: [number, number]  // điểm trên ảnh thân làm trục khi nghiêng cả thân (thường là chân phía đầu)
+  tiltPivot?: [number, number]
+  barrelBehind?: boolean        // nòng vẽ sau thân (bệ súng che đuôi nòng)  // điểm trên ảnh thân làm trục khi nghiêng cả thân (thường là chân phía đầu)
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
@@ -95,7 +96,8 @@ export class VehicleViews {
     const tx = (tp[0] - rig.ground[0]) * ra.body.width * k, ty = radius + (tp[1] - rig.ground[1]) * ra.body.height * k
     tilt.pivot.set(tx, ty)
     tilt.position.set(tx, ty)
-    tilt.addChild(body, barrel)
+    if (rig.barrelBehind) tilt.addChild(barrel, body)
+    else tilt.addChild(body, barrel)
     frame.addChild(tilt)
     v.root.addChildAt(frame, 0)
     v.body.visible = false

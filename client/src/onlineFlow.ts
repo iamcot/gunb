@@ -12,6 +12,7 @@ import './ui/lobby.css'
 const NAME_KEY = 'gunb.name'
 const esc = (s: string): string => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 const MOBILE_KEY = 'gunb.mobile'          // xe chọn lần trước (chỉ là tiện ích giao diện)
+const LOGO_URL = '/ui/logo.png'
 const TURN_TIMES = [15, 20, 30, 45]
 const TOAST_MS = 4000
 const BOT_LABEL: Record<string, string> = { easy: 'Dễ', normal: 'Vừa', hard: 'Khó' }
@@ -92,7 +93,7 @@ export class OnlineFlow {
     const el = document.createElement('div')
     el.className = 'gs'
     el.innerHTML = framed
-      ? `<div class="gs-frame"><div class="gs-top"><div class="gs-logo">${esc(GAME_NAME)}</div><div class="gs-title">${title}</div>
+      ? `<div class="gs-frame"><div class="gs-top"><div class="gs-logo"><img src="${LOGO_URL}" alt="${esc(GAME_NAME)}"></div><div class="gs-title">${title}</div>
           <div class="gs-who"><span class="dot"></span>${esc(this.myName)}</div></div>${html}<div class="gs-toast"></div></div>`
       : html
     document.body.appendChild(el)
@@ -104,7 +105,7 @@ export class OnlineFlow {
     this.screen = s
     this.shellFor = ''
     if (s === 'name') this.renderName()
-    else if (s === 'connecting') this.panel(`<div class="gs-card"><div class="gs-logo">${esc(GAME_NAME)}</div><p>Đang kết nối tới server…</p><div class="gs-spin"></div></div>`)
+    else if (s === 'connecting') this.panel(`<div class="gs-card"><div class="gs-logo"><img src="${LOGO_URL}" alt="${esc(GAME_NAME)}"></div><p>Đang kết nối tới server…</p><div class="gs-spin"></div></div>`)
     else if (s === 'lobby') this.renderLobby()
     else if (s === 'room') this.renderRoom()
     else if (s === 'loading') this.renderLoading()
@@ -125,7 +126,7 @@ export class OnlineFlow {
   private renderName(): void {
     let saved = ''
     try { saved = localStorage.getItem(NAME_KEY) ?? '' } catch { /* bỏ qua */ }
-    const el = this.panel(`<div class="gs-card"><div class="gs-logo">${esc(GAME_NAME)}</div><p>Chơi online · Tên của bạn</p>
+    const el = this.panel(`<div class="gs-card"><div class="gs-logo"><img src="${LOGO_URL}" alt="${esc(GAME_NAME)}"></div><p>Chơi online · Tên của bạn</p>
       <input id="nm" maxlength="20" value="${esc(saved)}" placeholder="Nhập tên">
       <div class="gs-err">${esc(this.errText)}</div>
       <div class="row"><button class="gs-btn" id="back">Quay lại</button><button class="gs-btn primary" id="go">Vào sảnh</button></div></div>`)
@@ -357,7 +358,7 @@ export class OnlineFlow {
     }
     el.querySelector('#mgrid')!.innerHTML = MOBILE_IDS.map(id => `<button class="gs-pick${id === current ? ' on' : ''}" data-mob="${esc(id)}" title="${esc(TUNING.mobiles[id]!.name)}"${canPick ? '' : ' disabled'}>
         <img data-portrait="${esc(id)}" alt=""><span class="fallback">${esc(TUNING.mobiles[id]!.name)}</span></button>`).join('') +
-      `<button class="gs-pick" id="mrand" title="Ngẫu nhiên"${canPick ? '' : ' disabled'}><span class="rnd">?</span></button>`
+      `<button class="gs-pick" id="mrand" title="Ngẫu nhiên"${canPick ? '' : ' disabled'}><img src="/ui/random-mobile.png" alt="?"></button>`
     const pick = (id: string): void => {
       try { localStorage.setItem(MOBILE_KEY, id) } catch { /* bỏ qua */ }
       this.net?.send({ t: MsgType.SetSeat, mobileId: id })

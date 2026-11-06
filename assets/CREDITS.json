@@ -303,5 +303,37 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "ui/lobby-bg.jpg",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi sang JPG chất lượng 86 để tải nhanh"
+  },
+  {
+    "file": "ui/logo.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2a trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về rộng 900 px"
+  },
+  {
+    "file": "ui/podium.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về rộng 600 px"
+  },
+  {
+    "file": "ui/random-mobile.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 4 trong plan/10-prompt-ui-sanh.md",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về 256 px"
   }
 ]

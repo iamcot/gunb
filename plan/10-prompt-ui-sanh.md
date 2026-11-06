@@ -21,13 +21,13 @@ text, letters, numbers, watermark, logo of other games, 3d render, pixel art, ph
 
 ---
 
-## 1. Nền sảnh – `assets/ui/lobby-bg.png` (1920×1080)
+## 1. Nền sảnh – `assets/ui/lobby-bg.jpg` (1920×1080) ✅ đã có
 Nằm sau khung sảnh, khung che khoảng 90% giữa, nên chi tiết đẹp nhất nên ở **mép trái/phải và dưới**.
 ```
 Same art style, line weight and palette as the vehicle and pilot images in this chat. Wide 16:9 game lobby background, no characters, no UI. A bright sunny sky with big soft cumulus clouds, several small floating grass islands drifting at the left and right edges with tiny waterfalls, wooden rope bridges and a few windmills, a distant floating island with a little workshop town in the far background, birds and paper kites in the sky. The center of the image is calm open sky with only soft clouds so a UI panel can sit on top of it. Bottom edge: rolling green hills with small flowers. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. No text, no logo.
 ```
 
-## 2. Logo – `assets/ui/logo.png` (1024×512, nền trắng)
+## 2. Logo – `assets/ui/logo.png` (1024×512, nền trắng) ✅ đã có (bản 2a)
 AI vẽ chữ hay sai; nếu chữ lỗi thì chỉ lấy phần biểu tượng (bản 2b), chữ để code vẽ.
 
 **2a. Có chữ**
@@ -39,13 +39,13 @@ Same art style, line weight and palette as the vehicle and pilot images in this 
 Same art style, line weight and palette as the vehicle and pilot images in this chat. Game emblem, no text: a round badge shaped like a brass cannon muzzle seen from the front, with a swirl of wind around it and a small cartoon cannonball arcing over the top leaving a dotted trajectory, two tiny clouds at the sides. Centered, flat front view. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no text.
 ```
 
-## 3. Bục đứng xe – `assets/ui/podium.png` (1024×512, nền trắng)
+## 3. Bục đứng xe – `assets/ui/podium.png` (1024×512, nền trắng) ✅ đã có
 Đặt dưới xe ở thẻ chi tiết xe (phòng chờ) và thẻ người chơi (sảnh).
 ```
 Same art style, line weight and palette as the vehicle and pilot images in this chat. 2D game prop, pure side view, flat orthographic profile: a small floating grass island platform used as a display podium, flat grassy top that is wide and level so a vehicle can stand on it, earth-brown rock underside tapering down with a few hanging roots and tiny crystals, a couple of small flowers at the edges, no objects on top. Centered, whole object visible. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
 ```
 
-## 4. Ô "Ngẫu nhiên" trong lưới chọn xe – `assets/ui/random-mobile.png` (512×512, nền trắng)
+## 4. Ô "Ngẫu nhiên" trong lưới chọn xe – `assets/ui/random-mobile.png` (512×512, nền trắng) ✅ đã có
 ```
 Same art style, line weight and palette as the vehicle and pilot images in this chat. 2D game icon: a wooden mystery crate with brass corners, a big painted question mark on the front in coral, a few small stars and a puff of smoke popping out of the slightly open lid, side view slightly from the front, chunky cute proportions. Centered, whole object visible. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no other text.
 ```

@@ -1,0 +1,16 @@
+{
+  "id": "dao-noi-ve",
+  "name": "Đảo nổi (bản vẽ)",
+  "width": 2400,
+  "height": 1200,
+  "terrain": "terrain.png",
+  "backgrounds": [
+    { "file": "bg-1-far.png", "parallax": 0.15 },
+    { "file": "bg-2-mid.png", "parallax": 0.35 },
+    { "file": "bg-3-near.png", "parallax": 0.6 }
+  ],
+  "spawnZones": {
+    "A": { "x1": 420, "x2": 880 },
+    "B": { "x1": 1520, "x2": 1980 }
+  }
+}

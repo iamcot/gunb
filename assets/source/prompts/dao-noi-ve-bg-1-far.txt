@@ -1,0 +1,6 @@
+Style bible: bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. Side view, no text, no characters, no logos.
+
+Wide panoramic sky background, soft gradient from sky blue at top to pale cream at the horizon, a few large soft fluffy clouds, very distant faint mountain silhouettes, low contrast, calm, no ground, 21:9 aspect ratio.
+
+Công cụ: Dreamina (gói free).
+Xử lý: chỉ giữ phần trời/mây/núi bên trái (ảnh gốc có vách đá, chữ mã màu, watermark), làm mờ badge "AI", lật gương ghép đôi cho đủ bề ngang, cao 1200.

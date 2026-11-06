@@ -26,5 +26,44 @@
     "source": "Sinh bằng scripts/gen-test-map.mjs",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "maps/dao-noi-ve/terrain.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-terrain.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-1-far.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-1-far.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-2-mid.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-2-mid.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/bg-3-near.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/dao-noi-ve-bg-3-near.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xử lý tay bằng script: xem ghi chú trong file prompt"
+  },
+  {
+    "file": "maps/dao-noi-ve/map.json",
+    "author": "Dự án gunb",
+    "source": "Viết tay theo plan/05-prompt-asset-map.md",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

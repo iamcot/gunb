@@ -9,6 +9,8 @@ export class Hud {
   private readonly windArrow: HTMLElement
   private readonly windNum: HTMLElement
   private readonly offscreen: HTMLElement
+  private readonly root: HTMLElement
+  private readonly helpEl: HTMLElement
 
   constructor() {
     const root = document.createElement('div')
@@ -22,6 +24,8 @@ export class Hud {
       <div class="hud-box hud-wind"><div class="hud-arrow">➤</div><div class="hud-wnum">Gió <b>0</b></div></div>
       <div class="hud-help">↑↓ góc · ←→ quay hướng · giữ Space tích lực, nhả để bắn · G gió ngẫu nhiên · H gió 0 · R hồi bia + địa hình · WASD / chuột phải kéo camera · F3 debug · F6 chỉnh số</div>`
     document.body.appendChild(root)
+    this.root = root
+    this.helpEl = root.querySelector('.hud-help')!
     this.angleEl = root.querySelector('#hud-angle b')!
     this.fillEl = root.querySelector('.hud-fill')!
     this.lastEl = root.querySelector('.hud-last')!
@@ -32,6 +36,13 @@ export class Hud {
     this.offscreen.id = 'offscreen'
     document.body.appendChild(this.offscreen)
   }
+
+  setVisible(v: boolean): void {
+    this.root.style.display = v ? 'flex' : 'none'
+    if (!v) this.setOffscreen(null)
+  }
+
+  setHelp(text: string): void { this.helpEl.textContent = text }
 
   setAim(angle: number, power: number, lastPower: number): void {
     this.angleEl.textContent = String(Math.min(ANGLE_MAX, Math.max(ANGLE_MIN, angle)))

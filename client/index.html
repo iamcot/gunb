@@ -25,12 +25,35 @@
     #tuning input { width: 80px; }
     #tuning button { margin: 6px 6px 0 0; }
     .tuning-title { font-weight: 700; margin-bottom: 6px; }
+
+    .overlay { position: fixed; inset: 0; background: #000a; display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .panel { background: #1e293b; color: #fff; padding: 22px 30px; border-radius: 12px; text-align: center; min-width: 280px; }
+    .panel h1, .panel h2 { margin: 0 0 12px; }
+    .panel p { margin: 12px 0 6px; opacity: .8; }
+    .panel table { margin: 8px auto 14px; border-collapse: collapse; }
+    .panel td { padding: 3px 14px; text-align: left; }
+    .row { display: flex; gap: 8px; justify-content: center; }
+    .panel button { font-size: 16px; padding: 8px 16px; border: 0; border-radius: 8px; background: #3b82f6; color: #fff; cursor: pointer; }
+    .panel button:hover { background: #2563eb; }
+    #turnhud { position: fixed; top: 44px; right: 12px; width: 190px; background: #0009; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; pointer-events: none; display: none; }
+    .th-timer { font-size: 34px; font-weight: 700; text-align: center; }
+    .th-timer.warn { color: #ff5a4d; }
+    .th-turn { text-align: center; margin-bottom: 6px; }
+    .th-fuel { height: 8px; background: #fff3; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .th-fuel div { height: 100%; background: #f5a623; }
+    .th-list-title { opacity: .7; font-size: 11px; margin-bottom: 3px; }
+    .th-row { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 4px; }
+    .th-row.cur { background: #ffffff30; font-weight: 700; }
+    .th-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .th-name { flex: 1; }
+    #menubtn { position: fixed; top: 8px; left: 110px; font-size: 12px; padding: 3px 10px; display: none; }
   </style>
 </head>
 <body>
   <div id="game"></div>
   <div id="title"></div>
   <div id="debug"></div>
+  <button id="menubtn">Menu (Esc)</button>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

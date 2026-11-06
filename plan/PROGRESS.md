@@ -19,11 +19,11 @@
 - [x] 1.5 Gió + bia tập bắn + bảng chỉnh số F6 — practice.ts (xe + 3 bia, chọn chỗ đứng phẳng nhất), G/H/R, tuningPanel.ts (F6, Copy JSON); xe chưa rơi khi mất đất (Phase 2)
 
 ## Phase 2 – Xe + lượt (hotseat) ⚠️
-- [ ] 2.1 mobileMove
-- [ ] 2.2 Xe hiển thị + nòng xoay
-- [ ] 2.3 Trạng thái trận + reducer
-- [ ] 2.4 Delay + thứ tự lượt + đồng hồ lượt
-- [ ] 2.5 Hotseat 2v2 + kết thúc trận
+- [x] 2.1 mobileMove — physics/mobileMove.ts (đi theo dốc ≤55°, dừng trước vách, nhiên liệu, rơi + sát thương, rơi khỏi đáy chết); thông số trong tuning.move; 7 test
+- [x] 2.2 Xe hiển thị + nòng xoay — client/vehicleView.ts (thân nghiêng theo dốc, nòng, tên + thanh máu, mũi tên lượt, hình quạt dải góc); sprite thật để Phase 3+
+- [x] 2.3 Trạng thái trận + reducer — match.ts (createMatch spawn có seed, ưu tiên chỗ ≤30°; applyAction aim/move/fire/skip/tick/endTurn; sửa trực tiếp state + mask, không I/O); 9 test
+- [x] 2.4 Delay + thứ tự lượt + đồng hồ lượt — turn/delay.ts (hoà delay: lâu chưa đi hơn, rồi id), turnHud.ts (đồng hồ, nhiên liệu, danh sách lượt); hết giờ cộng delay phạt
+- [x] 2.5 Hotseat 2v2 + kết thúc trận — menu 1v1..4v4 + Tập bắn, hotseatMode.ts, bảng kết quả + Ván mới; Esc về menu. Mask hiển thị và mask trận tách riêng, so hash để phát hiện lệch
 
 ## Phase 3 – 3 pháo đầu tiên + SS
 - [ ] 3.1 Hệ thống behavior cho đạn

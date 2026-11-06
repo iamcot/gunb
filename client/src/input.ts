@@ -5,7 +5,10 @@ const REPEAT_SLOW = 8         // độ/s lúc mới lặp
 const REPEAT_FAST = 40        // độ/s sau khi giữ lâu
 const REPEAT_RAMP = 1.2       // s để tăng từ chậm lên nhanh
 
-/** Điều khiển ngắm: ↑↓ góc, ←→ đổi hướng, giữ Space tích lực, nhả để bắn. */
+/**
+ * Điều khiển ngắm: ↑↓ góc, giữ Space tích lực, nhả để bắn.
+ * ←→: ở chế độ `moveMode` là đi (đọc `moveDir`), không thì đổi hướng (`facing`).
+ */
 export class AimInput {
   angle = 45
   facing: 1 | -1 = 1
@@ -14,29 +17,45 @@ export class AimInput {
   charging = false
   locked = false
   onFire: (angle: number, power: number) => void = () => {}
+  moveDir: -1 | 0 | 1 = 0
   private up = 0
   private down = 0
+  private left = false
+  private right = false
   private acc = 0
+  private readonly onKeyDown = (e: KeyboardEvent): void => this.keyDown(e)
+  private readonly onKeyUp = (e: KeyboardEvent): void => this.keyUp(e)
+  private readonly onBlur = (): void => this.cancel()
 
-  constructor() {
-    window.addEventListener('keydown', e => this.keyDown(e))
-    window.addEventListener('keyup', e => this.keyUp(e))
-    window.addEventListener('blur', () => this.cancel())
+  constructor(private readonly moveMode = false) {
+    window.addEventListener('keydown', this.onKeyDown)
+    window.addEventListener('keyup', this.onKeyUp)
+    window.addEventListener('blur', this.onBlur)
+  }
+
+  dispose(): void {
+    window.removeEventListener('keydown', this.onKeyDown)
+    window.removeEventListener('keyup', this.onKeyUp)
+    window.removeEventListener('blur', this.onBlur)
   }
 
   private keyDown(e: KeyboardEvent): void {
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Space') e.preventDefault()
+    if (e.code === 'ArrowLeft') this.left = true
+    else if (e.code === 'ArrowRight') this.right = true
     if (e.repeat || this.locked) return
     switch (e.code) {
       case 'ArrowUp': this.up = 1e-6; this.angle = clamp(this.angle + 1, ANGLE_MIN, ANGLE_MAX); break
       case 'ArrowDown': this.down = 1e-6; this.angle = clamp(this.angle - 1, ANGLE_MIN, ANGLE_MAX); break
-      case 'ArrowLeft': this.facing = -1; break
-      case 'ArrowRight': this.facing = 1; break
+      case 'ArrowLeft': if (!this.moveMode) this.facing = -1; break
+      case 'ArrowRight': if (!this.moveMode) this.facing = 1; break
       case 'Space': this.charging = true; this.power = 0; break
     }
   }
 
   private keyUp(e: KeyboardEvent): void {
+    if (e.code === 'ArrowLeft') this.left = false
+    else if (e.code === 'ArrowRight') this.right = false
     if (e.code === 'ArrowUp') this.up = 0
     else if (e.code === 'ArrowDown') this.down = 0
     else if (e.code === 'Space' && this.charging) {
@@ -51,12 +70,15 @@ export class AimInput {
   /** Hủy thao tác dở (mất focus, bị khóa). */
   cancel(): void {
     this.up = this.down = 0
+    this.left = this.right = false
+    this.moveDir = 0
     this.charging = false
     this.power = 0
   }
 
   update(dt: number): void {
     if (this.locked) { this.cancel(); return }
+    this.moveDir = this.moveMode ? ((this.right ? 1 : 0) - (this.left ? 1 : 0)) as -1 | 0 | 1 : 0
     if (this.charging) this.power = Math.min(100, this.power + (100 / TUNING.powerChargeS) * dt)
     const dir = (this.up > 0 ? 1 : 0) - (this.down > 0 ? 1 : 0)
     if (this.up > 0) this.up += dt

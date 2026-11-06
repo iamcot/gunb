@@ -103,7 +103,7 @@
     "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách đuôi phóng sét thành bộ phận xoay (chốt ở khớp tròn đuôi), xoay cho nằm ngang, thu về 192 px (thân)"
+    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
   },
   {
     "file": "mobiles/bo-loi/barrel.png",
@@ -111,7 +111,7 @@
     "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách đuôi phóng sét thành bộ phận xoay (chốt ở khớp tròn đuôi), xoay cho nằm ngang, thu về 192 px (thân)"
+    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
   },
   {
     "file": "mobiles/bo-loi/rig.json",

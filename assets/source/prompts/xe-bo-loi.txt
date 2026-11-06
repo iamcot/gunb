@@ -1,9 +1,11 @@
-Công cụ: ChatGPT (tạo ảnh). File gốc: "Whimsical Electric Beetle Mech.png" (1536x1024).
+Công cụ: ChatGPT (tạo ảnh). File gốc: "Cute Sky-Blue Beetle Blaster.png" (1536x1024), sửa từ ảnh "Whimsical Electric Beetle Mech.png" bằng lệnh edit bỏ đuôi dài.
 
-Prompt (bản tiếng Anh trong plan/06-prompt-xe.md, mục 3. Bọ Lôi), người dùng có thể đã chỉnh thêm trong ChatGPT.
+Prompt: plan/06-prompt-xe.md, mục 3. Bọ Lôi (bản tiếng Anh, bắn từ đít, không đuôi) + lệnh edit:
+"Edit this image: remove the long segmented tail completely. Keep everything else exactly the same. Put the golden cup launcher with the glowing lightning orb directly on the rear end of the body, hugging the abdomen, opening straight backward to the left, exactly level with the head on the same horizontal axis, mirroring the head on the opposite end. Keep the big round golden pivot joint behind it. Plain white background."
 
 Xử lý (Python/PIL/scipy):
-- Xoá nền trắng, giữ thân + tia sét trang trí.
-- Tách đuôi phóng sét (vùng đa giác quanh đuôi, chừa khớp tròn vàng ở lại thân) thành barrel.png, xoay -37.9° cho trục khớp→quả cầu nằm ngang.
-- Thu thân về 192 px rộng, đuôi cùng tỉ lệ.
-- rig.json: reverse=true (xe quay đít về phía địch khi bắn, phóng sét từ đuôi), pivot = khớp tròn vàng ở đuôi.
+- Xoá nền trắng.
+- Tách cốc + quả cầu sét (phần bên trái khớp tròn vàng) thành barrel.png, lật ngang cho chĩa +x.
+- Khớp tròn vàng giữ lại trên thân, là tâm xoay (pivot).
+- Thu thân về 192 px rộng, nòng cùng tỉ lệ.
+- rig.json: reverse=true (quay đít về phía địch khi bắn).

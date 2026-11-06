@@ -188,5 +188,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/nhim-chum/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-nhim-chum.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Hedgehog Tank with Coral-Barreled Launcher\": xoá nền, tách quạt 5 ống phóng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay ống giữa về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/nhim-chum/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-nhim-chum.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Hedgehog Tank with Coral-Barreled Launcher\": xoá nền, tách quạt 5 ống phóng thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay ống giữa về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/nhim-chum/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

@@ -1,0 +1,18 @@
+{
+  "id": "thu-nghiem",
+  "name": "Bản đồ thử nghiệm",
+  "width": 2400,
+  "height": 1200,
+  "terrain": "terrain.png",
+  "backgrounds": [],
+  "spawnZones": {
+    "A": {
+      "x1": 100,
+      "x2": 600
+    },
+    "B": {
+      "x1": 1800,
+      "x2": 2300
+    }
+  }
+}

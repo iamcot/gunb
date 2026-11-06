@@ -1,0 +1,16 @@
+[
+  {
+    "file": "maps/thu-nghiem/terrain.png",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs (noise sin, seed cố định)",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "maps/thu-nghiem/map.json",
+    "author": "Dự án gunb",
+    "source": "Sinh bằng scripts/gen-test-map.mjs",
+    "license": "Tự tạo",
+    "url": ""
+  }
+]

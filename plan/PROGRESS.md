@@ -6,10 +6,10 @@
 - [x] Viết plan: 00-overview, 01-kha-thi, 02-phases, 03-assets, CLAUDE.md
 
 ## Phase 0 – Khung dự án
-- [ ] 0.1 Monorepo + scripts
-- [ ] 0.2 Hằng số, math, RNG, protocol rỗng
-- [ ] 0.3 TerrainMask ⚠️
-- [ ] 0.4 Định dạng bản đồ + bản đồ thử + render tĩnh
+- [x] 0.1 Monorepo + scripts — workspaces shared/server/client (@gunb/*), vite + tsx watch, dev.mjs, typecheck + vitest pass; local Node 22 (nvmrc ghi 24)
+- [x] 0.2 Hằng số, math, RNG, protocol rỗng — constants/branding/math (Vec2, mulberry32, hashSeed)/protocol (msgpack, MsgType.Hello)
+- [x] 0.3 TerrainMask ⚠️ — mask.ts (fromAlpha, isSolid, carveCircle trả DirtyRect, hash FNV-1a), surface.ts (groundYBelow, slopeAt dương = dốc lên bên phải); 9 test
+- [x] 0.4 Định dạng bản đồ + bản đồ thử + render tĩnh — map/types+parseMap, scripts/gen-test-map.mjs (PNG tự ghi bằng zlib, không thêm thư viện), client Pixi 8.6.6 + camera (chuột phải kéo / WASD) + F3; assets.test.ts kiểm tra CREDITS.json
 
 ## Phase 1 – Bắn offline ⚠️
 - [ ] 1.1 stepProjectile + va chạm mask

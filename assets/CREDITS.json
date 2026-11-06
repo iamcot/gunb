@@ -388,5 +388,36 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/bo-loi/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Glowing Electric Orb Trio\": xoá nền, cắt riêng từng viên (chùm ba lấy 1 quả), thu nhỏ"
+  },
+  {
+    "file": "mobiles/bo-loi/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

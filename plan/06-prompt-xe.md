@@ -98,3 +98,66 @@ Tính cách: hiệp sĩ cao quý, oai phong.
 ## Sau khi có ảnh
 
 Gửi ảnh vào thread, mình sẽ: xoá nền, tách bộ phận vũ khí thành hình riêng, vá chỗ nó che, thu về 192 px chiều ngang, đo khớp xoay / miệng phóng / chỗ ngồi phi công cho `assets/mobiles/<id>/rig.json`, rồi đưa vào game.
+
+---
+
+# Prompt tiếng Anh (dùng cái này nếu Dreamina hiểu tiếng Việt kém)
+
+AI tạo ảnh hiểu tiếng Anh tốt hơn nhiều. Mỗi prompt xếp theo thứ tự quan trọng: **góc nhìn → vũ khí (to) → thân → buồng lái → style**. Sửa phần mô tả thì giữ nguyên thứ tự này.
+
+**Negative prompt (dùng chung):**
+```
+3d render, three-quarter view, perspective, isometric, front view, pixel art, person, pilot, human face on cockpit, small weapon, extra gun turret, text, watermark, background scenery, ground shadow
+```
+
+**Đuôi style (đã có ở cuối mỗi prompt):** `Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.`
+
+### 1. Ốc Thiết Giáp
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a mechanical snail. Its weapon is a HUGE brass cannon growing out of the center of the spiral shell, almost as long as the body, on a big round pivot joint, pointing diagonally up and forward to the right. Big riveted spiral metal shell striped coral and cream, soft light-green snail body, head raised with two eye stalks and big friendly eyes, small tank tread underneath. Small open cockpit between shell and head with an empty seat and two control levers, the head is separate from the cockpit. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 2. Chũi Khoan
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a mining mole. Its weapon is its snout: a HUGE spiral drill bit, steel grey with coral stripes, almost as long as the body, attached to the head by a big round pivot joint, pointing diagonally up and forward to the right. Chubby body of muddy earth-brown metal plates, yellow miner helmet with a small headlamp, big shovel claws, short tank treads, exhaust pipe puffing smoke at the back, eager grin. Small open cockpit on its back with an empty wooden seat and two control levers. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 3. Bọ Lôi
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a robot beetle. Its weapon is its tail: a HUGE lightning orb launcher almost as long as the body, brass rings and a glowing yellow muzzle holding a crackling lightning ball, attached at the rear by a big round pivot joint, curving up over the back like a scorpion tail and pointing diagonally up and forward to the right. Glossy round sky-blue shell with yellow lightning stripes, two copper coil antennae with small sparks, six short mechanical legs, a small separate head at the front with big clever eyes. Small open cockpit on top of the shell with an empty seat and control levers wired to the tail. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 4. Cua Lăn
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a sea crab. Its weapon is one HUGE mechanical claw, almost as long as the body, attached to the shoulder by a big round pivot joint, holding a round stone ball ready to throw, raised diagonally up and forward to the right. Wide coral-red shell with cream spots, cream belly armor, short crab legs ending in wheels, a few barnacles and a coil of rope on the shell, eye stalks with a tough confident look. Small open cockpit on top of the shell with an empty seat and two control levers. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 5. Diều Hâu Giấy
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi vehicle shaped like a hawk made of paper and bamboo. Its weapon is its head and neck: a HUGE bamboo crossbow almost as long as the body, the beak holding a folded paper dart, attached to the body by a big round pivot joint, raised diagonally up and forward to the right. Light bamboo frame tied with string, folded paper kite wings in cream and sky blue tucked at the sides, long kite tail with coral ribbons, small paper pinwheel at the back, two spoked wooden wheels, playful eyes. Open wooden seat in the middle under the wings, empty, with reins leading to the neck. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 6. Nhím Chùm
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a round robot hedgehog. Its weapon is a HUGE bundle of five thick spike launcher tubes fanned out like a flower, coral tips, almost as long as the body, on a big round pivot joint on its back, pointing diagonally up and forward to the right. Ball-shaped body covered in short rounded steel spikes with coral tips, cream face plate, grumpy cute frowning eyes, puffed cheeks, short tank treads. Small round open hatch cockpit on top among the spikes with an empty seat and a control lever. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 7. Sứa Đèn
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi vehicle shaped like a jellyfish lantern. Its weapon is one HUGE stiff brass tentacle almost as long as the body, attached to the rim of the bell by a big round pivot joint, curving up and pointing diagonally up and forward to the right, ending in a big glowing lantern holding a ball of light. Transparent glass bell dome glowing soft teal inside, riveted brass frame, wavy rim, short dangling cable tentacles with tiny bulbs, floating on two hover pads, sleepy absent-minded eyes. Empty seat inside the glass dome with a control lever, dome hatch half open. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 8. Rùa Thành
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi vehicle shaped like an old tortoise carrying a small stone castle on its back. Its weapon is the castle tower turned into a HUGE catapult arm with a bucket holding a boulder, almost as long as the body, on a big round pivot joint on top of the castle, pointing diagonally up and forward to the right. Stone castle shell with crenellated walls, arched windows, moss and grass and tiny flowers on top, old wise tortoise head with long white beard and bushy eyebrows, four thick pillar legs. Small open cockpit at the castle gate in front with an empty stone seat and a chain lever. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 9. Long Ngư Cơ
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like a golden carp turning into a dragon. Its weapon is its HUGE dragon head with an open fire-breathing mouth glowing orange, almost as long as the body, attached by a big round neck pivot joint, raised diagonally up and forward to the right. Sleek body with layered golden scales, bright coral fins, long flowing whiskers, flame-shaped tail, hovering on two small jet engines with orange flames, proud sharp eyes. Saddle-style open cockpit on the back with an empty seat and reins leading to the head. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```
+
+### 10. Kỳ Lân Sắt
+```
+2D game sprite, strict side view facing right, flat orthographic profile, whole vehicle visible. A cute chibi mech vehicle shaped like an iron unicorn war horse. Its weapon is its head with a HUGE spiral golden horn shaped like a jousting lance, almost as long as the body, the head attached by a big round neck pivot joint, raised diagonally up and forward to the right. Polished silver armor with gold and cream trim, mane of flowing coral ribbons, four strong mechanical legs with brass hooves, noble heroic eyes. Knight saddle cockpit on the back with an empty seat and reins leading to the head. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background, no shadow, no text, no logo.
+```

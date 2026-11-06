@@ -40,6 +40,7 @@ export class OnlineMode implements Mode {
   private pendingMask: TerrainMask | null = null
   private gotSnapshot = false
   private lastTurnPlayer = -1
+  private focusedSelf = false
   private lastHash: boolean | null = null
   private resyncs = 0
   private inputT = 0
@@ -120,7 +121,10 @@ export class OnlineMode implements Mode {
     this.lastDir = -9; this.lastAngle = -9; this.inputT = 1
     if (p.id === this.start.youId) audio.turn()
     this.ctx.hud.setWind(this.match.wind)
-    this.ctx.focus.x = this.tx[p.id]!; this.ctx.focus.y = this.ty[p.id]!; this.ctx.focus.t = 1.2
+    // lượt đầu trận: camera về xe của mình trước (lượt đầu có thể là của đối thủ)
+    const f = this.focusedSelf ? p.id : this.start.youId
+    this.focusedSelf = true
+    this.ctx.focus.x = this.tx[f]!; this.ctx.focus.y = this.ty[f]!; this.ctx.focus.t = 1.2
   }
 
   private fire(angle: number, power: number, slot: ShotSlot): void {

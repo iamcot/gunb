@@ -1,4 +1,4 @@
-# gunb – game bắn tọa độ 2D theo lượt trên web (tên tạm "Pháo Gió")
+# gunb – game bắn tọa độ 2D theo lượt trên web: Gun Storm
 
 Game artillery theo lượt chạy trên trình duyệt: căn góc, tích lực, đọc gió, phá địa hình, thứ tự lượt theo delay, chơi online với bạn bè. Thiết kế riêng (tên, xe, bản đồ, hình, nhạc), lấy cảm hứng từ dòng game bắn tọa độ những năm 2000.
 

@@ -1,6 +1,6 @@
-# 00 – Tổng quan: game bắn tọa độ trên web (tên tạm "Pháo Gió")
+# 00 – Tổng quan: Gun Storm, game bắn tọa độ trên web
 
-> Tên **"Pháo Gió"** chỉ là tên tạm. Đổi tên chỉ cần sửa `shared/src/branding.ts` và file này.
+> Tên game: **"Gun Storm"** (mã dự án nội bộ: GunB). Đổi tên chỉ cần sửa `shared/src/branding.ts` và file này.
 
 ## Cách dùng bộ plan này
 

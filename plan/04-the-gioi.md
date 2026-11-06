@@ -1,6 +1,6 @@
 # 04 – Thế giới: tên xe, nhân vật, cấp bậc
 
-Toàn bộ tên là thiết kế riêng, không trùng tên xe/nhân vật của game nào. **Tên game chưa chốt** (tạm "Pháo Gió", xem `shared/src/branding.ts`); GunB dùng làm tên nội bộ của repo.
+Toàn bộ tên là thiết kế riêng, không trùng tên xe/nhân vật của game nào. Tên game: **Gun Storm** (xem `shared/src/branding.ts`); GunB là mã dự án nội bộ.
 
 ## Xe (mobile)
 

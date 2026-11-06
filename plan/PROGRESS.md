@@ -12,11 +12,11 @@
 - [x] 0.4 Định dạng bản đồ + bản đồ thử + render tĩnh — map/types+parseMap, scripts/gen-test-map.mjs (PNG tự ghi bằng zlib, không thêm thư viện), client Pixi 8.6.6 + camera (chuột phải kéo / WASD) + F3; assets.test.ts kiểm tra CREDITS.json
 
 ## Phase 1 – Bắn offline ⚠️
-- [ ] 1.1 stepProjectile + va chạm mask
-- [ ] 1.2 simulateShot + ShotResult
-- [ ] 1.3 Điều khiển ngắm + thanh lực
-- [ ] 1.4 Playback + camera theo đạn + hiệu ứng tạm
-- [ ] 1.5 Gió + bia tập bắn + bảng chỉnh số F6
+- [x] 1.1 stepProjectile + va chạm mask — physics/projectile.ts (Euler bán ẩn, quét đoạn ≤1px); test tầm xa v²/g sai số <1%, không xuyên tấm 2px
+- [x] 1.2 simulateShot + ShotResult — shot/simulateShot.ts (đạn `basic`, quỹ đạo [t,x,y], events explode/carve/damage/out, hash sau bắn); thông số trong tuning.ts + shots.ts; sanitizeFire; aim.ts, wind.ts
+- [x] 1.3 Điều khiển ngắm + thanh lực — client/input.ts (↑↓ giữ để tăng tốc, ←→ quay hướng, Space tích lực), hud.ts (góc, lực + vạch lực lần trước, gió)
+- [x] 1.4 Playback + camera theo đạn + hiệu ứng tạm — playback.ts, fx.ts (vòng nổ + rung), terrainView.ts (hố + viền cháy, lớp phủ mask F3), mũi tên khi đạn bay quá mép trên
+- [x] 1.5 Gió + bia tập bắn + bảng chỉnh số F6 — practice.ts (xe + 3 bia, chọn chỗ đứng phẳng nhất), G/H/R, tuningPanel.ts (F6, Copy JSON); xe chưa rơi khi mất đất (Phase 2)
 
 ## Phase 2 – Xe + lượt (hotseat) ⚠️
 - [ ] 2.1 mobileMove

@@ -19,4 +19,9 @@ export class Camera {
     const maxY = this.mapH - this.viewH
     this.y = maxY <= minY ? maxY : clamp(this.y + dy, minY, maxY)
   }
+
+  /** Đưa tâm khung nhìn tới (x, y) bản đồ, mượt theo hệ số k (0..1). */
+  follow(x: number, y: number, k: number): void {
+    this.pan((x - this.viewW / 2 - this.x) * k, (y - this.viewH / 2 - this.y) * k)
+  }
 }

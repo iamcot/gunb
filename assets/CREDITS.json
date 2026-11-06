@@ -257,5 +257,51 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/long-ngu-co/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-long-ngu-co.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Golden Dragon-Carp Airship\": xoá nền, tách đầu rồng + cổ + bờm thành nòng xoay quanh đĩa vàng ở cổ (nòng vẽ sau đĩa), hướng phun lửa xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/long-ngu-co/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-long-ngu-co.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Golden Dragon-Carp Airship\": xoá nền, tách đầu rồng + cổ + bờm thành nòng xoay quanh đĩa vàng ở cổ (nòng vẽ sau đĩa), hướng phun lửa xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/long-ngu-co/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/ky-lan-sat/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-ky-lan-sat.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mechanical Unicorn War Mount\": xoá nền, tách đầu + sừng + đĩa vàng ở má thành nòng xoay quanh đĩa, hướng sừng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/ky-lan-sat/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-ky-lan-sat.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Mechanical Unicorn War Mount\": xoá nền, tách đầu + sừng + đĩa vàng ở má thành nòng xoay quanh đĩa, hướng sừng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/ky-lan-sat/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

@@ -1,0 +1,8 @@
+Long Ngư Cơ (long-ngu-co, xe ẩn) – ảnh "Golden Dragon-Carp Airship" vẽ bằng ChatGPT (06/11/2026),
+dùng prompt tiếng Anh mục "9. Long Ngư Cơ" trong plan/06-prompt-xe.md.
+
+Xử lý:
+- Xoá nền trắng.
+- "Nòng" = đầu rồng + bờm + cổ, xoay quanh đĩa vàng ở cổ (915,530 ảnh gốc), vẽ sau đĩa. Lửa phun ra từ miệng; hướng miệng (~8° lên) xoay về nằm ngang.
+- Thân thu về 192 px.
+- Lưu ý: shared/ chưa có MobileDef cho xe này nên ảnh chưa xuất hiện trong trận; thêm xe vào shared/src/mobiles là tự dùng ảnh.

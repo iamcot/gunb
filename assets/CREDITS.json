@@ -73,5 +73,28 @@
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
     "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/body.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xoá nền, tách nòng khỏi thân, vá vỏ ốc chỗ nòng che, nòng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/barrel.png",
+    "author": "IamCoT (tạo bằng Dreamina)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-oc-thiet-giap.txt",
+    "license": "AI (Dreamina, gói free)",
+    "url": "",
+    "modified": "Xoá nền, tách nòng khỏi thân, vá vỏ ốc chỗ nòng che, nòng xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

@@ -44,7 +44,7 @@
 - [x] 5.1 Bot — shared/bot.ts: `planShot` (mô phỏng thật: quét góc, chia đôi lực, tinh chỉnh; 3 mức Dễ/Vừa/Khó với sai số cố ý) + `BotDriver` (ngắm dần, đi tới địch nếu không có phát nào trúng, rồi bắn). Khó trúng ~82%, ~58 ms/lần; test: trong dải góc, xác định, không sửa trận, <100 ms. `ShotInput.skipHash` để bot bỏ tính hash
 - [x] 5.2 Bot vào phòng + chế độ offline — chủ phòng bấm "+ Máy" (chọn mức, đội) / ✕ để bỏ; menu "Chơi với máy" 1v1..4v4 (người đội Xanh, máy đội Đỏ), chạy hoàn toàn trên trình duyệt
 - [x] 5.3 Bảng kết quả — shared/stats.ts (sát thương, hạ gục, số phát, vụ nổ sát địch nhất), client/results.ts; online: server gửi Stats khi hết trận, về phòng chờ giữ nguyên đội sau 8 s
-- [ ] 5.4 Bản đồ đầu tiên "thật" — phần code đã xong: nền parallax (client/background.ts, dùng `backgrounds` của map.json, không có thì tự vẽ), âm thanh + nhạc nền tạo bằng code (client/audio.ts, nút 🔊 bật/tắt). CÒN: ảnh địa hình + nền + nhạc thật theo `plan/05-prompt-asset-map.md`, và đọc `music` từ map.json khi có file. Ảnh Dreamina đã có: assets/maps/dao-noi-ve (terrain + 3 lớp nền, chưa có nhạc, chưa đặt làm mặc định; mở bằng `?map=dao-noi-ve`)
+- [ ] 5.4 Bản đồ đầu tiên "thật" — phần code đã xong: nền parallax (client/background.ts, dùng `backgrounds` của map.json, không có thì tự vẽ), âm thanh + nhạc nền tạo bằng code (client/audio.ts, nút 🔊 bật/tắt). CÒN: ảnh địa hình + nền + nhạc thật theo `plan/05-prompt-asset-map.md`, và đọc `music` từ map.json khi có file. Ảnh Dreamina đã có: assets/maps/dao-noi-ve (terrain + 3 lớp nền, chưa có nhạc, chưa đặt làm mặc định; đã đặt làm map mặc định trong client; nhạc music.ogg đã có nhưng client chưa phát)
 
 ## Phase 6 – Nội dung
 - [x] 6.1 Thêm 5 pháo — Cua Lăn (roller), Diều Hâu Giấy (windFactor âm), Nhím Chùm (spread), Sứa Đèn (pierce), Rùa Thành (build, đắp đất: event `fill`, `TerrainMask.fillCircle`); mỗi hành vi có test (shots2.test.ts). Pháo ẩn Long Ngư Cơ / Kỳ Lân Sắt chưa làm
@@ -54,3 +54,4 @@
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.
+- [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (Dreamina, nòng gắn ở buồng lái). Chưa: 9 xe còn lại, sprite phi công (`pilot` trong rig)

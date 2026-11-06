@@ -1,6 +1,6 @@
 # 06 – Prompt vẽ xe (mobile) cho Gun Storm
 
-Dùng cùng style bible với bản đồ để đồng bộ. Mỗi xe: tạo **thân xe không có nòng** + **nòng riêng** (2 lần tạo), hoặc tạo 1 ảnh có nòng rồi tách tay trong Krita.
+Dùng cùng style bible với bản đồ để đồng bộ. Mỗi xe: tạo **1 ảnh có súng gắn ngay buồng lái** (phi công cầm tay cầm để ngắm), nòng chĩa lên khoảng trống để dễ cắt ra. Nòng sẽ được tách thành file riêng và xoay bằng code; chỉ dùng prompt nòng riêng khi súng che nhiều thân.
 
 Nhắc luật (`03-assets.md`): không đưa tên game/xe thương mại vào prompt, không vẽ "giống hệt" xe của game khác. Lưu prompt vào `assets/source/prompts/xe-<id>.txt`, ghi license vào `assets/CREDITS.json`.
 
@@ -23,7 +23,7 @@ Bản cho xe bỏ "no characters" (để AI không bỏ luôn ghế lái) và "S
 
 ## Khung chung cho thân xe
 
-> {style bible}. 2D game sprite of a small cute armored artillery vehicle, **{mô tả xe}**, **flat 2D, strict orthographic side profile facing right, no perspective, no 3D, no depth, only the near side visible (one tread / one row of wheels, one eye)**, chunky toy-like proportions, compact body fits in a 4:3 frame, small wheels or legs at the bottom, **an empty open cockpit with one small seat and a low windshield for a pilot, {vị trí ghế}, the seat is empty**, a round mounting socket next to the cockpit where a cannon attaches, **no cannon barrel**, big expressive eye, smooth hand-painted look, **not pixel art**, plain solid white background, centered, full body visible, no shadow on the ground.
+> {style bible}. 2D game sprite of a small cute armored artillery vehicle, **{mô tả xe}**, **flat 2D, strict orthographic side profile facing right, no perspective, no 3D, no depth, only the near side visible (one tread / one row of wheels, one eye)**, chunky toy-like proportions, compact body fits in a 4:3 frame, small wheels or legs at the bottom, **an empty open cockpit with one small seat and a low windshield for a pilot, {vị trí ghế}, the seat is empty**, **a short cannon on a swivel mount right at the front edge of the cockpit, with two handles reaching back toward the seat so the pilot aims it by hand, the barrel points up-right into empty space and does not overlap the body**, big expressive eye, smooth hand-painted look, **not pixel art**, plain solid white background, centered, full body visible, no shadow on the ground.
 
 **Vì sao ghế trống:** phi công (Tí Gió, Bà Sáu Khoan...) sẽ là sprite riêng đặt vào ghế, để sau này thay trang phục/nhân vật không phải vẽ lại xe. Ghi thêm `pilot` (điểm ngồi) vào `rig.json`. Nếu AI vẫn vẽ người ngồi trong ghế: thêm *"unoccupied seat, nobody inside"*.
 

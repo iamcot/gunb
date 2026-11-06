@@ -1,11 +1,51 @@
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { TEAM_NAMES, TUNING, aimDir, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const FAN_RADIUS = 80
 
-interface View { root: Container; body: Graphics; barrel: Graphics; bar: Graphics; marker: Text }
+interface View { root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null }
+
+/** `assets/mobiles/<id>/rig.json`. Toạ độ chuẩn hoá 0..1 theo ảnh tương ứng. */
+interface Rig {
+  body: string; barrel: string
+  width: number                 // bề rộng thân khi vẽ (px bản đồ)
+  ground: [number, number]      // điểm trên ảnh thân đặt tại đáy xe (b.x, b.y + radius)
+  pivot: [number, number]       // điểm gắn nòng trên ảnh thân
+  barrelPivot: [number, number] // tâm xoay trên ảnh nòng (nòng vẽ nằm ngang, chĩa sang phải)
+  muzzle: [number, number]      // đầu nòng trên ảnh nòng
+  pilot?: [number, number]      // chỗ ngồi phi công (chưa dùng)
+}
+interface RigArt { rig: Rig; body: Texture; barrel: Texture }
+/** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number }
+
+const rigCache = new Map<string, Promise<RigArt | null>>()
+
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  const img = new Image()
+  img.src = url
+  await img.decode()
+  return img
+}
+
+/** Tải ảnh xe nếu có (`/mobiles/<id>/rig.json`); không có thì trả null để vẽ hình khối. */
+function loadRig(mobileId: string): Promise<RigArt | null> {
+  let p = rigCache.get(mobileId)
+  if (!p) {
+    const base = `/mobiles/${encodeURIComponent(mobileId)}/`
+    p = (async () => {
+      const res = await fetch(base + 'rig.json')
+      if (!res.ok) return null
+      const rig = await res.json() as Rig
+      const [body, barrel] = await Promise.all([loadImage(base + rig.body), loadImage(base + rig.barrel)])
+      return { rig, body: Texture.from(body), barrel: Texture.from(barrel) }
+    })().catch(() => null)
+    rigCache.set(mobileId, p)
+  }
+  return p
+}
 
 /** Vẽ xe (hình khối tạm) cho mọi người chơi: thân nghiêng theo dốc, nòng xoay theo góc, tên + thanh máu, mũi tên người đến lượt, hình quạt dải góc. */
 export class VehicleViews {
@@ -28,8 +68,29 @@ export class VehicleViews {
       marker.visible = false
       root.addChild(body, barrel, bar, name, marker)
       this.container.addChild(root)
-      this.views.set(p.id, { root, body, barrel, bar, marker })
+      const view: View = { root, body, barrel, bar, name, marker, art: null }
+      this.views.set(p.id, view)
+      void loadRig(p.mobileId).then(ra => { if (ra && !root.destroyed) this.attachArt(view, ra, p.body.radius) })
     }
+  }
+
+  private attachArt(v: View, ra: RigArt, radius: number): void {
+    const { rig } = ra
+    const k = rig.width / ra.body.width
+    const frame = new Container()
+    const body = new Sprite(ra.body)
+    body.anchor.set(rig.ground[0], rig.ground[1])
+    body.scale.set(k)
+    body.position.set(0, radius)
+    const barrel = new Sprite(ra.barrel)
+    barrel.anchor.set(rig.barrelPivot[0], rig.barrelPivot[1])
+    barrel.scale.set(k)
+    barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
+    frame.addChild(body, barrel)
+    v.root.addChildAt(frame, 0)
+    v.body.visible = false
+    v.barrel.visible = false
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -51,6 +112,16 @@ export class VehicleViews {
     v.root.position.set(b.x, b.y)
     v.root.alpha = alive ? 1 : 0.35
     v.root.visible = b.alive || hp > 0 || true
+    if (v.art) {
+      const a = v.art
+      a.frame.rotation = -b.tilt
+      a.frame.scale.x = b.facing
+      a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
+      const d = aimDir(this.tmp, p.aimAngle, 1, 0)   // hướng nòng trong khung của xe (đã lật + nghiêng)
+      a.barrel.rotation = Math.atan2(d.y, d.x)
+      this.drawLabels(v, p, hp, alive, isCur, a.top)
+      return
+    }
     v.body.clear()
     v.body.rotation = -b.tilt
     v.body.roundRect(-r, -r * 0.6, r * 2, r * 1.2, 5).fill(alive ? TEAM_COLORS[p.team] : 0x777777).stroke({ color: TEAM_DARK[p.team], width: 2 })
@@ -59,14 +130,20 @@ export class VehicleViews {
     const d = aimDir(this.tmp, p.aimAngle, b.facing, b.tilt)
     v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
+    this.drawLabels(v, p, hp, alive, isCur, -30)
+  }
+
+  /** Thanh máu, tên, mũi tên lượt; `top` là mép trên của hình xe (so với tâm). */
+  private drawLabels(v: View, p: PlayerState, hp: number, alive: boolean, isCur: boolean, top: number): void {
     v.bar.clear()
     if (alive) {
       const w = 40, k = Math.max(0, Math.min(1, hp / p.maxHp))
-      v.bar.rect(-w / 2, -38, w, 5).fill(0x000000)
-      v.bar.rect(-w / 2 + 1, -37, (w - 2) * k, 3).fill(k > 0.5 ? 0x4ade80 : k > 0.25 ? 0xfacc15 : 0xef4444)
+      v.bar.rect(-w / 2, top - 8, w, 5).fill(0x000000)
+      v.bar.rect(-w / 2 + 1, top - 7, (w - 2) * k, 3).fill(k > 0.5 ? 0x4ade80 : k > 0.25 ? 0xfacc15 : 0xef4444)
     }
+    v.name.position.set(0, top - 14)
     v.marker.visible = isCur
-    v.marker.position.set(0, -58 + Math.sin(this.bob) * 3)
+    v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
   }
 
   /** Hình quạt dải góc hợp lệ (angleMin..angleMax của pháo) + vạch góc hiện tại của người đến lượt. */

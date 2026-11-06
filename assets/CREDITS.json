@@ -142,5 +142,28 @@
     "source": "Đo tay trên ảnh gốc",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "mobiles/cua-lan/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cua-lan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Crab Crusher with Boulder Claw\": xoá nền (cả khe trắng trong kìm), tách cánh tay kìm + cục đá thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/cua-lan/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cua-lan.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Chibi Crab Crusher with Boulder Claw\": xoá nền (cả khe trắng trong kìm), tách cánh tay kìm + cục đá thành nòng xoay quanh đĩa vàng (nòng vẽ sau đĩa), xoay về nằm ngang, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/cua-lan/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo tay trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
   }
 ]

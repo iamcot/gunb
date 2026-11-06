@@ -46,5 +46,11 @@
 - [x] 5.3 Bảng kết quả — shared/stats.ts (sát thương, hạ gục, số phát, vụ nổ sát địch nhất), client/results.ts; online: server gửi Stats khi hết trận, về phòng chờ giữ nguyên đội sau 8 s
 - [ ] 5.4 Bản đồ đầu tiên "thật" — phần code đã xong: nền parallax (client/background.ts, dùng `backgrounds` của map.json, không có thì tự vẽ), âm thanh + nhạc nền tạo bằng code (client/audio.ts, nút 🔊 bật/tắt). CÒN: ảnh địa hình + nền + nhạc thật theo `plan/05-prompt-asset-map.md`, và đọc `music` từ map.json khi có file
 
-## Phase 6–9
+## Phase 6 – Nội dung
+- [x] 6.1 Thêm 5 pháo — Cua Lăn (roller), Diều Hâu Giấy (windFactor âm), Nhím Chùm (spread), Sứa Đèn (pierce), Rùa Thành (build, đắp đất: event `fill`, `TerrainMask.fillCircle`); mỗi hành vi có test (shots2.test.ts). Pháo ẩn Long Ngư Cơ / Kỳ Lân Sắt chưa làm
+- [ ] 6.2 Thêm bản đồ — chưa làm (cần ảnh; có thể làm bản sinh bằng code)
+- [x] 6.3 Thời tiết — shared/weather.ts: Cột lốc, Mây giông, Gương nước, Cổng đôi; suy ra từ seed+lượt (không cần đồng bộ thêm), chance trong `Tuning.weather`; client vẽ + chữ báo (weatherView.ts)
+- [x] 6.4 Cân bằng — `npm run balance` (bot đấu bot, mọi cặp pháo), kết quả `plan/balance-report.md`; đã chỉnh 3 vòng
+
+## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.

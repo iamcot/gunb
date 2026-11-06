@@ -2,6 +2,7 @@ import { MAX_PLAYERS, MAX_TURNS } from './constants'
 import { clamp, hashSeed, mulberry32 } from './math'
 import { createBody, stepMobile, type MobileBody, type MoveResult } from './physics/mobileMove'
 import { simulateShot, sanitizeFire } from './shot/simulateShot'
+import { weatherForTurn, type Weather } from './weather'
 import type { ShotResult, ShotVehicle } from './shot/types'
 import type { ShotSlot } from './shots'
 import type { MobileDef } from './mobiles'
@@ -119,6 +120,9 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
   return state
 }
 
+/** Sự kiện thời tiết của lượt hiện tại (null nếu không có). */
+export const weatherOf = (s: MatchState, mapW: number, mapH: number, t: Tuning = TUNING): Weather | null => weatherForTurn(s.seed, s.turnNo, mapW, mapH, t.weather)
+
 export const currentPlayer = (s: MatchState): PlayerState => s.players[s.turnPlayerId]!
 
 /** Mọi xe còn sống đều đã đứng trên đất (không còn xe đang rơi). */
@@ -173,7 +177,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       if (a.slot === 2 && p.ss < t.ss.max) return { ok: false }   // SS chưa đầy
       const def = t.mobiles[p.mobileId]!
       const fire = sanitizeFire({ angle: a.angle, power: a.power, slot: a.slot }, def)
-      const shot = simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire }, t)
+      const shot = simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire, weather: weatherOf(s, env.mask.width, env.mask.height, t) }, t)
       env.mask.data.set(shot.maskAfter.data)
       if (fire.slot === 2) p.ss = 0
       for (const e of shot.events) {

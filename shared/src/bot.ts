@@ -1,6 +1,6 @@
 import { clamp } from './math'
 import { mulberry32 } from './math'
-import { currentPlayer, vehicles, type MatchState } from './match'
+import { currentPlayer, vehicles, weatherOf, type MatchState } from './match'
 import { sanitizeFire, simulateShot } from './shot/simulateShot'
 import type { ShotSlot } from './shots'
 import type { TerrainMask } from './terrain/mask'
@@ -38,6 +38,7 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
   const veh = vehicles(state)
   const team = me.team
   const facing = me.body.facing
+  const weather = weatherOf(state, mask.width, mask.height, tuning)
 
   // địch sống gần nhất theo phương ngang
   let target = -1, bestDx = Infinity
@@ -50,7 +51,7 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
 
   const evaluate = (angle: number, power: number, slot: ShotSlot): Cand => {
     const fire = sanitizeFire({ angle, power, slot }, def)
-    const r = simulateShot({ mask, vehicles: veh, wind: state.wind, shooterId: me.id, facing, tilt: me.body.tilt, fire, skipHash: true }, tuning)
+    const r = simulateShot({ mask, vehicles: veh, wind: state.wind, shooterId: me.id, facing, tilt: me.body.tilt, fire, skipHash: true, weather }, tuning)
     let enemy = 0, score = 0, landX = NaN
     for (const e of r.events) {
       if (Number.isNaN(landX) && (e.kind === 'explode' || e.kind === 'out')) landX = e.x

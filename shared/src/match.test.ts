@@ -170,9 +170,11 @@ describe('3 pháo + thanh SS', () => {
 
   it('mỗi pháo có máu/giáp/nhiên liệu riêng', () => {
     const { s } = duel('chui-khoan', 'bo-loi')
-    expect(s.players[0]!.maxHp).toBe(100)
-    expect(s.players[1]!.maxHp).toBe(90)
-    expect(s.players[0]!.body.fuel).toBe(140)
+    const def = createDefaultTuning().mobiles
+    expect(s.players[0]!.maxHp).toBe(def['chui-khoan']!.hp)
+    expect(s.players[1]!.maxHp).toBe(def['bo-loi']!.hp)
+    expect(s.players[0]!.maxHp).not.toBe(s.players[1]!.maxHp)
+    expect(s.players[0]!.body.fuel).toBe(def['chui-khoan']!.fuel)
   })
 
   it('SS: chưa đầy thì không bắn được; đầy thì bắn được và về 0', () => {

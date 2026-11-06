@@ -9,6 +9,7 @@
     "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client",
     "test": "vitest run",
     "play": "npm run build && npm run start -w server",
+    "balance": "tsx scripts/balance.ts",
     "gen-test-map": "node scripts/gen-test-map.mjs"
   },
   "devDependencies": {

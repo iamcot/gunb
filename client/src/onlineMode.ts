@@ -1,5 +1,5 @@
 import {
-  MsgType, TEAM_NAMES, TUNING, applySnapshot, createMatch, currentPlayer,
+  MsgType, TEAM_NAMES, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
 } from '@gunb/shared'
 import { audio } from './audio'
@@ -11,6 +11,7 @@ import { ShotPlayback } from './playback'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
+import { WeatherView } from './weatherView'
 
 const HELP = '↑↓ góc · ←→ đi · 1/2/3 chọn đạn · giữ Space tích lực, nhả để bắn · WASD / chuột phải kéo camera · Esc: rời trận'
 const EASE = 25               // độ mượt khi kéo vị trí hiển thị về vị trí server (1/s)
@@ -26,6 +27,7 @@ export class OnlineMode implements Mode {
   readonly match: MatchState
   private readonly aim = new AimInput(true)
   private readonly vehicles: VehicleViews
+  private readonly weather: WeatherView
   private readonly turnHud = new TurnHud()
   private readonly shotBar = new ShotBar(slot => { if (slot !== 2 || this.aim.ssReady) this.aim.slot = slot })
   private readonly shownHp = new Map<number, number>()
@@ -57,7 +59,9 @@ export class OnlineMode implements Mode {
     this.tx = new Float64Array(n); this.ty = new Float64Array(n); this.tt = new Float64Array(n)
     ctx.view.applyMask(mask)
     this.vehicles = new VehicleViews(this.match)
-    ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
+    this.weather = new WeatherView(ctx.map.height)
+    ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
+    ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
@@ -158,6 +162,8 @@ export class OnlineMode implements Mode {
       if (this.pendingMask) { ctx.view.applyMask(this.pendingMask); this.pendingMask = null }
     }
     if (!this.playback) this.shownHp.clear()
+    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
+    this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const cur = currentPlayer(m)
@@ -201,6 +207,8 @@ export class OnlineMode implements Mode {
     this.overlay?.remove()
     this.ctx.world.removeChild(this.vehicles.container)
     this.vehicles.destroy()
+    this.ctx.world.removeChild(this.weather.container)
+    this.weather.destroy()
     this.ctx.fx.hideProjectiles()
   }
 }

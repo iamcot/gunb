@@ -1,6 +1,7 @@
 import type { TerrainMask } from '../terrain/mask'
 import type { ShotSlot } from '../shots'
 import type { Wind } from '../wind'
+import type { Weather } from '../weather'
 
 export interface ShotVehicle {
   id: number
@@ -28,11 +29,14 @@ export interface ShotInput {
   fire: FireCmd
   /** Bỏ tính hash địa hình sau phát bắn (terrainHashAfter = 0). Dành cho bot thử nhiều phát bắn, nơi chỉ cần sát thương. */
   skipHash?: boolean
+  /** Sự kiện thời tiết của lượt này (từ `weatherForTurn`), hoặc không có. */
+  weather?: Weather | null
 }
 
 export type ShotEvent =
   | { t: number; kind: 'explode'; x: number; y: number; r: number }
   | { t: number; kind: 'carve'; x: number; y: number; r: number }
+  | { t: number; kind: 'fill'; x: number; y: number; r: number }      // đắp đất (Rùa Thành)
   | { t: number; kind: 'damage'; id: number; amount: number; hpAfter: number }
   | { t: number; kind: 'out'; x: number; y: number }
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)

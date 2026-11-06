@@ -64,6 +64,24 @@ export class TerrainMask {
     return out
   }
 
+  /** Đắp đất hình tròn (ngược của carveCircle): chỉ biến ô trống thành đất. Cùng quy ước làm tròn/biên như carveCircle. */
+  fillCircle(cx: number, cy: number, r: number, out: DirtyRect = { x0: 0, y0: 0, x1: 0, y1: 0 }): DirtyRect {
+    const icx = Math.round(cx), icy = Math.round(cy), ir = Math.round(r)
+    const x0 = Math.max(0, icx - ir), x1 = Math.min(this.width, icx + ir + 1)
+    const y0 = Math.max(0, icy - ir), y1 = Math.min(this.height, icy + ir + 1)
+    out.x0 = x0; out.y0 = y0; out.x1 = Math.max(x0, x1); out.y1 = Math.max(y0, y1)
+    if (ir < 0 || x1 <= x0 || y1 <= y0) { out.x1 = out.x0; out.y1 = out.y0; return out }
+    const r2 = ir * ir
+    for (let y = y0; y < y1; y++) {
+      const dy = y - icy, row = y * this.width
+      for (let x = x0; x < x1; x++) {
+        const dx = x - icx
+        if (dx * dx + dy * dy <= r2) this.data[row + x] = 1
+      }
+    }
+    return out
+  }
+
   /** Số ô đất còn lại. */
   countSolid(): number {
     let n = 0

@@ -47,6 +47,7 @@
     .th-dot { width: 10px; height: 10px; border-radius: 50%; }
     .th-name { flex: 1; }
     .th-mob { opacity: .6; font-size: 10px; }
+    #weather { position: fixed; top: 44px; left: 50%; transform: translateX(-50%); background: #0f172acc; color: #fff; padding: 5px 14px; border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 4; }
     #mutebtn { position: fixed; top: 8px; left: 215px; font-size: 12px; padding: 3px 10px; z-index: 5; }
     #menubtn { position: fixed; top: 8px; left: 110px; font-size: 12px; padding: 3px 10px; display: none; }
 
@@ -57,8 +58,8 @@
     #shotbar button small { display: block; opacity: .7; font-size: 11px; }
     .sb-key { display: inline-block; background: #fff3; border-radius: 4px; padding: 0 6px; margin-right: 4px; }
     .ss-fill { position: absolute; left: 0; bottom: 0; height: 4px; background: #38bdf8; }
-    .cards { display: flex; gap: 8px; }
-    .card { flex: 1; min-width: 150px; background: #0f172a; border: 2px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; cursor: pointer; }
+    .cards { display: flex; flex-wrap: wrap; gap: 8px; }
+    .card { flex: 1 1 150px; max-width: 190px; min-width: 150px; background: #0f172a; border: 2px solid transparent; border-radius: 8px; padding: 8px; text-align: left; font-size: 12px; cursor: pointer; }
     .card.sel { border-color: #ffe14d; }
     .card b { font-size: 14px; }
     .bar { height: 5px; background: #fff2; border-radius: 3px; margin: 2px 0 5px; overflow: hidden; }

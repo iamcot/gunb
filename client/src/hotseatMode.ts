@@ -1,5 +1,5 @@
 import {
-  BotDriver, TEAM_NAMES, TUNING, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
+  BotDriver, TEAM_NAMES, TUNING, weatherOf, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
 } from '@gunb/shared'
 import { audio } from './audio'
@@ -10,6 +10,7 @@ import { resultsHtml } from './results'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
+import { WeatherView } from './weatherView'
 
 const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đạn (3 = SS khi đầy) · giữ Space tích lực, nhả để bắn · Esc: menu'
 const SETTLE_PAUSE = 0.3
@@ -23,6 +24,7 @@ export class HotseatMode implements Mode {
   private readonly mask: TerrainMask       // sự thật của trận; ctx.view.mask chỉ là bản hiển thị, được phát lại theo từng phát bắn
   private readonly aim = new AimInput(true)
   private readonly vehicles: VehicleViews
+  private readonly weather: WeatherView
   private readonly turnHud = new TurnHud()
   private readonly shotBar = new ShotBar(slot => { if (slot !== 2 || this.aim.ssReady) this.aim.slot = slot })
   private readonly shownHp = new Map<number, number>()
@@ -48,7 +50,9 @@ export class HotseatMode implements Mode {
     this.stats = newStats(this.match.players.length)
     this.bot = setup.botLevel ? new BotDriver(setup.botLevel) : null
     this.vehicles = new VehicleViews(this.match)
-    ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
+    this.weather = new WeatherView(ctx.map.height)
+    ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
+    ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
@@ -129,6 +133,8 @@ export class HotseatMode implements Mode {
       }
     }
     if (!this.playback && m.phase !== 'resolving') this.shownHp.clear()
+    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
+    this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const cur = currentPlayer(m)
@@ -166,6 +172,8 @@ export class HotseatMode implements Mode {
     this.overlay?.remove()
     this.ctx.world.removeChild(this.vehicles.container)
     this.vehicles.destroy()
+    this.ctx.world.removeChild(this.weather.container)
+    this.weather.destroy()
     this.ctx.fx.hideProjectiles()
   }
 }

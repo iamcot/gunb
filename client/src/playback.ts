@@ -33,6 +33,7 @@ export class ShotPlayback {
       switch (e.kind) {
         case 'explode': this.fx.explosion(e.x, e.y, e.r); audio.explode(e.r); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
+        case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
         case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break

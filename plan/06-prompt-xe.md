@@ -1,91 +1,95 @@
 # 06 – Prompt vẽ xe (mobile) cho Gun Storm
 
-Dùng cùng style bible với bản đồ để đồng bộ. Mỗi xe: tạo **1 ảnh có súng gắn ngay buồng lái** (phi công cầm tay cầm để ngắm), nòng chĩa lên khoảng trống để dễ cắt ra. Nòng sẽ được tách thành file riêng và xoay bằng code; chỉ dùng prompt nòng riêng khi súng che nhiều thân.
+Prompt viết bằng tiếng Việt để bạn dễ sửa. Mỗi xe có **một prompt hoàn chỉnh**, copy dán thẳng vào Dreamina. Nếu Dreamina hiểu tiếng Việt chưa tốt (vẽ sai chi tiết), gửi bản bạn đã sửa vào thread, mình dịch sang tiếng Anh giúp.
 
 Nhắc luật (`03-assets.md`): không đưa tên game/xe thương mại vào prompt, không vẽ "giống hệt" xe của game khác. Lưu prompt vào `assets/source/prompts/xe-<id>.txt`, ghi license vào `assets/CREDITS.json`.
 
-## Yêu cầu kỹ thuật (sau khi tạo)
+## Cách xe được dùng trong game (để hiểu vì sao prompt viết vậy)
 
-| Mục | Yêu cầu |
-|---|---|
-| Thân | Nhìn ngang, **quay mặt sang phải**, nền trắng → xoá thành trong suốt. Xuất 192×144 (2x) và 96×72 (1x) |
-| Nòng | Ảnh riêng, nằm ngang chĩa sang phải, đuôi nòng ở bên trái (đó là tâm xoay) |
-| Rig | `assets/mobiles/<id>/rig.json`: `pivot` (điểm gắn nòng trên thân), `muzzle` (đầu nòng), `pilot` (điểm ngồi của phi công). Mình/Claude Code đo giúp được |
-| Chuyển động | Không cần vẽ nhiều khung: xoay nòng, nảy thân, nháy mắt làm bằng code |
+- Xe nhìn **ngang, phẳng 2D, quay mặt sang phải**. Game tự lật khi xe quay trái.
+- **Súng gắn ngay buồng lái**, có tay cầm quay về ghế: phi công ngồi ghế và cầm súng ngắm. Ghế để **trống** vì phi công là hình riêng (để sau này đổi nhân vật, trang phục).
+- **Nòng chĩa chéo lên khoảng trống**, không đè lên thân, để mình cắt nòng ra thành hình riêng và cho xoay theo góc bắn.
+- Hình được thu nhỏ còn khoảng 90 px chiều ngang trong game, nên cần **dáng to, rõ, dễ nhận ra từ xa**; chi tiết li ti sẽ mất.
 
-Mẹo cho đồng bộ giữa các xe: tạo cùng 1 công cụ, cùng seed/style reference (Dreamina: dùng ảnh xe đầu tiên làm "reference image" cho các xe sau), cùng tỉ lệ khung 4:3.
+## Đoạn phong cách chung (đã có sẵn trong từng prompt bên dưới)
 
-## Style bible (dán đầu mọi prompt)
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm chiếu từ góc trên bên trái. Bảng màu chính: xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, điểm nhấn san hô #FF7A59. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art. Nền trắng trơn, không bóng đổ dưới đất, không chữ, không logo.
 
-Bản cho xe bỏ "no characters" (để AI không bỏ luôn ghế lái) và "Side view" (đã ghi kỹ trong khung thân xe).
+**Ô "negative prompt" (nếu có):** `3D, phối cảnh, góc nghiêng 3/4, isometric, pixel art, người ngồi trong xe, chữ, logo, bóng đổ, cảnh nền`
 
-> bright cheerful 2D hand-painted game art, bold clean outlines, flat cel shading with soft gradients, warm light from top-left, palette: sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, accent coral #FF7A59. No text, no logos.
+## Gợi ý sửa prompt cho đẹp
 
-## Khung chung cho thân xe
+- Muốn xe "có hồn": thêm tính cách (*hiền lành, cáu kỉnh, ngái ngủ, hăng máu*) và biểu cảm mắt/miệng.
+- Muốn dáng dễ nhận: giữ **1 khối lớn đặc trưng** (vỏ ốc, mai rùa, mái vòm...) chiếm 50–60% hình.
+- Muốn đồng bộ cả bộ xe: tạo xe đầu tiên ưng ý, rồi dùng nó làm **ảnh tham chiếu (reference image)** cho các xe sau.
+- Nếu AI vẽ người ngồi vào ghế: thêm *"ghế trống, không có ai ngồi"*.
+- Nếu ra 3D/nghiêng: nhấn lại *"phẳng 2D, nhìn ngang hoàn toàn, chỉ thấy một bên xích/bánh và một mắt"*.
+- Nếu nòng đè lên thân: thêm *"nòng súng chĩa chéo lên trời, tách hẳn khỏi thân xe"*.
 
-> {style bible}. 2D game sprite of a small cute armored artillery vehicle, **{mô tả xe}**, **flat 2D, strict orthographic side profile facing right, no perspective, no 3D, no depth, only the near side visible (one tread / one row of wheels, one eye)**, chunky toy-like proportions, compact body fits in a 4:3 frame, small wheels or legs at the bottom, **an empty open cockpit with one small seat and a low windshield for a pilot, {vị trí ghế}, the seat is empty**, **a short cannon on a swivel mount right at the front edge of the cockpit, with two handles reaching back toward the seat so the pilot aims it by hand, the barrel points up-right into empty space and does not overlap the body**, big expressive eye, smooth hand-painted look, **not pixel art**, plain solid white background, centered, full body visible, no shadow on the ground.
+---
 
-**Vì sao ghế trống:** phi công (Tí Gió, Bà Sáu Khoan...) sẽ là sprite riêng đặt vào ghế, để sau này thay trang phục/nhân vật không phải vẽ lại xe. Ghi thêm `pilot` (điểm ngồi) vào `rig.json`. Nếu AI vẫn vẽ người ngồi trong ghế: thêm *"unoccupied seat, nobody inside"*.
+## 1. Ốc Thiết Giáp (`oc-thiet-giap`) – cân bằng, dễ chơi
 
-## Khung chung cho nòng
+Tính cách: hiền lành, chậm mà chắc, "bé ngoan" của dàn xe.
 
-> {style bible}. 2D game sprite of a single detached cannon barrel, **{mô tả nòng}**, flat 2D side profile, no perspective, horizontal pointing right, round pivot joint at the left end, isolated, plain solid white background, no shadow.
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ dễ thương hình **con ốc sên máy**: vỏ ốc xoắn ốc to tròn bằng thép tán đinh, sơn sọc san hô và kem, chiếm hơn nửa thân xe; thân ốc mềm màu xanh lá nhạt bóng mượt, đầu ngóc lên với hai râu mắt, mắt to tròn long lanh, miệng cười hiền. Dưới bụng là một dải xích tank nhỏ màu xám đen. Giữa vỏ ốc và đầu là một buồng lái hở, có một chiếc ghế da nâu nhỏ **để trống** và kính chắn gió thấp. Ngay mép trước buồng lái là **một khẩu pháo đồng ngắn mập trên ụ xoay**, có hai tay cầm quay về phía ghế để phi công cầm ngắm, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng mũm mĩm như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
 
-## Từng xe
+## 2. Chũi Khoan (`chui-khoan`) – phá địa hình, đạn khoan
 
-### 1. Ốc Thiết Giáp (`oc-thiet-giap`) – cân bằng, dễ chơi
-- Thân: *a mechanical snail with a big riveted spiral metal shell in coral and cream, soft green body with two eye stalks, small tank treads underneath*
-- Ghế: *cockpit seat on the front of the body, in front of the shell, behind the eye stalks*
-- Nòng: *short sturdy brass cannon with a riveted band*
+Tính cách: thợ mỏ lam lũ, hăng hái, lúc nào cũng dính đất.
 
-### 2. Chũi Khoan (`chui-khoan`) – phá địa hình, đạn khoan
-- Thân: *a chubby mechanical mole digger, earth brown fur-like metal plates, miner helmet with a lamp, big shovel claws in front, small treads*
-- Ghế: *open cockpit seat on the back, behind the helmet*
-- Nòng: *stubby launcher tube ending in a spiral drill bit, steel grey with coral stripes*
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con chuột chũi máy đào mỏ**: thân tròn trịa ghép từ các tấm thép màu nâu đất lấm lem bùn, mõm hồng nhọn, đội mũ thợ mỏ vàng có đèn pha nhỏ, hai móng xẻng to bằng thép ở phía trước, đi trên xích tank ngắn, phía sau có ống xả nhả khói. Trên lưng là buồng lái hở với ghế gỗ nhỏ **để trống**. Ngay mép trước buồng lái là **một ống phóng ngắn gắn mũi khoan xoắn ốc** (thép xám sọc san hô) trên ụ xoay, có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Biểu cảm hăng hái, má lấm bùn. Dáng mũm mĩm như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
 
-### 3. Bọ Lôi (`bo-loi`) – đạn điện, bào giáp
-- Thân: *a round beetle robot with a glossy sky-blue shell, two antenna coils glowing yellow, tiny sparks, six short mechanical legs*
-- Ghế: *small bubble-canopy cockpit on top of the shell, canopy open*
-- Nòng: *tesla coil cannon with copper rings and a glowing yellow tip*
+## 3. Bọ Lôi (`bo-loi`) – đạn điện, bào giáp
 
-### 4. Cua Lăn (`cua-lan`) – đạn lăn theo địa hình
-- Thân: *a sturdy crab-shaped vehicle with a coral red shell, one big claw raised, cream belly plate, four little legs with wheels*
-- Ghế: *seat on top of the shell between the eye stalks*
-- Nòng: *wide short mortar tube shaped like a crab claw, coral and cream*
+Tính cách: lanh lợi, tích điện, lúc nào cũng lách tách tia lửa.
 
-### 5. Diều Hâu Giấy (`dieu-hau-giay`) – đạn đi ngược gió
-- Thân: *a light wooden glider cart with folded paper kite wings in cream and sky blue, bamboo frame, small spoked wheels, a little pinwheel on the back*
-- Ghế: *open wooden seat in the middle under the wings*
-- Nòng: *slim bamboo launcher tube with paper fins*
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con bọ cánh cứng robot**: mai tròn bóng loáng màu xanh trời có sọc vàng chớp, hai râu là cuộn dây đồng phát sáng vàng, vài tia điện nhỏ lách tách quanh râu, sáu chân máy ngắn có khớp tròn. Mắt to lanh lợi. Phía trước mai là buồng lái hở với ghế nhỏ **để trống** và kính chắn gió cong. Ngay mép trước buồng lái là **một khẩu pháo điện kiểu cuộn tesla**, có các vòng đồng và đầu nòng phát sáng vàng, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng tròn gọn như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
 
-### 6. Nhím Chùm (`nhim-chum`) – chùm gai tỏa 5 hướng
-- Thân: *a round hedgehog robot covered in short rounded metal spikes, cream face plate, grumpy cute eyes, small treads*
-- Ghế: *small round hatch seat on top among the spikes*
-- Nòng: *a cannon with a flared five-hole muzzle like a pepperbox, gunmetal with coral tips*
+## 4. Cua Lăn (`cua-lan`) – đạn lăn theo địa hình
 
-### 7. Sứa Đèn (`sua-den`) – đạn chậm, xuyên đất mỏng
-- Thân: *a glass dome vehicle shaped like a jellyfish lantern, soft glowing cyan inside, brass frame, dangling short tentacle cables, hover pads instead of wheels*
-- Ghế: *seat inside the glass dome, dome hatch open*
-- Nòng: *long thin brass lamp-post barrel with a glowing bulb at the tip*
+Tính cách: ngư dân vạm vỡ, khoẻ mạnh, hơi ngang tàng.
 
-### 8. Rùa Thành (`rua-thanh`) – máu trâu, dựng tường đất
-- Thân: *a big slow tortoise tank whose shell is a little stone castle with crenellations and grass on top, earth brown and grass green, thick stubby legs*
-- Ghế: *seat in the castle tower on top, like a lookout*
-- Nòng: *thick short stone mortar with a brick pattern*
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con cua biển cơ khí**: mai cua to bè màu đỏ san hô có đốm kem, bụng tấm giáp màu kem, một càng cua khổng lồ giơ lên phía trước đầy oai vệ, chân cua ngắn gắn bánh xe tròn, có vài con hàu và dây thừng quấn trên mai như vừa đi biển về. Hai mắt cua thò lên trên cuống, nhìn ngang tàng. Trên mai là buồng lái hở với ghế nhỏ **để trống**. Ngay mép trước buồng lái là **một khẩu súng cối ống rộng ngắn** màu đồng có vành san hô, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng chắc nịch như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
 
-### 9. Long Ngư Cơ (`long-ngu-co`, ẩn) – phun lửa
-- Thân: *a sleek mechanical carp-dragon hybrid, golden scales and coral fins, whiskers, flame-shaped tail, hovering on small jets*
-- Ghế: *saddle-like cockpit on the back*
-- Nòng: *dragon-head shaped flamethrower barrel with open mouth*
+## 5. Diều Hâu Giấy (`dieu-hau-giay`) – đạn đi ngược gió
 
-### 10. Kỳ Lân Sắt (`ky-lan-sat`, ẩn) – mạnh nhất, hiếm
-- Thân: *a noble iron unicorn-shaped war machine, polished silver armor with cream and gold trim, a single horn, sturdy mechanical legs*
-- Ghế: *knight saddle cockpit on the back*
-- Nòng: *long elegant lance-like cannon with gold rings*
+Tính cách: nhẹ nhàng, bay bổng, mơ mộng.
 
-## Gợi ý khi kết quả chưa ưng
-- Ra cảnh nền/đất: thêm *"isolated sprite, nothing else in the image"*.
-- Ra pixel art: thêm *"smooth hand-painted, not pixel art, no pixelation"*.
-- Ra góc 3/4 / trông như 3D (thấy cả 2 bên xích, 2 mắt, khối có chiều sâu): nhấn *"flat 2D, strict orthographic side profile, no perspective, no depth"*; thêm vào negative prompt (nếu công cụ có): *"3d, isometric, three-quarter view, perspective, pixel art"*.
-- Nòng dính vào thân dù đã ghi "no cannon": cứ để, gửi mình, mình tách và đo `pivot`/`muzzle`.
-- Gửi ảnh vào thread này, mình sẽ xoá nền, cắt khít, resize 1x/2x và tạo `rig.json`.
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con diều hâu làm bằng giấy và tre**: khung tre mảnh buộc dây, đôi cánh diều giấy gấp nếp màu kem và xanh trời xếp gọn hai bên, đầu chim nhọn có mắt to tinh nghịch, đuôi diều dài có tua vải san hô bay phấp phới, phía sau gắn chong chóng giấy nhỏ, đi trên hai bánh xe gỗ có nan. Giữa thân là ghế gỗ nhỏ **để trống** dưới đôi cánh. Ngay mép trước ghế là **một ống phóng tre thon dài có cánh giấy ở đuôi**, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng nhẹ, thanh thoát như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+## 6. Nhím Chùm (`nhim-chum`) – chùm gai tỏa 5 hướng
+
+Tính cách: robot nhỏ hay cáu, xù gai khi tức.
+
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con nhím robot tròn vo**: thân tròn như quả bóng phủ đầy gai kim loại ngắn đầu bo tròn màu xám thép, đầu gai sơn san hô, mặt nạ màu kem với đôi mắt cau có cáu kỉnh dễ thương và má phồng, đi trên xích tank ngắn. Trên đỉnh, giữa đám gai, là một nắp hầm tròn mở ra thành buồng lái với ghế nhỏ **để trống**. Ngay mép trước buồng lái là **một khẩu súng miệng loe có năm lỗ nòng** như bông hoa, màu thép xám đầu san hô, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng tròn xoe như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+## 7. Sứa Đèn (`sua-den`) – đạn chậm, xuyên đất mỏng
+
+Tính cách: nhà khoa học lập dị, lơ đãng, phát sáng lung linh.
+
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con sứa đèn lồng**: mái vòm kính trong suốt hình chuông sứa, bên trong toả ánh sáng xanh ngọc dịu, khung đồng thau có đinh tán, mép chuông gợn sóng, bên dưới thòng xuống những xúc tu là dây cáp mềm có bóng đèn nhỏ ở đầu, lơ lửng trên hai đệm hơi thay cho bánh xe. Đôi mắt lim dim lơ đãng. Bên trong mái vòm là ghế nhỏ **để trống**, nắp vòm mở hé. Ngay mép trước buồng lái là **một khẩu súng nòng dài mảnh như cột đèn đồng**, đầu nòng là bóng đèn phát sáng, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng mềm mại như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+## 8. Rùa Thành (`rua-thanh`) – máu trâu, dựng tường đất
+
+Tính cách: ông lão điềm đạm, vững như núi.
+
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con rùa già cõng toà lâu đài**: mai rùa là một thành đá nhỏ có tường răng cưa, cửa sổ vòm, rêu và cỏ xanh mọc trên đỉnh, vài bông hoa nhỏ; đầu rùa già hiền từ có râu bạc dài và lông mày rậm, bốn chân to chắc như cột. Trên chòi canh của lâu đài là buồng lái hở với ghế đá nhỏ **để trống**. Ngay mép trước buồng lái là **một khẩu súng cối đá to ngắn có hoa văn gạch**, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng to bè vững chãi nhưng vẫn dễ thương như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+## 9. Long Ngư Cơ (`long-ngu-co`, ẩn) – phun lửa
+
+Tính cách: kiêu hãnh, bốc lửa, hiếm gặp.
+
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **cá chép hoá rồng máy**: thân thon có vảy vàng óng xếp lớp, vây và mang màu san hô rực, râu rồng dài uốn lượn, đuôi xoè như ngọn lửa, lơ lửng trên hai động cơ phản lực nhỏ phụt lửa cam. Mắt sắc sảo kiêu hãnh. Trên lưng là buồng lái kiểu yên ngựa với ghế nhỏ **để trống**. Ngay mép trước buồng lái là **một khẩu súng phun lửa hình đầu rồng há miệng**, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng uyển chuyển như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+## 10. Kỳ Lân Sắt (`ky-lan-sat`, ẩn) – mạnh nhất, cực hiếm
+
+Tính cách: hiệp sĩ cao quý, oai phong.
+
+> Phong cách game 2D vẽ tay tươi sáng vui nhộn, nét viền đen đậm và sạch, tô màu phẳng kiểu hoạt hình với chuyển màu nhẹ, ánh sáng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Một chiếc xe pháo nhỏ hình **con kỳ lân chiến mã bằng sắt**: giáp bạc sáng bóng viền vàng và kem, một sừng xoắn ánh vàng trên trán, bờm là những dải ruy băng san hô bay phấp phới, bốn chân máy chắc khoẻ có móng guốc đồng. Ánh mắt oai phong cao quý. Trên lưng là buồng lái kiểu yên hiệp sĩ với ghế nhỏ **để trống**. Ngay mép trước buồng lái là **một khẩu pháo nòng dài thanh mảnh như ngọn giáo có các vòng vàng**, trên ụ xoay có hai tay cầm quay về ghế, nòng chĩa chéo lên trời phía trước, không đè lên thân. Dáng oai vệ nhưng vẫn dễ thương như đồ chơi, vừa khung 4:3. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, nền trắng trơn, không bóng đổ, không chữ, không logo.
+
+---
+
+## Sau khi có ảnh
+
+Gửi ảnh vào thread, mình sẽ: xoá nền, tách nòng thành hình riêng, vá chỗ nòng che, thu về 192 px chiều ngang, đo điểm gắn nòng / đầu nòng / chỗ ngồi phi công cho `assets/mobiles/<id>/rig.json`, rồi đưa vào game.

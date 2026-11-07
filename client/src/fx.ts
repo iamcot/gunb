@@ -20,6 +20,8 @@ const BOOM_LIFE = 0.6       // chớp sáng + sóng xung kích tắt hẳn
 const FLASH_S = 0.12
 const BOLT_S = 0.42
 /** Đạn xuyên đất dưới đất: màu tối, độ mờ, độ nhòe, biên độ rung (px). Đạn SS: số vệt xé gió, số đoạn mỗi vệt. */
+/** Quầng lửa SS: dài = FLAME_LEN × chiều dài đạn; điểm gắn (đầu lửa) trên ảnh. */
+const FLAME_LEN = 4.2, FLAME_AX = 0.86, FLAME_AY = 0.48
 const DIG_TINT = 0x4a3326, DIG_ALPHA = 0.7, DIG_BLUR = 3, DIG_SHAKE = 2.2
 const BOLT_HEIGHT = 900
 const MAX_PARTICLES = 700
@@ -38,7 +40,7 @@ const BEAM_OUTER = 0x6fe3ff, BEAM_CORE = 0xf4fdff
 /** Ảnh hiệu ứng vẽ tay (plan/14-prompt-no-khoi.md, assets/fx/). Thiếu ảnh nào thì phần đó vẽ bằng code. */
 const ART = {
   fireball: null as Texture | null, shockwave: null as Texture | null, impact: null as Texture | null,
-  muzzle: null as Texture | null, spark: null as Texture | null, satellite: null as Texture | null,
+  muzzle: null as Texture | null, ssFlame: null as Texture | null, spark: null as Texture | null, satellite: null as Texture | null,
   smoke: [] as Texture[], dirt: [] as Texture[], bits: [] as Texture[],
 }
 function loadArt(file: string, done: (t: Texture) => void): void {
@@ -50,6 +52,7 @@ loadArt('fireball.png', t => { ART.fireball = t })
 loadArt('shockwave.png', t => { ART.shockwave = t })
 loadArt('hit-impact.png', t => { ART.impact = t })
 loadArt('muzzle-flash.png', t => { ART.muzzle = t })
+loadArt('ss-flame.png', t => { ART.ssFlame = t })
 loadArt('spark.png', t => { ART.spark = t })
 loadArt('satellite.png', t => { ART.satellite = t })
 for (let i = 0; i < 4; i++) loadArt(`smoke-${i}.png`, t => { ART.smoke.push(t) })
@@ -117,6 +120,8 @@ export class Fx {
   private readonly shellRot: number[] = []
   private readonly shellDig: boolean[] = []   // đạn xuyên đất đang ở dưới đất
   private readonly shellBlur: BlurFilter[] = []
+  private readonly flames: Sprite[] = []      // đạn SS: ảnh quầng lửa phía sau (2 lớp lệch pha cho "động đậy")
+  private readonly flames2: Sprite[] = []
   private readonly popArt = new Container()
   private readonly pops: { text: Text; age: number; alive: boolean; baseY: number; k: number }[] = []
   private nextPop = 0
@@ -197,6 +202,7 @@ export class Fx {
       this.trailD.push(0)
       this.shellRot.push(0); this.shellDig.push(false)
       this.shellBlur.push(new BlurFilter({ strength: DIG_BLUR }))
+      for (const arr of [this.flames, this.flames2]) { const f = new Sprite(); f.anchor.set(FLAME_AX, FLAME_AY); f.visible = false; this.fireArt.addChild(f); arr.push(f) }
     }
     const g = this.shells[i]!, s = this.shellSprites[i]!, p = this.shellPos[i]!
     const art = this.shellArt !== null
@@ -209,6 +215,7 @@ export class Fx {
     const ga = grown ? a!.grow! : null
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
     this.shellRot[i] = rot
+    this.updateFlame(i, x, y, rot, visible && a !== null && a.streak !== 0, a?.length ?? 0)
     if (a && (a.trail || a.streak !== 0) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== 0)
     // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
     const under = visible && this.shellDig[i] === true
@@ -239,7 +246,6 @@ export class Fx {
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
       this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)
       if (streak) {   // đạn SS: thêm lửa to và tàn lửa văng ra
-        this.spawn(P_FIRE, tx, ty, -cx * 60 + rnd(-30, 30), -cy * 60 + rnd(-30, 30), rnd(0.25, 0.4), rnd(13, 20), FIRE_HOT)
         this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
         this.spawn(P_EMBER, tx, ty, -cx * 90 + rnd(-60, 60), -cy * 90 + rnd(-60, 60), rnd(0.4, 0.8), rnd(1.5, 2.6), 0xffa030)
       }
@@ -269,24 +275,18 @@ export class Fx {
     }
   }
 
-  /** Hiệu ứng đạn SS (`streak` trong shots.json): quầng lửa nhiều lớp quanh đạn (vàng trắng ở lõi, cam ở ngoài), hai cung gió cong phía trước đầu đạn như đang xé không khí; lửa + khói tối đuôi nằm ở `trail`. */
-  private drawShellStreaks(glow: Graphics, flame: Graphics): void {
-    const a = this.shellArt
-    if (!a || a.streak === 0) return
-    for (let i = 0; i < this.shellPos.length; i++) {
-      const p = this.shellPos[i]!
-      if (!p.visible) continue
-      const rot = this.shellRot[i]!, fl = 0.85 + Math.random() * 0.3   // nhấp nháy
-      // quầng lửa vẽ bằng blend thường (cộng sáng sẽ làm trắng xoá trên nền sáng)
-      flame.circle(p.x, p.y, a.length * 0.95 * fl).fill({ color: a.streak, alpha: 0.28 })
-      flame.circle(p.x, p.y, a.length * 0.62 * fl).fill({ color: 0xff9a2e, alpha: 0.4 })
-      flame.circle(p.x, p.y, a.length * 0.32 * fl).fill({ color: 0xffe27a, alpha: 0.6 })
-      for (let j = 0; j < 3; j++) {   // cung gió cong ôm phía trước đạn, lệch nhẹ mỗi frame
-        const r = a.length * (0.75 + 0.3 * j) * fl, half = 1.15 - 0.15 * j, off = (Math.random() - 0.5) * 0.12
-        glow.moveTo(p.x + Math.cos(rot - half + off) * r, p.y + Math.sin(rot - half + off) * r)
-        glow.arc(p.x, p.y, r, rot - half + off, rot + half + off).stroke({ color: j === 0 ? 0xffffff : a.streak, width: 3.2 - j * 0.8, alpha: 0.7 - j * 0.15, cap: 'round' })
-      }
-    }
+  /** Quầng lửa + cung gió (ảnh `ss-flame.png`) sau đạn SS, hướng theo đường bay; hai lớp co giãn/lắc lệch pha để lửa luôn "động đậy". */
+  private updateFlame(i: number, x: number, y: number, rot: number, on: boolean, len: number): void {
+    const f1 = this.flames[i]!, f2 = this.flames2[i]!, tex = ART.ssFlame
+    if (!on || !tex) { f1.visible = false; f2.visible = false; return }
+    const tt = performance.now() / 1000, k = (len * FLAME_LEN) / tex.width, flip = Math.cos(rot) < 0 ? -1 : 1
+    f1.texture = f2.texture = tex
+    f1.visible = f2.visible = true
+    f1.position.set(x, y); f2.position.set(x, y)
+    f1.rotation = rot + Math.sin(tt * 31 + i) * 0.05; f2.rotation = rot + Math.sin(tt * 23 + 2 + i) * 0.07
+    f1.scale.set(k * (1 + 0.07 * Math.sin(tt * 38) + rnd(-0.03, 0.03)), k * flip * (1 + 0.14 * Math.sin(tt * 47 + 1)))
+    f2.scale.set(k * 0.9 * (1 + 0.1 * Math.sin(tt * 29 + 2)), -k * flip * 0.85 * (1 + 0.16 * Math.sin(tt * 41)))   // lật dọc, nhỏ hơn: lưỡi lửa lệch nhau
+    f1.alpha = 0.95; f2.alpha = 0.5 + 0.2 * Math.sin(tt * 35)
   }
 
   /** Đạn `i` (đạn xuyên đất) đang ở dưới đất hay không (do playback xét theo mask). */
@@ -547,7 +547,6 @@ export class Fx {
     fire.clear()
     glow.clear()
     this.drawShellArcs(glow)
-    this.drawShellStreaks(glow, fire)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt

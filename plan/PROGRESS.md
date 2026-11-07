@@ -100,3 +100,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Sửa theo bản gốc: Chũi Khoan đ2 và SS chui xuyên đất KHÔNG khoét hầm (chỉ hố ở chỗ nổ); Bọ Lôi đ2 mỗi tia 204 (tổng 408 ≈ 1,2× đạn 1, khớp tỉ lệ gốc 300/250 và delay 330/275).
 - Chũi đ2/SS chui đất: tối + nhòe + rung + bụi đất + tiếng rè lặp (dùng sound fire) khi ở dưới đất (shots.json: dig). Mọi đạn SS: vệt xé gió/xé lửa + quầng sáng + lửa/tàn lửa to (shots.json: streak).
 - Chũi đ2: đoạn cua dưới đất uốn mềm (turnRadius 55, không gấp khúc); tiếng rè chui đất lấy fire-1 (shots.json dig = tên file); hiệu ứng SS vẽ lại: quầng lửa blend thường + 3 cung gió + lửa to + khói tối.
+- Đạn SS dùng ảnh assets/fx/ss-flame.png (quầng lửa + cung gió) sau đạn, 2 lớp co giãn/lắc lệch pha cho động đậy; bỏ quầng/cung vẽ bằng code.

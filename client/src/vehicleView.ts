@@ -5,6 +5,8 @@ import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
+const TEAM_LIGHT = [0xbfe0ff, 0xffc4c4] as const
+const BAR_W = 60, BAR_H = 9, BAR_GAP = 8, BAR_SEGS = 4   // thanh máu dưới xe: bề rộng, cao, cách đáy xe, số ô
 const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
 const ARC_GREEN = 0x4fb35a, ARC_BANDS = 16   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
 const ARC_EXTEND2 = 0.2
@@ -138,9 +140,8 @@ export class VehicleViews {
     for (const p of match.players) {
       const root = new Container()
       const body = new Graphics(), barrel = new Graphics(), bar = new Graphics()
-      const name = new Text({ text: p.name, style: { fill: 0xffffff, fontSize: 12, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
-      name.anchor.set(0.5, 1)
-      name.position.set(0, -44)
+      const name = new Text({ text: p.name, style: { fill: 0xffffff, fontSize: 12, fontWeight: '700', stroke: { color: TEAM_DARK[p.team], width: 3.5 } } })
+      name.anchor.set(0.5, 0)
       const marker = new Text({ text: '▼', style: { fill: 0xffe14d, fontSize: 18, stroke: { color: 0x000000, width: 3 } } })
       marker.anchor.set(0.5, 1)
       marker.visible = false
@@ -334,14 +335,22 @@ export class VehicleViews {
   /** Thanh máu, tên, mũi tên lượt; `top` là mép trên của hình xe (so với tâm). */
   private drawLabels(v: View, p: PlayerState, hp: number, alive: boolean, isCur: boolean, top: number): void {
     v.bar.clear()
+    const y0 = p.body.radius + BAR_GAP   // thanh máu + tên nằm dưới xe cho khỏi che nòng súng
     if (alive) {
-      const w = 40, k = Math.max(0, Math.min(1, hp / p.maxHp))
-      v.bar.rect(-w / 2, top - 8, w, 5).fill(0x000000)
-      v.bar.rect(-w / 2 + 1, top - 7, (w - 2) * k, 3).fill(k > 0.5 ? 0x4ade80 : k > 0.25 ? 0xfacc15 : 0xef4444)
+      const k = Math.max(0, Math.min(1, hp / p.maxHp)), x0 = -BAR_W / 2, col = TEAM_COLORS[p.team], light = TEAM_LIGHT[p.team]
+      // quầng sáng nhẹ theo màu đội
+      for (let i = 3; i >= 1; i--) v.bar.roundRect(x0 - i * 2, y0 - i * 2, BAR_W + i * 4, BAR_H + i * 4, BAR_H / 2 + i * 2).fill({ color: col, alpha: 0.07 })
+      v.bar.roundRect(x0 - 1.5, y0 - 1.5, BAR_W + 3, BAR_H + 3, BAR_H / 2 + 1.5).fill(0x1b2130).stroke({ color: TEAM_DARK[p.team], width: 1 })
+      v.bar.roundRect(x0, y0, BAR_W, BAR_H, BAR_H / 2).fill(0x4a4f5c)   // phần máu đã mất
+      if (k > 0) {
+        v.bar.roundRect(x0, y0, BAR_W * k, BAR_H, BAR_H / 2).fill(col)
+        v.bar.roundRect(x0 + 1, y0 + 1, Math.max(0, BAR_W * k - 2), BAR_H * 0.35, BAR_H * 0.17).fill({ color: light, alpha: 0.55 })   // vệt sáng trên
+      }
+      for (let i = 1; i < BAR_SEGS; i++) v.bar.rect(x0 + (BAR_W * i) / BAR_SEGS - 0.75, y0, 1.5, BAR_H).fill(0x1b2130)   // vạch chia 4 phần
     }
-    v.name.position.set(0, top - 14)
+    v.name.position.set(0, y0 + BAR_H + 4)
     v.marker.visible = isCur
-    v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
+    v.marker.position.set(0, top - 46 + Math.sin(this.bob) * 3)
   }
 
   /** Thước ngắm vòng tròn trong mờ, tách khỏi xe: tâm ở gốc nòng súng, dải góc quay được tô xanh lá nhạt, kim ngắm mũi tên xanh chỉ góc hiện tại, số độ hiện dưới vòng. */

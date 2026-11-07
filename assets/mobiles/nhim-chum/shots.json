@@ -4,20 +4,22 @@
       "file": "shot-1.png",
       "length": 12,
       "fire": "fire-1.ogg",
-      "boom": "boom-1.ogg"
+      "boom": "boom-1.ogg",
+      "trail": "smoke"
     },
     {
       "file": "shot-2.png",
       "length": 15,
       "fire": "fire-2.ogg",
-      "boom": "boom-2.ogg"
+      "boom": "boom-2.ogg",
+      "trail": "smoke"
     },
     {
       "file": "shot-3.png",
       "length": 26,
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
-      "streak": "#ff9a5a"
+      "trail": "smoke"
     }
   ]
 }

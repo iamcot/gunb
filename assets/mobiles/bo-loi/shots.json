@@ -22,8 +22,7 @@
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
       "bolt": "bolt-3.ogg",
-      "arcs": 10,
-      "streak": "#8fd0ff"
+      "arcs": 10
     }
   ]
 }

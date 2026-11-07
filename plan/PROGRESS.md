@@ -101,3 +101,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Chũi đ2/SS chui đất: tối + nhòe + rung + bụi đất + tiếng rè lặp (dùng sound fire) khi ở dưới đất (shots.json: dig). Mọi đạn SS: vệt xé gió/xé lửa + quầng sáng + lửa/tàn lửa to (shots.json: streak).
 - Chũi đ2: đoạn cua dưới đất uốn mềm (turnRadius 55, không gấp khúc); tiếng rè chui đất lấy fire-1 (shots.json dig = tên file); hiệu ứng SS vẽ lại: quầng lửa blend thường + 3 cung gió + lửa to + khói tối.
 - Đạn SS dùng ảnh assets/fx/ss-flame.png (quầng lửa + cung gió) sau đạn, 2 lớp co giãn/lắc lệch pha cho động đậy; bỏ quầng/cung vẽ bằng code.
+- Quầng lửa SS chỉ còn cho Ốc và Chũi (bỏ streak ở xe khác); xe có quầng lửa bỏ lửa đuôi, giữ khói. Nhím Chùm: cả 3 đạn có khói + lửa đuôi như đạn Ốc.

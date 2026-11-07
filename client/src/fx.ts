@@ -244,10 +244,9 @@ export class Fx {
     for (let n = 0; d >= TRAIL_STEP && n < TRAIL_MAX_PER_CALL; n++, d -= TRAIL_STEP) {
       const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
-      this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)
-      if (streak) {   // đạn SS: thêm lửa to và tàn lửa văng ra
+      if (!streak) this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)   // đạn có quầng lửa SS thì bỏ lửa đuôi, chỉ để khói
+      if (streak) {   // đạn SS: khói tối dày sau đuôi
         this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
-        this.spawn(P_EMBER, tx, ty, -cx * 90 + rnd(-60, 60), -cy * 90 + rnd(-60, 60), rnd(0.4, 0.8), rnd(1.5, 2.6), 0xffa030)
       }
     }
     this.trailD[i] = d >= TRAIL_STEP ? 0 : d

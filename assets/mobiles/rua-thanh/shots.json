@@ -18,8 +18,7 @@
       "length": 32,
       "upright": true,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg",
-      "streak": "#ff9a4a"
+      "boom": "boom-3.ogg"
     }
   ]
 }

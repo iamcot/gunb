@@ -1125,5 +1125,13 @@
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
     "modified": "Lấy đoạn 0.03–1.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "textures/dirt-tile.png",
+    "author": "IamCoT (tạo bằng AI)",
+    "source": "Ảnh AI tạo từ prompt trong plan/12-prompt-dat-dap.md (file gốc Cartoon Layered Soil Texture with Roots and Rocks.png, 1254×1254)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Chỉnh màu 70% về màu dải đất nâu của Đảo nổi, thu về 256×256"
   }
 ]

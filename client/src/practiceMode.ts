@@ -27,7 +27,7 @@ export class PracticeMode implements Mode {
     else if (e.code === 'KeyR') { this.ctx.view.reset(); this.practice.resetHp() }
   }
 
-  constructor(private readonly ctx: GameCtx) {
+  constructor(private readonly ctx: GameCtx, mobileId?: string) {
     ctx.view.reset()
     this.practice = new Practice(ctx.view.mask)
     ctx.world.addChildAt(this.practice.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
@@ -38,7 +38,7 @@ export class PracticeMode implements Mode {
     window.addEventListener('keydown', this.onKey)
     this.aim.ssReady = true   // tập bắn: SS luôn sẵn sàng
     this.shotBar = new ShotBar(slot => { this.aim.slot = slot })
-    this.setMobile(0)
+    this.setMobile(Math.max(0, MOBILE_IDS.findIndex(id => id === mobileId)))
     this.aim.onFire = (angle, power, slot) => this.fire(angle, power, slot)
   }
 

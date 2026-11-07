@@ -1,5 +1,5 @@
 import {
-  GAME_NAME, ITEM_SLOTS, ALL_MOBILE_IDS, MAX_PLAYERS, MOBILE_IDS, RANDOM_MOBILE, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
+  GAME_NAME, ITEM_SLOTS, MAX_PLAYERS, MOBILE_IDS, RANDOM_MOBILE, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
   type BotLevel, type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
@@ -400,7 +400,7 @@ export class OnlineFlow {
   private savedMobile(): string {
     let id: string | null = null
     try { id = localStorage.getItem(MOBILE_KEY) } catch { /* bỏ qua */ }
-    return id === RANDOM_MOBILE || (id && TUNING.mobiles[id] && ALL_MOBILE_IDS.includes(id)) ? id! : MOBILE_IDS[0]
+    return id === RANDOM_MOBILE || (id && TUNING.mobiles[id] && (MOBILE_IDS as readonly string[]).includes(id)) ? id! : MOBILE_IDS[0]
   }
 
   private renderLoading(): void {

@@ -263,6 +263,15 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
 
   const stepDrill = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'drill' }>): void => {
     const adv = Math.min(b.speed * DT_SIM, s.remaining)
+    if (s.rising && b.resurface) {   // pha trồi: hướng đào quay dần về hướng chếch lên (cua mềm, không gấp khúc)
+      const up = degToRad(b.resurface.riseDeg), tx = (Math.sign(s.p.vx) || input.facing) * Math.cos(up), ty = -Math.sin(up)
+      const cur = Math.atan2(s.dy, s.dx)
+      let diff = Math.atan2(ty, tx) - cur
+      if (diff > Math.PI) diff -= 2 * Math.PI
+      else if (diff < -Math.PI) diff += 2 * Math.PI
+      const turn = Math.sign(diff) * Math.min(Math.abs(diff), adv / b.resurface.turnRadius)
+      s.dx = Math.cos(cur + turn); s.dy = Math.sin(cur + turn)
+    }
     const nx = s.p.x + s.dx * adv, ny = s.p.y + s.dy * adv
     const inside = nx >= 0 && nx < mask.width && ny >= 0 && ny < mask.height
     // Mỗi lần khoan khoét hố bán kính R quanh đầu khoan nên "đất phía trước" phải xét cách R: hết đất trong phạm vi đó thì nổ luôn.
@@ -280,9 +289,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, nx, ny)
     if (s.remaining <= 1e-6) {
       if (diving) {   // hết đoạn lặn: quay đầu đào chếch lên
-        const up = degToRad(b.resurface!.riseDeg)
-        s.rising = true; s.dx = (Math.sign(s.p.vx) || input.facing) * Math.cos(up); s.dy = -Math.sin(up); s.remaining = b.resurface!.riseMax
-        s.path.push(t, nx, ny)
+        s.rising = true; s.remaining = b.resurface!.riseMax
       } else explodeShell(s, nx, ny, t)
     }
   }

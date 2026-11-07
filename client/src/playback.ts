@@ -60,7 +60,7 @@ export class ShotPlayback {
     }
     this.anyDig = false
     for (let k = 0; k < this.result.paths.length; k++) this.placeShell(k)
-    if (this.art?.dig) audio.digLoopSet(this.anyDig, this.sfx?.fire)
+    if (this.art?.dig) audio.digLoopSet(this.anyDig, this.sfx?.dig)
     if (this.t >= this.result.endT && this.ev >= evs.length) {
       this.tail += dt
       if (this.tail >= 0.6 && !this.fx.busy) {

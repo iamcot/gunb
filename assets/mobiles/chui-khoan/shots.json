@@ -11,7 +11,7 @@
       "length": 18,
       "fire": "fire-2.ogg",
       "boom": "boom-2.ogg",
-      "dig": true
+      "dig": "fire-1.ogg"
     },
     {
       "file": "shot-3.png",
@@ -19,7 +19,7 @@
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
       "streak": "#ffb36b",
-      "dig": true
+      "dig": "fire-1.ogg"
     }
   ]
 }

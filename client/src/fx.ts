@@ -21,7 +21,6 @@ const FLASH_S = 0.12
 const BOLT_S = 0.42
 /** Đạn xuyên đất dưới đất: màu tối, độ mờ, độ nhòe, biên độ rung (px). Đạn SS: số vệt xé gió, số đoạn mỗi vệt. */
 const DIG_TINT = 0x4a3326, DIG_ALPHA = 0.7, DIG_BLUR = 3, DIG_SHAKE = 2.2
-const STREAKS = 7, STREAK_SEGS = 5
 const BOLT_HEIGHT = 900
 const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
@@ -240,7 +239,8 @@ export class Fx {
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
       this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)
       if (streak) {   // đạn SS: thêm lửa to và tàn lửa văng ra
-        this.spawn(P_FIRE, tx, ty, -cx * 60 + rnd(-30, 30), -cy * 60 + rnd(-30, 30), rnd(0.25, 0.4), rnd(11, 16), FIRE_HOT)
+        this.spawn(P_FIRE, tx, ty, -cx * 60 + rnd(-30, 30), -cy * 60 + rnd(-30, 30), rnd(0.25, 0.4), rnd(13, 20), FIRE_HOT)
+        this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
         this.spawn(P_EMBER, tx, ty, -cx * 90 + rnd(-60, 60), -cy * 90 + rnd(-60, 60), rnd(0.4, 0.8), rnd(1.5, 2.6), 0xffa030)
       }
     }
@@ -269,24 +269,22 @@ export class Fx {
     }
   }
 
-  /** Vệt xé gió / xé lửa của đạn SS (`streak` trong shots.json): quầng sáng quanh đạn + vài vệt dài mỏng nhạt dần ra sau, nhoáng mỗi frame. */
-  private drawShellStreaks(glow: Graphics): void {
+  /** Hiệu ứng đạn SS (`streak` trong shots.json): quầng lửa nhiều lớp quanh đạn (vàng trắng ở lõi, cam ở ngoài), hai cung gió cong phía trước đầu đạn như đang xé không khí; lửa + khói tối đuôi nằm ở `trail`. */
+  private drawShellStreaks(glow: Graphics, flame: Graphics): void {
     const a = this.shellArt
     if (!a || a.streak === 0) return
     for (let i = 0; i < this.shellPos.length; i++) {
       const p = this.shellPos[i]!
       if (!p.visible) continue
-      const rot = this.shellRot[i]!, cx = Math.cos(rot), cy = Math.sin(rot), nx = -cy, ny = cx
-      glow.circle(p.x, p.y, a.length * 0.75).fill({ color: a.streak, alpha: 0.12 })
-      glow.circle(p.x, p.y, a.length * 0.4).fill({ color: 0xffffff, alpha: 0.07 })
-      for (let n = 0; n < STREAKS; n++) {
-        const off = rnd(-a.length * 0.5, a.length * 0.5), len = a.length * rnd(1.4, 3.2), core = n < 2
-        const sx = p.x - cx * a.length * 0.3 + nx * off, sy = p.y - cy * a.length * 0.3 + ny * off
-        for (let k = 0; k < STREAK_SEGS; k++) {
-          const f0 = k / STREAK_SEGS, f1 = (k + 1) / STREAK_SEGS
-          glow.moveTo(sx - cx * len * f0, sy - cy * len * f0).lineTo(sx - cx * len * f1, sy - cy * len * f1)
-            .stroke({ color: core ? 0xfff2c0 : a.streak, width: (core ? 3.2 : 2.4) * (1 - f0 * 0.7), alpha: 0.85 * (1 - f0), cap: 'round' })
-        }
+      const rot = this.shellRot[i]!, fl = 0.85 + Math.random() * 0.3   // nhấp nháy
+      // quầng lửa vẽ bằng blend thường (cộng sáng sẽ làm trắng xoá trên nền sáng)
+      flame.circle(p.x, p.y, a.length * 0.95 * fl).fill({ color: a.streak, alpha: 0.28 })
+      flame.circle(p.x, p.y, a.length * 0.62 * fl).fill({ color: 0xff9a2e, alpha: 0.4 })
+      flame.circle(p.x, p.y, a.length * 0.32 * fl).fill({ color: 0xffe27a, alpha: 0.6 })
+      for (let j = 0; j < 3; j++) {   // cung gió cong ôm phía trước đạn, lệch nhẹ mỗi frame
+        const r = a.length * (0.75 + 0.3 * j) * fl, half = 1.15 - 0.15 * j, off = (Math.random() - 0.5) * 0.12
+        glow.moveTo(p.x + Math.cos(rot - half + off) * r, p.y + Math.sin(rot - half + off) * r)
+        glow.arc(p.x, p.y, r, rot - half + off, rot + half + off).stroke({ color: j === 0 ? 0xffffff : a.streak, width: 3.2 - j * 0.8, alpha: 0.7 - j * 0.15, cap: 'round' })
       }
     }
   }
@@ -549,7 +547,7 @@ export class Fx {
     fire.clear()
     glow.clear()
     this.drawShellArcs(glow)
-    this.drawShellStreaks(glow)
+    this.drawShellStreaks(glow, fire)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt

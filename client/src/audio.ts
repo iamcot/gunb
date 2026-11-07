@@ -15,7 +15,7 @@ const MANIFEST_URL = '/audio/sounds.json'
 /** `assets/audio/sounds.json`: tên file (trong `assets/audio/`), mục nào không có thì dùng tiếng tạo bằng code. */
 interface SoundsFile { music?: { lobby?: string; battle?: string }; sfx?: { turn?: string; hit?: string; aim?: string; aimLoop?: string } }
 /** URL tiếng của một loại đạn (từ shots.json của xe). */
-export interface ShotSfx { fire?: string; boom?: string; bolt?: string; beam?: string }
+export interface ShotSfx { fire?: string; boom?: string; bolt?: string; beam?: string; dig?: string }
 /** Nhạc đang cần: sảnh (menu, phòng chờ) hoặc trận (`mapUrl` = nhạc riêng của bản đồ nếu có). */
 export type MusicScene = { kind: 'lobby' } | { kind: 'battle'; mapUrl: string | null }
 // Giai điệu: 4 hợp âm (Am F C G) × 8 nốt gam ngũ cung, tốc độ 96 bpm

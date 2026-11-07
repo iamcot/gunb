@@ -61,6 +61,17 @@ describe('simulateShot: đạn thường (Ốc Thiết Giáp, đạn 1)', () => 
   })
 })
 
+describe('simulateShot: đạn xuất phát từ đầu nòng', () => {
+  it('Ốc: nòng chĩa thẳng lên thì đạn ở trên gốc nòng ox px; quay mặt trái thì đối xứng qua tâm xe', () => {
+    const mz = createDefaultTuning().mobiles['oc-thiet-giap']!.muzzle!
+    const r1 = simulateShot(input({ fire: { angle: 90, power: 50, slot: 0 } }))
+    expect(r1.paths[0]![1]).toBeCloseTo(200 + mz.px, 0)
+    expect(r1.paths[0]![2]).toBeCloseTo(GROUND - 18 + mz.py - mz.ox, 0)
+    const r2 = simulateShot(input({ facing: -1, fire: { angle: 90, power: 50, slot: 0 } }))
+    expect(r2.paths[0]![1]).toBeCloseTo(200 - mz.px, 0)
+  })
+})
+
 describe('simulateShot: behavior', () => {
   it('burst (Ốc, đạn 2): 2 quả bắn cách nhau interval, 2 vụ nổ, 2 đường đạn', () => {
     const t = createDefaultTuning()

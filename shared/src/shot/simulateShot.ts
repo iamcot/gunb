@@ -236,7 +236,15 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
 
   const spawn = (t: number, angleDeg: number): void => {
     aimDir(dir, angleDeg, input.facing)   // góc so với phương ngang, không cộng độ dốc
-    const x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
+    let x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
+    const mz = mobile.muzzle
+    if (mz) {   // đạn ra từ đầu nòng: gốc nòng xoay theo dốc xe, đầu nòng = gốc + ox dọc nòng + oy vuông góc nòng
+      const f = input.facing, c = Math.cos(-input.tilt), sn = Math.sin(-input.tilt)
+      const gx = f * mz.px, gy = mz.py
+      const nx = f > 0 ? -dir.y : dir.y, ny = f > 0 ? dir.x : -dir.x
+      x = shooter.x + gx * c - gy * sn + dir.x * mz.ox + nx * mz.oy
+      y = shooter.y + gx * sn + gy * c + dir.y * mz.ox + ny * mz.oy
+    }
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
     if (mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất
   }

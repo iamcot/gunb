@@ -48,7 +48,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const mobile = tuning.mobiles[shooter.mobileId]
   if (!mobile) throw new Error(`không có pháo ${shooter.mobileId}`)
   const fire = sanitizeFire(input.fire, mobile, input.facing, input.tilt)
-  const def = mobile.shots[fire.slot]
+  const def = input.shotDef ?? mobile.shots[fire.slot]
   const beh = def.behavior
   const mask = input.mask.clone()
   const hp = new Map<number, number>(input.vehicles.map(v => [v.id, v.hp]))
@@ -99,6 +99,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const explodeShell = (s: Shell, x: number, y: number, t: number): void => {
     s.alive = false
     s.path.push(t, x, y)
+    if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
     blast(x, y, t, def.blastRadius, beh.kind === 'build' ? 0 : def.carveRadius, def.damage, true)
     if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
     if (beh.kind === 'build') build(x, y, t, beh)

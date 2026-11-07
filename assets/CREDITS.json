@@ -1429,5 +1429,45 @@
     "license": "OFL",
     "url": "https://fonts.google.com/specimen/Nunito",
     "modified": "Không sửa (file woff2 tải nguyên từ fonts.gstatic.com)"
+  },
+  {
+    "file": "ui/items/dual.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt trong plan/16-prompt-item.md (dual.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, căn vuông, thu về 128 px"
+  },
+  {
+    "file": "ui/items/heal.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt trong plan/16-prompt-item.md (heal.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, căn vuông, thu về 128 px"
+  },
+  {
+    "file": "ui/items/teleport.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt trong plan/16-prompt-item.md (teleport.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, căn vuông, thu về 128 px"
+  },
+  {
+    "file": "ui/items/windShield.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt trong plan/16-prompt-item.md (windShield.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, căn vuông, thu về 128 px"
+  },
+  {
+    "file": "ui/items/fastTurn.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt trong plan/16-prompt-item.md (fastTurn.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, căn vuông, thu về 128 px"
   }
 ]

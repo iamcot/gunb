@@ -6,6 +6,8 @@ import type { TerrainView } from './terrainView'
 
 export interface PlaybackHooks {
   onDamage: (id: number, amount: number, hpAfter: number) => void
+  /** Quả dịch chuyển chạm (item): xe người bắn sẽ tới đây khi phát lại xong. */
+  onTeleport?: (x: number, y: number) => void
 }
 
 /** Phát lại ShotResult theo thời gian thật: mỗi viên đạn bay theo quỹ đạo của nó; tới `t` của sự kiện thì áp hố/sát thương/hiệu ứng. */
@@ -41,6 +43,7 @@ export class ShotPlayback {
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
         case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
+        case 'teleport': this.fx.soulBurst(e.x, e.y); this.hooks.onTeleport?.(e.x, e.y); break
         default: break
       }
     }

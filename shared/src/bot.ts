@@ -6,6 +6,8 @@ import { sanitizeFire, simulateShot } from './shot/simulateShot'
 import type { ShotSlot } from './shots'
 import type { TerrainMask } from './terrain/mask'
 import { TUNING, type Tuning } from './tuning'
+import { windMagnitude } from './wind'
+import type { ItemId } from './items'
 
 export type BotLevel = 'easy' | 'normal' | 'hard'
 
@@ -17,6 +19,10 @@ export const BOT_LEVELS: Record<BotLevel, { angleStep: number; bisect: number; r
   normal: { angleStep: 15, bisect: 5, refine: 6, angleErr: 2, powerErr: 5, thinkS: 1.6 },
   hard: { angleStep: 12, bisect: 5, refine: 12, angleErr: 0, powerErr: 0, thinkS: 2.0 },
 }
+
+/** Item máy mang vào trận và ngưỡng dùng: Hồi máu khi đã mất ít nhất lượng hồi; Lá chắn gió khi gió ≥ `windShieldMin`; Bắn 2 lần khi phát đã chọn có trúng địch. */
+export const BOT_ITEMS: readonly ItemId[] = ['heal', 'windShield', 'dual']
+export const BOT_ITEM_RULES = { windShieldMin: 12 }
 
 const KILL_BONUS = 40
 const ALLY_WEIGHT = 1.5
@@ -115,7 +121,8 @@ export function planShot(state: MatchState, mask: TerrainMask, level: BotLevel, 
 /** Seed cho RNG của bot, ổn định theo trận + lượt (xác định, tái lập được). */
 export const botRng = (seed: number, turnNo: number): (() => number) => mulberry32((seed ^ Math.imul(turnNo, 0x9e3779b1)) >>> 0)
 
-export interface BotCmd { angle: number; dir: -1 | 0 | 1; fire: boolean; power: number; slot: ShotSlot }
+/** `item` = ô item cần dùng ngay ở tick này (-1 = không); bên gọi áp action `item` trước `fire`. */
+export interface BotCmd { angle: number; dir: -1 | 0 | 1; fire: boolean; power: number; slot: ShotSlot; item: number }
 
 const WALK_S = 0.9
 const AIM_DEG_PER_S = 40
@@ -131,6 +138,7 @@ export class BotDriver {
   private thinkLeft = 0
   private walkLeft = 0
   private replanned = false
+  private itemTried = false
 
   constructor(readonly level: BotLevel) {}
 
@@ -138,7 +146,15 @@ export class BotDriver {
     const me = currentPlayer(s)
     const cfg = BOT_LEVELS[this.level]
     const rng = botRng(s.seed, s.turnNo)
+    out.item = -1
     if (this.turnNo !== s.turnNo) {
+      // đầu lượt: dùng item trước (gió về 0 phải có trước khi lập kế hoạch), lập kế hoạch ở tick sau
+      if (!this.itemTried) {
+        this.itemTried = true
+        const k = s.turnItem === null ? preItemSlot(me.items, me.hp, me.maxHp, windMagnitude(s.wind), tuning) : -1
+        if (k >= 0) { out.item = k; out.fire = false; out.dir = 0; out.angle = me.aimAngle; return }
+      }
+      this.itemTried = false
       this.turnNo = s.turnNo
       this.plan = planShot(s, mask, this.level, rng, tuning)
       this.angle = me.aimAngle
@@ -169,8 +185,21 @@ export class BotDriver {
     this.angle = Math.abs(target - this.angle) <= stepDeg ? target : this.angle + Math.sign(target - this.angle) * stepDeg
     out.angle = Math.round(this.angle)
     this.thinkLeft -= dt
-    if (this.thinkLeft <= 0 && out.angle === target) out.fire = true
+    if (this.thinkLeft <= 0 && out.angle === target) {
+      out.fire = true
+      const dual = me.items.indexOf('dual')
+      if (dual >= 0 && s.turnItem === null && this.plan!.slot !== 2 && this.plan!.enemyDamage > 0) out.item = dual
+    }
     out.power = this.plan!.power
     out.slot = this.plan!.slot
   }
+}
+
+/** Ô item máy dùng đầu lượt (-1 = không dùng). */
+function preItemSlot(items: readonly (ItemId | null)[], hp: number, maxHp: number, wind: number, t: Tuning): number {
+  const heal = items.indexOf('heal')
+  if (heal >= 0 && maxHp - hp >= t.items.heal.amount) return heal
+  const ws = items.indexOf('windShield')
+  if (ws >= 0 && wind >= BOT_ITEM_RULES.windShieldMin) return ws
+  return -1
 }

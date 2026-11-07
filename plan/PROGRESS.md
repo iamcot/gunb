@@ -119,3 +119,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - B9: Nhím Chùm 4/6/9 quả (dmg/quả 260/140/310). Chưa làm `spreadGrowth` (tỏa tăng theo quãng bay).
 - B6: `ShotDef.curve {returnAccel, rampS}` (gia tốc ngang ngược chiều bắn tăng dần) → Diều Hâu: đ1 boomerang, đ2 4 quả (110/quả), SS vẫn airGrow + curve. Bắn góc cao/lực mạnh thì quay về, bắn thấp bay thẳng. Cần chỉnh 220/1,5 s bằng F4.
 - B8: `roller.crawl {fuseS}` → Cua Lăn SS 'Cua khổng lồ': bò theo hướng bắn (90 px/s), gặp vách thì quay đầu, 6 s tự nổ, chạm xe nào cũng nổ (kể cả xe bắn). Mìn nằm chờ (đ2) vẫn là C3.
+- Nhím Chùm SS: bỏ ảnh hiệu ứng lửa SS (streak), về lửa + khói đuôi như đạn 1, 2. Ảnh nhim-chum/ss-fx.png còn trong assets (chưa dùng).

@@ -149,7 +149,7 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - B1. ⚠️ `airGrow` → Ốc SS phình, Diều SS hoá vàng. **Xong** (afterS: Ốc 1,8 s, Diều 2,4 s; thời gian bay thật của ta 1–4 s nên không dùng 2,5 s của bản gốc; chỉnh bằng F6). Kèm: khói + lửa đuôi cho 3 đạn Ốc, số sát thương nhảy lên cho mỗi phát trúng.
 - B2. ⚠️ `tandem` → Ốc đ2.
 - B3. ⚠️ `beam` + `twin`/`orbit` → Sứa Đèn đ1, đ2; Rùa Thành đ1, đ2 (đạn nước); Cua Lăn đ1 (3 đĩa).
-- B4. ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS.
+- B4 (xong). ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS. Đ1 thành đạn nổ thường.
 - B5 (xong). ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
 - B6. ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
 - B7. ⚠️ `splitAfter` → Rùa Thành SS.

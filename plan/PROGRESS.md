@@ -96,3 +96,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Thanh máu + tên chuyển xuống dưới xe: thanh theo màu đội, 4 ô, quầng sáng nhẹ theo đội; mũi tên lượt đứng cao hơn nòng.
 - Hiệu ứng tụ lực: thân nhún + nòng phập phồng + rung nhẹ, nhanh/mạnh dần theo lực (mọi xe; VehicleViews.setCharge).
 - Thanh trên: hai nút ESC/ÂM sát mép khung, ô thời tiết cân lề, chữ SẮP TỚI không bị chạm viền.
+- B4: Chũi Khoan đ1 nổ thường, đ2 lặn 110px rồi đào chếch lên 55° và nổ ở chỗ trồi (drill.resurface), SS xuyên địa hình, chỉ nổ khi chạm xe kể cả xác (ghost). Bọ Lôi đ2: hai tia chụm một điểm, mỗi tia 170 (tổng = đạn 1). Balance mẫu nhỏ 128 ván: Chũi 62%, Bọ Lôi 43% (nhiễu, cần chạy 640 ván).

@@ -18,8 +18,10 @@ export { KY_LAN_SAT, LONG_NGU_CO, BO_LOI, CHUI_KHOAN, CUA_LAN, CU_THIEN_VAN, DIE
 export const MOBILE_IDS = ['oc-thiet-giap', 'chui-khoan', 'bo-loi', 'cua-lan', 'dieu-hau-giay', 'nhim-chum', 'sua-den', 'rua-thanh', 'cu-thien-van'] as const
 /** Xe ẩn: không có ở lưới chọn pháo, chỉ gặp qua nút Ngẫu nhiên. */
 export const SECRET_MOBILE_IDS = ['long-ngu-co', 'ky-lan-sat'] as const
-/** Mọi xe hợp lệ (cả xe ẩn): server kiểm tra lựa chọn và nút Ngẫu nhiên bốc trong danh sách này. */
-export const ALL_MOBILE_IDS: readonly string[] = [...MOBILE_IDS, ...SECRET_MOBILE_IDS]
+/** Bật để xe ẩn xuất hiện (Ngẫu nhiên, tập bắn, cân bằng). Tạm tắt: chưa có ảnh đạn/rồng/kiếm. */
+const SECRET_ENABLED = false
+/** Mọi xe hợp lệ: server kiểm tra lựa chọn và nút Ngẫu nhiên bốc trong danh sách này (xe ẩn chỉ có khi `SECRET_ENABLED`). */
+export const ALL_MOBILE_IDS: readonly string[] = SECRET_ENABLED ? [...MOBILE_IDS, ...SECRET_MOBILE_IDS] : MOBILE_IDS
 /** Giá trị đặt chỗ "chưa chọn xe" ở phòng online: server bốc ngẫu nhiên trong `ALL_MOBILE_IDS` lúc bấm Bắt đầu (xe ẩn cũng có thể ra). */
 export const RANDOM_MOBILE = 'random'
 export type MobileId = (typeof MOBILE_IDS)[number]

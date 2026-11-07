@@ -119,9 +119,10 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
    *  `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), trúng mọi xe nằm trên đoạn tia. */
   const beamRay = (ax: number, ay: number, t: number, b: SatelliteBeh): void => {
     const sky = b.from === 'sky'
+    const hx = shooter.x, hy = shooter.y - b.altitude      // chỗ vệ tinh bay theo trên đầu xe (báo cho client trong event)
     let x0 = ax, y0 = 0, dx = 0, dy = 1
     if (!sky) {
-      x0 = shooter.x; y0 = shooter.y - b.altitude
+      x0 = hx; y0 = hy
       const n = Math.hypot(ax - x0, ay - y0) || 1
       dx = (ax - x0) / n; dy = (ay - y0) / n
     }
@@ -137,7 +138,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       px += dx; py += dy
     }
     const hitGround = solid >= b.depth
-    events.push({ t, kind: 'beam', x: px, y: py, w: b.halfWidth, sky, x0, y0 })
+    events.push({ t, kind: 'beam', x: px, y: py, w: b.halfWidth, sky, x0: hx, y0: hy })
     if (topX >= 0) {
       const len = Math.hypot(px - topX, py - topY), step = Math.max(3, b.halfWidth / 2)
       for (let d = 0; ; d += step) {

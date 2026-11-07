@@ -7,10 +7,11 @@ Gameplay đã chạy được khi chưa có ảnh: xe vẽ bằng hình khối, 
 
 ## Thông số (shared/src/mobiles/cuThienVan.ts)
 
+Vệ tinh **luôn bay theo** trên đầu xe (cao 170 px, nghiêng chéo về phía trước). Cầu sáng **không gây sát thương, không khoét đất**, chỉ đánh dấu; sát thương đến hoàn toàn từ laser.
+
 | | Đạn 1 – Đốm sáng | Đạn 2 – Ba tia | SS – Cột sáng |
 |---|---|---|---|
-| Cầu sáng nổ | 12 sát thương, bán kính 40 | 8, bán kính 35 | 15, bán kính 50 |
-| Laser | 1 tia chéo từ trên đầu xe (cao 260 px), rộng 16 px, 30 sát thương, đốt sâu 30 px | 3 tia chéo (nhắm giữa, phải, trái cách 30 px, nối nhau 0.15 s), rộng 14 px, 20 mỗi tia, sâu 26 px | 1 tia thẳng đứng từ trời, rộng 52 px, 75 sát thương, đốt sâu 110 px |
+| Laser | 1 tia chéo từ vệ tinh trên đầu xe, rộng 16 px, 42 sát thương, đốt sâu 30 px | 3 tia chéo (nhắm giữa, phải, trái cách 30 px, nối nhau 0.15 s), rộng 14 px, 26 mỗi tia, sâu 26 px | Vệ tinh bay tới trên điểm chạm, xoay ngang, bắn 1 tia thẳng đứng từ trời, rộng 52 px, 90 sát thương, đốt sâu 110 px |
 | Vệ tinh bắn sau | 0.5 s | 0.5 s | 0.6 s |
 | Delay | 115 | 160 | 230 |
 

@@ -104,7 +104,7 @@ describe('Cú Thiên Văn (satellite)', () => {
     const e = b[0]!
     expect(e.sky).toBe(false)
     expect(e.x0).toBe(400)                     // ngay trên đầu xe bắn
-    expect(e.y0).toBeLessThan(G - 200)
+    expect(e.y0).toBe(G - 18 - 170)           // vệ tinh bay theo cao 170 px trên tâm xe
     expect(e.t - ex.t).toBeCloseTo(0.5, 1)
     // điểm cuối nằm trên đường thẳng (x0, y0) → điểm nổ, phía sau điểm nổ
     const cross = (ex.x - e.x0) * (e.y - e.y0) - (ex.y - e.y0) * (e.x - e.x0)
@@ -119,7 +119,19 @@ describe('Cú Thiên Văn (satellite)', () => {
     expect(e.sky).toBe(true)
     expect(e.x).toBe(ex.x)
     expect(e.y).toBeGreaterThan(G)
-    expect(e.y).toBeLessThanOrEqual(G + 25 + 110)   // đáy hố cầu sáng (carve 25) + depth 110
+    expect(e.y).toBeLessThanOrEqual(G + 110)        // cầu sáng không khoét, tia đốt sâu 110 từ mặt đất
+  })
+  it('cầu sáng không gây sát thương, không khoét đất: chỉ laser mới gây sát thương', () => {
+    for (const slot of [0, 1, 2] as const) {
+      const x = firstExplode(shoot('cu-thien-van', slot, 45, 60)).x
+      const r = shoot('cu-thien-van', slot, 45, 60, { others: [veh(1, 'oc-thiet-giap', x + 5)] })
+      const beamTs = new Set(beamsOf(r).map(e => e.t))
+      const dmg = r.events.filter(e => e.kind === 'damage')
+      expect(dmg.length).toBeGreaterThan(0)
+      for (const e of dmg) expect(beamTs.has(e.t)).toBe(true)
+      const ex = r.events.find(e => e.kind === 'explode')!
+      expect(r.events.some(e => e.kind === 'carve' && e.t === ex.t)).toBe(false)
+    }
   })
   it('laser trúng xe nằm trên tia; lệch xa khỏi tia thì trượt', () => {
     const x = firstExplode(shoot('cu-thien-van', 0, 45, 60)).x

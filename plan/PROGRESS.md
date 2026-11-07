@@ -90,3 +90,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Tụ lực bằng chuột trái trên khung game (nhả = bắn); hết giờ lượt khi đang tụ thì bắn luôn với lực hiện tại (hotseat/online). Chưa có file âm thanh tụ lực.
 - Thước ngắm: chỉ vẽ cung (dải góc + 20% mỗi đầu) tâm ở gốc nòng, xanh gradient đậm ngoài/nhạt trong; tụ lực chuột: lực tự tăng, kéo phải +, kéo trái −.
 - Âm thanh tụ lực: aim.ogg (tăng dần ~2 s) rồi aim_loop.ogg (lặp), phát khi bắt đầu tụ (Space/chuột), tắt khi nhả/hủy.
+- Kim ngắm dùng ảnh assets/ui/aim-needle.png (do người dùng tạo), mũi tên vẽ bằng code còn làm dự phòng.

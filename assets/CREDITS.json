@@ -1611,5 +1611,13 @@
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
     "modified": "Lấy đoạn 0.00–3.00 s của bản gốc 6.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "ui/aim-needle.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mũi tên kim ngắm (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 96 px"
   }
 ]

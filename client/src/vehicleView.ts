@@ -8,6 +8,9 @@ const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
 const ARC_GREEN = 0x4fb35a, ARC_BANDS = 10   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
 const ARC_EXTEND = 0.2, DEG = Math.PI / 180   // cung vẽ thêm 20% bề rộng dải góc ở mỗi đầu
+const NEEDLE_W = 46, NEEDLE_ANCHOR_X = 0.936, NEEDLE_ANCHOR_Y = 0.46   // ảnh kim: bề rộng khi vẽ (px) và toạ độ mũi trên ảnh (0..1)
+let needleTex: Texture | null = null
+void loadImage('/ui/aim-needle.png').then(img => { needleTex = Texture.from(img) }).catch(() => { /* dùng mũi tên vẽ bằng code */ })
 const NEEDLE_COLOR = 0x5ec4ff
 /** Con trỏ mũi tên: các cặp (lùi dọc kim, lệch ngang) quanh mũi ở (0,0). */
 const NEEDLE: readonly number[] = [0, 0, 24, 11, 17, 3.5, 34, 3.5, 34, -3.5, 17, -3.5, 24, -11]
@@ -114,6 +117,7 @@ function satAltitude(mobileId: string): number {
 export class VehicleViews {
   readonly container = new Container()
   private readonly fan = new Graphics()
+  private readonly needle = new Sprite()
   private readonly angleText = new Text({ text: '', style: { fontFamily: 'sans-serif', fontSize: 16, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x1a2b3c, width: 4 } } })
   private readonly views = new Map<number, View>()
   private readonly tmp: Vec2 = { x: 0, y: 0 }
@@ -127,7 +131,8 @@ export class VehicleViews {
     this.container.addChild(this.fan)
     this.angleText.anchor.set(0.5, 0)
     this.angleText.visible = false
-    this.container.addChild(this.angleText)
+    this.container.addChild(this.needle, this.angleText)
+    this.needle.visible = false
     for (const p of match.players) {
       const root = new Container()
       const body = new Graphics(), barrel = new Graphics(), bar = new Graphics()
@@ -192,6 +197,7 @@ export class VehicleViews {
     this.updateGhosts(dt)
     this.fan.clear()
     this.angleText.visible = false
+    this.needle.visible = false
     for (const p of match.players) {
       const v = this.views.get(p.id)!
       const hp = shownHp.get(p.id) ?? p.hp
@@ -367,15 +373,21 @@ export class VehicleViews {
       g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })
     }
     const lowEnd = scr(r.min - ext)   // số độ nằm dưới đầu thấp của cung
-    // kim ngắm: con trỏ chuột xanh (tự vẽ bằng Graphics), mũi chạm vòng, đuôi hướng về tâm
+    // kim ngắm: ảnh mũi tên (assets/ui/aim-needle.png, vẽ chĩa sang phải), mũi chạm giữa cung; chưa tải xong thì dùng mũi tên vẽ bằng code
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
     const tx = cx + d.x * (mid + 6), ty = cy + d.y * (mid + 6)
-    for (let i = 0; i < NEEDLE.length; i += 2) {
-      const u = NEEDLE[i]!, w = NEEDLE[i + 1]!   // u: lùi dọc theo kim, w: lệch ngang
-      const px = tx - d.x * u - d.y * w, py = ty - d.y * u + d.x * w
-      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py)
+    if (needleTex) {
+      const n = this.needle
+      if (!n.texture || n.texture !== needleTex) { n.texture = needleTex; n.anchor.set(NEEDLE_ANCHOR_X, NEEDLE_ANCHOR_Y); n.scale.set(NEEDLE_W / needleTex.width) }
+      n.position.set(tx, ty); n.rotation = Math.atan2(d.y, d.x); n.visible = true
+    } else {
+      for (let i = 0; i < NEEDLE.length; i += 2) {
+        const u = NEEDLE[i]!, w2 = NEEDLE[i + 1]!   // u: lùi dọc theo kim, w2: lệch ngang
+        const px = tx - d.x * u - d.y * w2, py = ty - d.y * u + d.x * w2
+        if (i === 0) g.moveTo(px, py); else g.lineTo(px, py)
+      }
+      g.closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0xffffff, width: 2 })
     }
-    g.closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0xffffff, width: 2 })
     this.angleText.text = `${p.aimAngle}°`
     this.angleText.position.set(cx + Math.cos(lowEnd) * mid, cy + Math.sin(lowEnd) * mid + w / 2 + 4)
     this.angleText.visible = true

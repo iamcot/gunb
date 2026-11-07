@@ -105,3 +105,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Hiệu ứng SS riêng cho 6 xe: Ốc (xoắn ốc), Cú Thiên Văn (sao tím), Nhím (gai xanh), Diều (lông vàng), Bọ Lôi (sét xanh), Chũi (lửa cam): assets/mobiles/<id>/ss-fx.png, khai báo streak trong shots.json; khói đuôi chỉ khi trail:smoke. Cua Lăn, Sứa Đèn, Rùa Thành chưa có ảnh.
 - Nhím SS: thu ảnh hiệu ứng 0,5 (streakScale) và bỏ khói đuôi (nhiều quả chồng dày).
 - Nhím Chùm SS: trả lại khói đuôi (loại nhẹ), khói tối dày chỉ cho đạn SS đơn.
+- B3: thêm Behavior `twin` (xoắn rồi chụm, N viên, mỗi viên va chạm riêng). Sứa Đèn đ1 = tia đơn (basic), đ2 = 2 tia; Rùa Thành đ2 = 2 dòng nước (thay tường đất); Cua Lăn đ1 = 3 đĩa. SS Sứa/Rùa/Cua giữ nguyên chờ C1/B7/B8. Chưa có ảnh/dải tia riêng: dùng ảnh đạn hiện có. Cần chỉnh radius/convergeS/damage bằng F6 + balance.

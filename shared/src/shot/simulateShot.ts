@@ -26,6 +26,8 @@ interface Shell {
   grown: boolean          // airGrow: đã bay đủ lâu
   pierced: number         // số lần đã xuyên đất (pierce)
   tp: number              // lần cuối qua cổng (portal)
+  twinK: number           // twin: số thứ tự viên (-1 = không xoắn)
+  off: number             // twin: độ lệch hiện tại khỏi trục bay (px, theo phương vuông góc vận tốc)
 }
 
 interface Pending { tStart: number; angleDeg: number }
@@ -82,7 +84,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1,
+      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0,
     }
     shells.push(s)
     return s
@@ -235,7 +237,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return undefined
   }
 
-  const spawn = (t: number, angleDeg: number): void => {
+  const spawn = (t: number, angleDeg: number, twinK = -1): void => {
     aimDir(dir, angleDeg, input.facing)   // góc so với phương ngang, không cộng độ dốc
     let x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
     const mz = mobile.muzzle
@@ -247,6 +249,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       y = shooter.y + gx * sn + gy * c + dir.y * mz.ox + ny * mz.oy
     }
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
+    if (twinK >= 0) s.twinK = twinK
     if (beh.kind !== 'ghost' && mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất (đạn xuyên địa hình thì cứ bay)
   }
 
@@ -375,6 +378,14 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
         }
       }
     }
+    if (r === FLYING && s.twinK >= 0 && beh.kind === 'twin') {   // xoắn quanh trục: dịch viên đạn thêm phần chênh của độ lệch so với bước trước
+      const tt = Math.min(t - s.tStart, beh.convergeS)
+      const off = beh.radius * (1 - tt / beh.convergeS) * Math.sin((2 * Math.PI * s.twinK) / beh.count + (2 * Math.PI * beh.turns * tt) / beh.convergeS)
+      const sp = Math.hypot(s.p.vx, s.p.vy) || 1
+      const d = off - s.off
+      s.p.x += (-s.p.vy / sp) * d; s.p.y += (s.p.vx / sp) * d; s.off = off
+      if (mask.isSolid(s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
+    }
     if (r === FLYING) {
       if (hitsVehicle(s, s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
       if (beh.kind === 'splitAtApex' && !s.child && s.p.vy >= 0) { split(s, t, beh); return }
@@ -409,6 +420,8 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   // Lịch bắn: đạn đầu ở t = 0; chùm liền thì các quả sau theo `interval`.
   if (beh.kind === 'spread') {
     for (let k = 0; k < beh.count; k++) spawn(0, fire.angle + (k - (beh.count - 1) / 2) * beh.spreadDeg)
+  } else if (beh.kind === 'twin') {
+    for (let k = 0; k < beh.count; k++) spawn(0, fire.angle, k)
   } else spawn(0, fire.angle)
   if (beh.kind === 'burst') for (let k = 1; k < beh.count; k++) pending.push({ tStart: k * beh.interval, angleDeg: fire.angle + k * beh.angleStepDeg })
 

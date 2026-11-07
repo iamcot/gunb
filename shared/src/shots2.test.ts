@@ -24,7 +24,7 @@ const firstExplode = (r: ShotResult): { x: number; y: number } => r.events.find(
 
 describe('Cua Lăn (roller)', () => {
   it('lăn tiếp sau khi chạm đất rồi mới nổ', () => {
-    const r = shoot('cua-lan', 0, 30, 60)
+    const r = shoot('cua-lan', 1, 30, 60)
     const path = r.paths[0]!
     let landX = 0
     for (let i = 0; i < path.length; i += 3) if (path[i + 2]! >= G - 8) { landX = path[i + 1]!; break }
@@ -35,11 +35,11 @@ describe('Cua Lăn (roller)', () => {
   it('gặp vách cao thì nổ ngay trước vách', () => {
     const m = flat()
     for (let y = G - 120; y < G; y++) for (let x = 1000; x < 1040; x++) m.data[y * W + x] = 1
-    const r = shoot('cua-lan', 0, 20, 45, { mask: m })
+    const r = shoot('cua-lan', 1, 20, 45, { mask: m })
     expect(firstExplode(r).x).toBeLessThan(1000)
   })
   it('trúng xe đang đứng trên đường lăn', () => {
-    const r = shoot('cua-lan', 0, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)] })
+    const r = shoot('cua-lan', 1, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)] })
     expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
   })
 })
@@ -60,8 +60,8 @@ describe('Sứa Đèn (pierce)', () => {
     return m
   }
   it('xuyên vách mỏng, bị chặn bởi vách dày; đạn thường bị chặn cả hai', () => {
-    const thin = shoot('sua-den', 0, 30, 80, { mask: wall(20) })
-    const thick = shoot('sua-den', 0, 30, 80, { mask: wall(200) })
+    const thin = shoot('sua-den', 2, 30, 80, { mask: wall(20) })
+    const thick = shoot('sua-den', 2, 30, 80, { mask: wall(200) })
     const basic = shoot('oc-thiet-giap', 0, 30, 75, { mask: wall(20) })
     expect(firstExplode(thin).x).toBeGreaterThan(930)
     expect(firstExplode(thick).x).toBeLessThan(1100)
@@ -73,13 +73,13 @@ describe('Rùa Thành (build)', () => {
   it('đắp thêm đất, không khoét; không đắp khi chạm xe', () => {
     const m = flat()
     const before = m.countSolid()
-    const r = shoot('rua-thanh', 1, 50, 50, { mask: m })
+    const r = shoot('rua-thanh', 2, 50, 50, { mask: m })
     expect(r.events.some(e => e.kind === 'fill')).toBe(true)
     expect(r.events.some(e => e.kind === 'carve')).toBe(false)
     expect(r.maskAfter.countSolid()).toBeGreaterThan(before)
     const ex = firstExplode(r)
     const target = veh(1, 'oc-thiet-giap', ex.x)
-    const r2 = shoot('rua-thanh', 1, 50, 50, { mask: flat(), others: [target] })
+    const r2 = shoot('rua-thanh', 2, 50, 50, { mask: flat(), others: [target] })
     for (const e of r2.events) if (e.kind === 'fill') expect(Math.hypot(target.x - e.x, target.y - e.y)).toBeGreaterThanOrEqual(e.r + target.radius + 3)
   })
   it('client phát lại fill cho cùng mask như server', () => {
@@ -257,5 +257,38 @@ describe('airGrow (Ốc SS, Diều SS)', () => {
   it('chưa đủ giờ thì sát thương và bán kính bằng thông số gốc', () => {
     const base = tuning.mobiles['oc-thiet-giap']!.shots[2]
     expect(grownBlast(shoot('oc-thiet-giap', 2, 30, 40))).toBe(base.blastRadius)
+  })
+})
+
+describe('twin (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1)', () => {
+  const maxOffset = (path: number[], other: number[]): number => {
+    let m = 0
+    for (let i = 0; i < Math.min(path.length, other.length); i += 3) m = Math.max(m, Math.hypot(path[i + 1]! - other[i + 1]!, path[i + 2]! - other[i + 2]!))
+    return m
+  }
+  it('Sứa Đèn đ2: 2 viên xoắn rộng ra rồi chụm lại, mỗi viên một vụ nổ có sát thương riêng', () => {
+    const r = shoot('sua-den', 1, 45, 80)
+    expect(r.paths).toHaveLength(2)
+    expect(maxOffset(r.paths[0]!, r.paths[1]!)).toBeGreaterThan(30)
+    const a = r.paths[0]!, b = r.paths[1]!
+    // gần thời điểm chụm (1,6 s) hai viên gần như trùng nhau
+    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 1.6) < 0.02) expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(8)
+    expect(r.events.filter(e => e.kind === 'explode')).toHaveLength(2)
+  })
+  it('đứng đúng chỗ chụm thì bị trúng (ít nhất một viên)', () => {
+    const probe = shoot('sua-den', 1, 45, 80)
+    const ex = firstExplode(probe)
+    const target = veh(1, 'oc-thiet-giap', ex.x, 5000)
+    const r = shoot('sua-den', 1, 45, 80, { others: [target] })
+    const hits = r.events.filter(e => e.kind === 'damage' && e.id === 1)
+    expect(hits.length).toBeGreaterThanOrEqual(1)
+  })
+  it('Cua Lăn đ1 có 3 viên, Rùa Thành đ2 có 2 viên', () => {
+    expect(shoot('cua-lan', 0, 45, 70).paths).toHaveLength(3)
+    expect(shoot('rua-thanh', 1, 50, 60).paths).toHaveLength(2)
+  })
+  it('deterministic', () => {
+    const a = shoot('cua-lan', 0, 40, 65), b = shoot('cua-lan', 0, 40, 65)
+    expect(JSON.stringify(a.paths)).toBe(JSON.stringify(b.paths))
   })
 })

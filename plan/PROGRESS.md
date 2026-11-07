@@ -107,3 +107,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Nhím Chùm SS: trả lại khói đuôi (loại nhẹ), khói tối dày chỉ cho đạn SS đơn.
 - B3: thêm Behavior `twin` (xoắn rồi chụm, N viên, mỗi viên va chạm riêng). Sứa Đèn đ1 = tia đơn (basic), đ2 = 2 tia; Rùa Thành đ2 = 2 dòng nước (thay tường đất); Cua Lăn đ1 = 3 đĩa. SS Sứa/Rùa/Cua giữ nguyên chờ C1/B7/B8. Chưa có ảnh/dải tia riêng: dùng ảnh đạn hiện có. Cần chỉnh radius/convergeS/damage bằng F6 + balance.
 - Nhím Chùm: tăng carveRadius (25/32/38 → 42/46/52) cho hố to hơn đạn thường (Ốc 45); blast/damage giữ nguyên. Chờ chỉnh khi làm B9.
+- Sứa Đèn: dòng ánh sáng sau đạn (shots.json `ribbon`, `ribbonW`; vẽ bằng code, thon dần về đuôi): đ1 vàng, đ2 xanh ngọc, quả đèn đ2 đổi sang xanh ngọc.

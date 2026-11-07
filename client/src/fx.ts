@@ -67,6 +67,7 @@ const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
 const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
 /** Khói đuôi đạn (Ốc Thiết Giáp...): nhả một đám khói + một đốm lửa mỗi TRAIL_STEP px bay được. */
+const RIBBON_N = 26, RIBBON_STEP = 7   // số điểm / khoảng cách giữa các điểm của dòng ánh sáng (px)
 const TRAIL_STEP = 6, TRAIL_MAX_PER_CALL = 6, TRAIL_SMOKE = 0x8a7b6c
 /** Số sát thương nhảy lên khi trúng: mỗi phát một số (không cộng dồn), bay lên POP_RISE px trong POP_S s. */
 const POP_POOL = 16, POP_S = 1.1, POP_RISE = 56, POP_STACK = 28
@@ -113,6 +114,9 @@ export class Fx {
   private readonly shells: Graphics[] = []
   private readonly shellSprites: Sprite[] = []
   private shellArt: ShotArt | null = null
+  /** Dòng ánh sáng sau đạn (`ribbon` trong shots.json): mỗi viên giữ tối đa RIBBON_N điểm đã đi qua (mảng cố định, không cấp phát mỗi frame). */
+  private readonly ribbonPts: Float32Array[] = []
+  private readonly ribbonN: number[] = []
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
   private readonly shellGrown: boolean[] = []
   private readonly trailD: number[] = []
@@ -197,6 +201,7 @@ export class Fx {
       this.container.addChild(s)
       this.shellSprites.push(s)
       this.shellPos.push({ x: 0, y: 0, visible: false })
+      this.ribbonPts.push(new Float32Array(RIBBON_N * 2)); this.ribbonN.push(0)
       this.shellGrown.push(false)
       this.trailD.push(0)
       this.shellRot.push(0); this.shellDig.push(false)
@@ -214,6 +219,7 @@ export class Fx {
     const ga = grown ? a!.grow! : null
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
     this.shellRot[i] = rot
+    this.ribbonPush(i, x, y, visible && a !== null && a.ribbon >= 0)
     this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, (a?.length ?? 0) * (a?.streakScale ?? 1))
     if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail, a.streakScale >= 1)
     // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
@@ -250,6 +256,37 @@ export class Fx {
       }
     }
     this.trailD[i] = d >= TRAIL_STEP ? 0 : d
+  }
+
+  /** Ghi điểm mới cho dòng ánh sáng của đạn `i` (cách điểm trước ≥ RIBBON_STEP px); `on` = false thì xoá dòng. */
+  private ribbonPush(i: number, x: number, y: number, on: boolean): void {
+    const pts = this.ribbonPts[i]!
+    let n = this.ribbonN[i]!
+    if (!on) { this.ribbonN[i] = 0; return }
+    if (n > 0 && Math.hypot(x - pts[(n - 1) * 2]!, y - pts[(n - 1) * 2 + 1]!) < RIBBON_STEP) return
+    if (n === RIBBON_N) { pts.copyWithin(0, 2); n-- }
+    pts[n * 2] = x; pts[n * 2 + 1] = y
+    this.ribbonN[i] = n + 1
+  }
+
+  /** Vẽ dòng ánh sáng: dải thon dần về đuôi, lớp ngoài rộng mờ + lõi sáng mảnh; đầu dải bám đúng vị trí đạn. */
+  private drawRibbons(g: Graphics): void {
+    const a = this.shellArt
+    if (!a || a.ribbon < 0) return
+    const core = ((((a.ribbon >> 16) & 255) + 255) >> 1) << 16 | ((((a.ribbon >> 8) & 255) + 255) >> 1) << 8 | (((a.ribbon & 255) + 255) >> 1)
+    for (let i = 0; i < this.shellPos.length; i++) {
+      const p = this.shellPos[i]!, n = this.ribbonN[i]!
+      if (!p.visible || n === 0) continue
+      const pts = this.ribbonPts[i]!
+      let px = pts[0]!, py = pts[1]!
+      for (let j = 1; j <= n; j++) {
+        const x = j === n ? p.x : pts[j * 2]!, y = j === n ? p.y : pts[j * 2 + 1]!
+        const k = j / n
+        g.moveTo(px, py).lineTo(x, y).stroke({ color: a.ribbon, width: a.ribbonW * k, alpha: 0.4 * k, cap: 'round' })
+        g.moveTo(px, py).lineTo(x, y).stroke({ color: core, width: a.ribbonW * 0.4 * k, alpha: 0.85 * k, cap: 'round' })
+        px = x; py = y
+      }
+    }
   }
 
   /** Vân sét quanh các viên đạn điện (`arcs` trong shots.json): mỗi frame vẽ lại vài tia gấp khúc ngắn toả ra từ viên đạn nên nhìn như điện nhoáng. */
@@ -320,7 +357,7 @@ export class Fx {
   }
 
   hideProjectiles(): void {
-    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false; this.shellDig[i] = false; this.shellSprites[i]!.filters = [] }
+    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false; this.shellDig[i] = false; this.shellSprites[i]!.filters = []; this.ribbonN[i] = 0 }
   }
 
   /** Viên đạn đầu tiên đang hiện (camera bám theo), hoặc null. */
@@ -546,6 +583,7 @@ export class Fx {
     fire.clear()
     glow.clear()
     this.drawShellArcs(glow)
+    this.drawRibbons(fire)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt

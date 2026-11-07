@@ -5,9 +5,8 @@ import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
-const FAN_RADIUS = 80
-const FAN_TICK = 5, FAN_TICK_LONG = 10   // px: vạch thước mỗi 5° / 15°
-const NEEDLE_COLOR = 0xff5a1f, NEEDLE_BASE = 3.5, NEEDLE_OVER = 10   // kim ngắm đỏ cam: nửa bề rộng gốc, phần thò ra ngoài vòng cung
+const RING_IN = 66, RING_OUT = 88   // thước ngắm: bán kính trong / ngoài của vòng (chừa khoảng trống quanh xe)
+const NEEDLE_COLOR = 0x2f8cff, NEEDLE_LEN = 24, NEEDLE_HALF = 9   // kim ngắm mũi tên xanh: dài, nửa bề rộng
 
 interface View {
   root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null
@@ -111,6 +110,7 @@ function satAltitude(mobileId: string): number {
 export class VehicleViews {
   readonly container = new Container()
   private readonly fan = new Graphics()
+  private readonly angleText = new Text({ text: '', style: { fontFamily: 'sans-serif', fontSize: 16, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x1a2b3c, width: 4 } } })
   private readonly views = new Map<number, View>()
   private readonly tmp: Vec2 = { x: 0, y: 0 }
   private readonly range: AimRange = { min: 0, max: 90 }
@@ -121,6 +121,9 @@ export class VehicleViews {
   /** `fx`: nếu có thì tung bụi dưới bánh khi xe đi. */
   constructor(match: MatchState, private readonly fx: Fx | null = null) {
     this.container.addChild(this.fan)
+    this.angleText.anchor.set(0.5, 0)
+    this.angleText.visible = false
+    this.container.addChild(this.angleText)
     for (const p of match.players) {
       const root = new Container()
       const body = new Graphics(), barrel = new Graphics(), bar = new Graphics()
@@ -184,6 +187,7 @@ export class VehicleViews {
     }
     this.updateGhosts(dt)
     this.fan.clear()
+    this.angleText.visible = false
     for (const p of match.players) {
       const v = this.views.get(p.id)!
       const hp = shownHp.get(p.id) ?? p.hp
@@ -328,33 +332,47 @@ export class VehicleViews {
     v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch thước trên vòng cung + kim ngắm đỏ cam chỉ góc hiện tại. */
+  /** Thước ngắm vòng tròn trong mờ, tách khỏi xe: tâm ở gốc nòng súng, dải góc quay được tô xanh lá nhạt, kim ngắm mũi tên xanh chỉ góc hiện tại, số độ hiện dưới vòng. */
   private drawFan(p: PlayerState): void {
-    const b = p.body, g = this.fan
-    const cx = b.x, cy = b.y - 4
+    const b = p.body, g = this.fan, a = this.views.get(p.id)?.art
+    let cx = b.x, cy = b.y - 4
+    if (a) {   // gốc nòng trong toạ độ bản đồ: biến đổi điểm gắn nòng qua khung xe (không tính lắc/nhún để thước đứng yên)
+      const rot = -b.tilt, sx = b.facing * a.flip, c = Math.cos(rot), s = Math.sin(rot)
+      const lx = a.barrelX * sx, ly = a.barrelY - a.radius   // khung có pivot (0, radius)
+      cx = b.x + lx * c - ly * s - a.radius * s
+      cy = b.y + lx * s + ly * c + a.radius * c
+    }
     const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
-    g.moveTo(cx, cy)
-    for (let a = r.min; ; a = Math.min(a + 5, r.max)) {
-      const d = aimDir(this.tmp, a, b.facing)
-      g.lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
-      if (a >= r.max) break
+    const mid = (RING_IN + RING_OUT) / 2
+    g.circle(cx, cy, mid).stroke({ color: 0xffffff, width: RING_OUT - RING_IN, alpha: 0.3 })
+    g.circle(cx, cy, RING_OUT).stroke({ color: 0xffffff, width: 1.5, alpha: 0.7 })
+    g.circle(cx, cy, RING_IN).stroke({ color: 0xffffff, width: 1.5, alpha: 0.7 })
+    // dải góc cho phép: xanh lá nhạt
+    const d0 = aimDir(this.tmp, r.min, b.facing)
+    const s0 = Math.atan2(d0.y, d0.x)
+    const d1 = aimDir(this.tmp, r.max, b.facing)
+    const s1 = Math.atan2(d1.y, d1.x)
+    const from = b.facing > 0 ? s1 : s0
+    let to = b.facing > 0 ? s0 : s1
+    if (to < from) to += Math.PI * 2
+    g.moveTo(cx + Math.cos(from) * mid, cy + Math.sin(from) * mid)
+    g.arc(cx, cy, mid, from, to).stroke({ color: 0x9be8a6, width: RING_OUT - RING_IN, alpha: 0.85 })
+    for (let ang = Math.ceil(r.min / 15) * 15; ang <= r.max; ang += 15) {
+      const d = aimDir(this.tmp, ang, b.facing)
+      g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })
     }
-    g.closePath().fill({ color: 0xffffff, alpha: 0.2 }).stroke({ color: 0x3a2412, width: 1.5, alpha: 0.55 })
-    // vạch thước: mỗi 5° một vạch ngắn, mỗi 15° vạch dài hơn (tính theo góc so với phương ngang)
-    for (let a = Math.ceil(r.min / 5) * 5; a <= r.max; a += 5) {
-      const d = aimDir(this.tmp, a, b.facing)
-      const len = a % 15 === 0 ? FAN_TICK_LONG : FAN_TICK
-      g.moveTo(cx + d.x * (FAN_RADIUS - len), cy + d.y * (FAN_RADIUS - len)).lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
-    }
-    g.stroke({ color: 0x3a2412, width: 1.5, alpha: 0.8 })
-    // kim ngắm: tam giác thon từ tâm tới quá vòng cung một chút
+    // kim ngắm: con trỏ mũi tên xanh, mũi chạm giữa vòng
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    const nx = -d.y, ny = d.x, tip = FAN_RADIUS + NEEDLE_OVER
-    g.moveTo(cx + nx * NEEDLE_BASE, cy + ny * NEEDLE_BASE)
-      .lineTo(cx + d.x * tip, cy + d.y * tip)
-      .lineTo(cx - nx * NEEDLE_BASE, cy - ny * NEEDLE_BASE)
-      .closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
-    g.circle(cx, cy, NEEDLE_BASE + 1).fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
+    const nx = -d.y, ny = d.x, tx = cx + d.x * (mid + 5), ty = cy + d.y * (mid + 5)
+    const bx = tx - d.x * NEEDLE_LEN, by = ty - d.y * NEEDLE_LEN, mx = tx - d.x * NEEDLE_LEN * 0.7, my = ty - d.y * NEEDLE_LEN * 0.7
+    g.moveTo(tx, ty)
+      .lineTo(bx + nx * NEEDLE_HALF, by + ny * NEEDLE_HALF)
+      .lineTo(mx, my)
+      .lineTo(bx - nx * NEEDLE_HALF, by - ny * NEEDLE_HALF)
+      .closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0xffffff, width: 1.5 })
+    this.angleText.text = `${p.aimAngle}°`
+    this.angleText.position.set(cx, cy + RING_OUT + 4)
+    this.angleText.visible = true
   }
 
   /** Hồn thoát xác: bản sao mờ của phi công (xe không có phi công thì của thân xe) bay lên, lắc lư, rồi vỡ thành tia sáng. */

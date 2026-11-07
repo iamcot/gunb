@@ -112,7 +112,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   /** Lên lịch các tia sét của đạn lightning sau khi đạn chạm (x, y): các tia chéo/thẳng ở chỗ chạm + (SS) một tia vào đầu mỗi xe trong vùng. */
   const scheduleLightning = (b: LightningBeh, x: number, y: number, t: number): void => {
     for (const a of b.angles ?? ZERO_ANGLES) {
-      bolts.push({ t: t + b.delay, x, y, ang: clamp(degToRad(a), -BOLT_MAX_ANG, BOLT_MAX_ANG), march: true, after: b.aftershock ?? null, def: b })
+      bolts.push({ t: t + b.delay, x: x - Math.sign(a) * (b.spread ?? 0), y, ang: clamp(degToRad(a), -BOLT_MAX_ANG, BOLT_MAX_ANG), march: true, after: b.aftershock ?? null, def: b })
     }
     if (b.area) {
       let k = 0

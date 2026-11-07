@@ -327,16 +327,25 @@ export class Fx {
     for (let i = 0; i < 2; i++) this.spawn(P_DUST, x + rnd(-3, 3), y - rnd(0, 3), -dirX * rnd(10, 35), -rnd(10, 30), rnd(0.35, 0.6), rnd(2.5, 4.5), 0xc9b08a)
   }
 
-  /** Tia sét giáng thẳng xuống (x, y) từ trên cao. */
-  bolt(x: number, y: number): void {
+  /** Tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao): đường gấp khúc ngẫu nhiên quanh đoạn thẳng, lõi trắng viền xanh. */
+  bolt(x: number, y: number, x0?: number, y0?: number): void {
     const g = new Graphics()
-    let cx = x + 10
-    g.moveTo(cx, y - BOLT_HEIGHT)
-    for (let i = 1; i <= 12; i++) {
-      cx = i === 12 ? x : x + (((i * 7) % 5) - 2) * 9
-      g.lineTo(cx, y - BOLT_HEIGHT + (BOLT_HEIGHT * i) / 12)
+    const sx = x0 ?? x + 10, sy = y0 ?? y - BOLT_HEIGHT
+    const dx = x - sx, dy = y - sy, len = Math.hypot(dx, dy) || 1
+    const nx = -dy / len, ny = dx / len          // pháp tuyến của tia
+    const segs = Math.max(8, Math.round(len / 60))
+    g.moveTo(sx, sy)
+    for (let i = 1; i <= segs; i++) {
+      const k = i / segs, off = i === segs ? 0 : (((i * 7) % 5) - 2) * 9
+      g.lineTo(sx + dx * k + nx * off, sy + dy * k + ny * off)
     }
-    g.stroke({ color: 0xcfe8ff, width: 6, join: 'round' })
+    g.stroke({ color: 0x7fb8ff, width: 9, join: 'round', alpha: 0.55 })
+    g.moveTo(sx, sy)
+    for (let i = 1; i <= segs; i++) {
+      const k = i / segs, off = i === segs ? 0 : (((i * 7) % 5) - 2) * 9
+      g.lineTo(sx + dx * k + nx * off, sy + dy * k + ny * off)
+    }
+    g.stroke({ color: 0xf2f9ff, width: 4, join: 'round' })
     this.container.addChild(g)
     this.bolts.push({ g, age: 0 })
     this.shake = Math.max(this.shake, 6)

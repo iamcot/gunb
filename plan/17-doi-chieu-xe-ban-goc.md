@@ -150,7 +150,7 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - B2. ⚠️ `tandem` → Ốc đ2.
 - B3. ⚠️ `beam` + `twin`/`orbit` → Sứa Đèn đ1, đ2; Rùa Thành đ1, đ2 (đạn nước); Cua Lăn đ1 (3 đĩa).
 - B4. ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS.
-- B5. ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
+- B5 (xong). ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
 - B6. ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
 - B7. ⚠️ `splitAfter` → Rùa Thành SS.
 - B8. ⚠️ `roller` mở rộng → Cua Lăn SS.

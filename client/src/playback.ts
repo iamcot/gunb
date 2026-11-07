@@ -47,7 +47,7 @@ export class ShotPlayback {
         case 'carve': this.view.carve(e.x, e.y, e.r); break
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
-        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
+        case 'bolt': this.fx.bolt(e.x, e.y, e.x0, e.y0); audio.bolt(this.sfx?.bolt); break
         case 'grow': this.fx.growShell(e.shell, e.x, e.y); break
         case 'beam': this.fx.beam(e.x, e.y, e.w, e.sky, e.x0, e.y0); audio.beam(this.sfx?.beam); this.beamT = e.t; break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break

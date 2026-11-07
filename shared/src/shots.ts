@@ -12,7 +12,13 @@ export type Behavior =
   /** Chạm đất thì khoan tiếp `length` px (theo vận tốc / ngang / thẳng xuống) với tốc độ `speed` px/s, đào hầm bán kính `tunnelRadius`, rồi nổ. */
   | { kind: 'drill'; length: number; tunnelRadius: number; direction: 'velocity' | 'horizontal' | 'down'; speed: number }
   /** Nổ như đạn thường, rồi `delay` s sau có tia sét giáng thẳng xuống đúng điểm nổ (thêm một vụ nổ với thông số riêng). */
-  | { kind: 'lightning'; delay: number; damage: number; blastRadius: number; carveRadius: number }
+  | { kind: 'lightning'; delay: number; damage: number; blastRadius: number; carveRadius: number
+      /** Các tia sét giáng xuống chỗ đạn chạm, mỗi phần tử là độ lệch khỏi phương thẳng đứng (độ; 0 = thẳng từ trời xuống, ±35 = chéo từ hai bên). Mặc định [0]; mảng rỗng = không có tia ở chỗ chạm. Tia đi từ trời xuống và dừng ở vật rắn đầu tiên trên đường (đất hoặc xe): có đất che phía trên thì sét đánh vào đất, không trúng xe. */
+      angles?: number[]
+      /** Dư chấn: mỗi xe trúng sét chịu thêm `damage` (đã trừ giáp) sau `delay` s kể từ tia trúng nó; mỗi xe chỉ một lần mỗi phát bắn. */
+      aftershock?: { delay: number; damage: number }
+      /** Sét vùng (SS): mọi xe còn sống trừ người bắn trong `radius` px quanh chỗ chạm (trong hay ngoài vòng nổ) bị một tia riêng từ trời đánh thẳng xuống, cách nhau `stagger` s; mỗi tia nổ bán kính `blastRadius`, hố `carveRadius`, sát thương `damage`. */
+      area?: { radius: number; damage: number; blastRadius: number; carveRadius: number; stagger: number } }
 
   /** Bắn cùng lúc `count` quả tỏa đều quanh hướng bắn, cách nhau `spreadDeg` độ (không đổi tốc độ). */
   | { kind: 'spread'; count: number; spreadDeg: number }

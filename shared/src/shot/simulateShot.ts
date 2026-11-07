@@ -1,6 +1,6 @@
 import { DT_SIM, MUZZLE_DIST, SHOT_MAX_TIME_S, SHOT_SAMPLE_EVERY } from '../constants'
 import { aimDir, aimRange, type AimRange } from '../aim'
-import { clamp, type Vec2 } from '../math'
+import { clamp, degToRad, type Vec2 } from '../math'
 import type { MobileDef } from '../mobiles'
 import { FLYING, HIT_TERRAIN, stepProjectile, type ProjectileState } from '../physics/projectile'
 import type { ShotDef } from '../shots'
@@ -28,7 +28,11 @@ interface Shell {
 }
 
 interface Pending { tStart: number; angleDeg: number }
-interface Bolt { t: number; x: number; y: number; def: { damage: number; blastRadius: number; carveRadius: number } }
+type LightningBeh = Extract<ShotDef['behavior'], { kind: 'lightning' }>
+/** Tia sét chờ giáng: `ang` = lệch khỏi phương thẳng đứng (rad); `march` = tia đi từ trời xuống và dừng ở vật rắn đầu tiên (không thì nổ thẳng tại (x, y), như sét của thời tiết). */
+interface Bolt { t: number; x: number; y: number; ang: number; march: boolean; after: { delay: number; damage: number } | null; def: { damage: number; blastRadius: number; carveRadius: number } }
+interface After { t: number; id: number; damage: number }
+const BOLT_STEP = 3, BOLT_MAX_ANG = degToRad(70), ZERO_ANGLES: readonly number[] = [0]
 type SatelliteBeh = Extract<ShotDef['behavior'], { kind: 'satellite' }>
 interface Beam { t: number; x: number; y: number; def: SatelliteBeh }
 
@@ -68,6 +72,10 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const shells: Shell[] = []
   const pending: Pending[] = []
   const bolts: Bolt[] = []
+  const afters: After[] = []
+  const aftered = new Set<number>()
+  const hitNow: number[] = []
+  const strike = { x: 0, y: 0, x0: 0, y0: 0 }
   const beams: Beam[] = []
 
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
@@ -95,8 +103,41 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (amount <= 0) continue
       const after = Math.max(0, cur - amount)
       hp.set(v.id, after)
+      hitNow.push(v.id)
       events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
       if (breakArmor && def.armorBreak) events.push({ t, kind: 'armorBreak', id: v.id, turns: def.armorBreak.turns, amount: def.armorBreak.amount })
+    }
+  }
+
+  /** Lên lịch các tia sét của đạn lightning sau khi đạn chạm (x, y): các tia chéo/thẳng ở chỗ chạm + (SS) một tia vào đầu mỗi xe trong vùng. */
+  const scheduleLightning = (b: LightningBeh, x: number, y: number, t: number): void => {
+    for (const a of b.angles ?? ZERO_ANGLES) {
+      bolts.push({ t: t + b.delay, x, y, ang: clamp(degToRad(a), -BOLT_MAX_ANG, BOLT_MAX_ANG), march: true, after: b.aftershock ?? null, def: b })
+    }
+    if (b.area) {
+      let k = 0
+      for (const v of input.vehicles) {
+        if (v.id === input.shooterId || (hp.get(v.id) ?? 0) <= 0 || Math.hypot(v.x - x, v.y - y) > b.area.radius) continue
+        bolts.push({ t: t + b.delay + k * b.area.stagger, x: v.x, y: v.y, ang: 0, march: true, after: b.aftershock ?? null, def: b.area })
+        k++
+      }
+    }
+    bolts.sort((p, q) => p.t - q.t)
+  }
+
+  /** Điểm chạm của tia sét: đi từ trời (y = -20) tới (b.x, b.y) theo góc `b.ang`, dừng ở vật rắn đầu tiên (đất hoặc xe còn sống). Kết quả ở `strike`. */
+  const boltTarget = (b: Bolt): void => {
+    if (!b.march) { strike.x = b.x; strike.y = b.y; strike.x0 = b.x; strike.y0 = -20; return }
+    const sa = Math.sin(b.ang), ca = Math.cos(b.ang)
+    const len = Math.max(30, (b.y + 20) / ca)
+    const x0 = b.x - sa * len, y0 = b.y - ca * len
+    strike.x0 = x0; strike.y0 = y0
+    strike.x = b.x; strike.y = b.y
+    for (let d = 0; d < len; d += BOLT_STEP) {
+      const px = x0 + sa * d, py = y0 + ca * d
+      let stop = mask.isSolid(px, py)
+      if (!stop) for (const v of input.vehicles) if ((hp.get(v.id) ?? 0) > 0 && Math.hypot(v.x - px, v.y - py) <= v.radius) { stop = true; break }
+      if (stop) { strike.x = px; strike.y = py; return }
     }
   }
 
@@ -106,7 +147,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
     const g = beh.kind === 'airGrow' && s.grown ? beh : null
     blast(x, y, t, def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : def.carveRadius * (g?.carveMul ?? 1), def.damage * (g?.damageMul ?? 1), true)
-    if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
+    if (beh.kind === 'lightning') scheduleLightning(beh, x, y, t)
     if (beh.kind === 'build') build(x, y, t, beh)
     if (beh.kind === 'satellite') {
       for (let k = 0; k < beh.count; k++) {
@@ -286,7 +327,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (r === FLYING && W) {
       if (W.kind === 'storm' && !stormUsed && Math.abs(s.p.x - W.x) <= W.hw && Math.abs(s.p.y - W.y) <= W.hh) {
         const gy = groundBelow(s.p.x, s.p.y, mask.height)
-        if (gy >= 0) { stormUsed = true; bolts.push({ t: t + wt.storm.delay, x: s.p.x, y: gy, def: wt.storm }); bolts.sort((a, b) => a.t - b.t) }
+        if (gy >= 0) { stormUsed = true; bolts.push({ t: t + wt.storm.delay, x: s.p.x, y: gy, ang: 0, march: false, after: null, def: wt.storm }); bolts.sort((a, b) => a.t - b.t) }
       } else if (W.kind === 'portal' && t - s.tp > 0.3) {
         const inA = Math.hypot(s.p.x - W.x, s.p.y - W.y) <= W.hw
         const inB = !inA && Math.hypot(s.p.x - W.x2, s.p.y - W.y2) <= W.hw
@@ -343,8 +384,25 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     while (pending.length && pending[0]!.tStart <= t + 1e-9) { const q = pending.shift()!; spawn(t, q.angleDeg) }
     while (bolts.length && bolts[0]!.t <= t + 1e-9) {
       const b = bolts.shift()!
-      events.push({ t, kind: 'bolt', x: b.x, y: b.y })
-      blast(b.x, b.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
+      boltTarget(b)
+      events.push(b.march ? { t, kind: 'bolt', x: strike.x, y: strike.y, x0: strike.x0, y0: strike.y0 } : { t, kind: 'bolt', x: strike.x, y: strike.y })
+      hitNow.length = 0
+      blast(strike.x, strike.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
+      if (b.after) {
+        for (const id of hitNow) if (!aftered.has(id)) { aftered.add(id); afters.push({ t: t + b.after.delay, id, damage: b.after.damage }) }
+        afters.sort((p, q) => p.t - q.t)
+      }
+    }
+    while (afters.length && afters[0]!.t <= t + 1e-9) {
+      const a = afters.shift()!
+      const v = input.vehicles.find(q => q.id === a.id)
+      const cur = hp.get(a.id) ?? 0
+      if (!v || cur <= 0) continue
+      const amount = Math.round(a.damage * (1 - v.armor))
+      if (amount <= 0) continue
+      const after = Math.max(0, cur - amount)
+      hp.set(a.id, after)
+      events.push({ t, kind: 'damage', id: a.id, amount, hpAfter: after })
     }
     while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamRay(b.x, b.y, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp
@@ -354,7 +412,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       else if (s.mode === 'roll') stepRoll(s, t, beh as Extract<ShotDef['behavior'], { kind: 'roller' }>)
       else stepFly(s, t)
     }
-    if (!pending.length && !bolts.length && !beams.length && shells.every(s => !s.alive)) break
+    if (!pending.length && !bolts.length && !afters.length && !beams.length && shells.every(s => !s.alive)) break
   }
   // hết giờ mô phỏng: đạn còn bay coi như ra ngoài
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }

@@ -42,7 +42,7 @@ export type ShotEvent =
   | { t: number; kind: 'damage'; id: number; amount: number; hpAfter: number }
   | { t: number; kind: 'out'; x: number; y: number }
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)
-  | { t: number; kind: 'bolt'; x: number; y: number }      // tia sét giáng xuống (hiệu ứng; vụ nổ đi kèm có event explode riêng)
+  | { t: number; kind: 'bolt'; x: number; y: number; x0?: number; y0?: number }      // tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao) (hiệu ứng; vụ nổ đi kèm có event explode riêng)
   | { t: number; kind: 'grow'; shell: number; x: number; y: number }    // đạn airGrow bay đủ lâu và lớn lên (hiệu ứng; `shell` = chỉ số trong `paths`)
   | { t: number; kind: 'beam'; x: number; y: number; w: number; sky: boolean; x0: number; y0: number }  // tia laser vệ tinh tới (x, y), nửa bề rộng w: sky = từ tận trời thẳng đứng, không thì từ vệ tinh ở (x0, y0); (x0, y0) luôn là chỗ vệ tinh bay theo trên đầu xe bắn (hiệu ứng; khoét + sát thương có event riêng)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }

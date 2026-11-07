@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TerrainMask } from '../terrain/mask'
 import { createDefaultTuning } from '../tuning'
 import { simulateShot } from './simulateShot'
+import type { ShotDef } from '../shots'
 import type { ShotEvent, ShotInput, ShotResult, ShotVehicle } from './types'
 
 const GROUND = 900
@@ -71,8 +72,9 @@ describe('simulateShot: behavior', () => {
     expect(explodes(r)[1]!.t).toBeGreaterThan(explodes(r)[0]!.t)
   })
 
-  it('splitAtApex (Bọ Lôi, đạn 2): tách 3 quả tại đỉnh quỹ đạo rồi 3 vụ nổ', () => {
-    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'bo-loi' }), veh(2, 1000)], fire: { angle: 60, power: 70, slot: 1 } }))
+  it('splitAtApex: tách 3 quả tại đỉnh quỹ đạo rồi 3 vụ nổ', () => {
+    const shotDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 30, damage: 260, delay: 0, behavior: { kind: 'splitAtApex', count: 3, spreadDeg: 8 } }
+    const r = simulateShot(input({ vehicles: [veh(1, 200), veh(2, 1000)], fire: { angle: 60, power: 70, slot: 0 }, shotDef }))
     expect(r.paths).toHaveLength(4)          // quả mẹ + 3 quả con
     const split = r.events.find(e => e.kind === 'split')!
     expect(split).toBeDefined()
@@ -104,21 +106,74 @@ describe('simulateShot: behavior', () => {
     expect(Math.abs(dc[dc.length - 1]!.x - dc[0]!.x)).toBeLessThan(5)
   })
 
-  it('lightning (Bọ Lôi, SS): nổ rồi sét giáng đúng điểm nổ sau delay, thêm một vụ nổ lớn hơn', () => {
+  describe('lightning (Bọ Lôi)', () => {
     const t = createDefaultTuning()
-    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'bo-loi' })], fire: { angle: 50, power: 70, slot: 2 } }), t)
-    const bolt = r.events.find(e => e.kind === 'bolt')!
-    const [first, second] = explodes(r)
-    expect(explodes(r)).toHaveLength(2)
-    expect(bolt.t - first!.t).toBeCloseTo((t.mobiles['bo-loi']!.shots[2].behavior as { delay: number }).delay, 1)
-    expect(second!.x).toBeCloseTo(first!.x, 5)
-    expect(second!.r).toBeGreaterThan(first!.r)
+    const boLoi = (x = 200) => veh(1, x, { mobileId: 'bo-loi' })
+    const bolts = (r: ShotResult) => r.events.filter((e): e is Extract<ShotEvent, { kind: 'bolt' }> => e.kind === 'bolt')
+    const fireBo = (slot: 0 | 1 | 2, others: ShotVehicle[], mask?: TerrainMask) =>
+      simulateShot(input({ vehicles: [boLoi(), ...others], fire: { angle: 55, power: 75, slot }, ...(mask ? { mask } : {}) }), t)
+    const landing = (slot: 0 | 1 | 2) => explodes(fireBo(slot, []))[0]!
+
+    it('đạn 1: sét giáng thẳng từ trời xuống đúng chỗ đạn chạm sau delay, trúng xe đứng đó, rồi dư chấn', () => {
+      const ex = landing(0)
+      const beh = t.mobiles['bo-loi']!.shots[0].behavior
+      if (beh.kind !== 'lightning' || !beh.aftershock) throw new Error('đạn 1 Bọ Lôi phải có sét + dư chấn')
+      const r = fireBo(0, [veh(2, ex.x, { hp: 5000 })])
+      const [b] = bolts(r)
+      expect(bolts(r)).toHaveLength(1)
+      expect(b!.t - ex.t).toBeCloseTo(beh.delay, 1)
+      expect(b!.x0).toBeCloseTo(b!.x, 5)                 // thẳng đứng
+      expect(b!.y0).toBeLessThan(0)                      // từ phía trên bản đồ
+      expect(b!.y).toBeLessThan(GROUND - 18)             // chạm đỉnh xe, không xuyên xuống đất
+      const d = damages(r, 2)
+      expect(d).toHaveLength(2)                          // sét + dư chấn
+      expect(d[1]!.t - d[0]!.t).toBeCloseTo(beh.aftershock.delay, 1)
+      expect(d[1]!.amount).toBe(Math.round(beh.aftershock.damage))
+      expect(d[0]!.amount).toBeGreaterThan(beh.damage * 0.8)
+    })
+
+    it('đạn 2: hai tia chéo đi từ hai phía, cùng nhắm vào chỗ đạn chạm; mỗi xe chỉ bị dư chấn một lần', () => {
+      const ex = landing(1)
+      const r = fireBo(1, [veh(2, ex.x, { hp: 5000 })])
+      const bs = bolts(r)
+      expect(bs).toHaveLength(2)
+      expect(bs.some(b => b.x0! < b.x - 50) && bs.some(b => b.x0! > b.x + 50)).toBe(true)
+      const beh = t.mobiles['bo-loi']!.shots[1].behavior
+      if (beh.kind !== 'lightning' || !beh.aftershock) throw new Error()
+      const d = damages(r, 2)
+      expect(d.filter(e => e.amount === beh.aftershock!.damage)).toHaveLength(1)
+      expect(d.length).toBeGreaterThanOrEqual(2)
+    })
+
+    it('có đất che phía trên thì sét đánh vào đất, không trúng xe nằm dưới', () => {
+      const ex = landing(0)
+      const roof = world()
+      for (let y = GROUND - 330; y < GROUND - 300; y++) for (let x = Math.round(ex.x) - 260; x < Math.round(ex.x) + 260; x++) roof.data[y * W + x] = 1
+      const r = fireBo(0, [veh(2, ex.x)], roof)
+      const [b] = bolts(r)
+      expect(b).toBeDefined()
+      expect(b!.y).toBeLessThan(GROUND - 290)            // sét dừng ở mái
+      expect(damages(r, 2)).toHaveLength(0)
+    })
+
+    it('SS: mọi xe trong vùng (trừ người bắn) bị một tia riêng, xe ngoài vùng thì không', () => {
+      const ex = landing(2)
+      const beh = t.mobiles['bo-loi']!.shots[2].behavior
+      if (beh.kind !== 'lightning' || !beh.area) throw new Error('SS Bọ Lôi phải là sét vùng')
+      const near1 = veh(2, ex.x - 150, { hp: 5000 }), near2 = veh(3, ex.x + 200, { hp: 5000 }), far = veh(4, ex.x + beh.area.radius + 400, { hp: 5000 })
+      const r = fireBo(2, [near1, near2, far])
+      expect(bolts(r)).toHaveLength(2)
+      expect(damages(r, 2).some(e => e.amount >= beh.area!.damage * 0.9)).toBe(true)
+      expect(damages(r, 3).some(e => e.amount >= beh.area!.damage * 0.9)).toBe(true)
+      expect(damages(r, 4)).toHaveLength(0)
+      expect(damages(r, 1)).toHaveLength(0)              // người bắn không bị
+    })
   })
 
-  it('armorBreak (Bọ Lôi, đạn 1): trúng thì có sự kiện giảm giáp lên mục tiêu', () => {
-    const t = createDefaultTuning()
-    const ex = explodes(simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'bo-loi' })] }), t))[0]!
-    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'bo-loi' }), veh(2, ex.x + 5)] }), t)
+  it('armorBreak: đạn có armorBreak thì trúng xe sinh sự kiện giảm giáp', () => {
+    const shotDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 60, carveRadius: 35, damage: 350, delay: 0, behavior: { kind: 'basic' }, armorBreak: { turns: 2, amount: 0.25 } }
+    const ex = explodes(simulateShot(input({ shotDef })))[0]!
+    const r = simulateShot(input({ vehicles: [veh(1, 200), veh(2, ex.x + 5)], shotDef }))
     const e = r.events.find(e => e.kind === 'armorBreak')
     expect(e && e.kind === 'armorBreak' && e.id === 2 && e.turns === 2).toBe(true)
   })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
 import { applyAction, createMatch, windForRound, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
-import { createDefaultTuning } from './tuning'
+import { TUNING, createDefaultTuning } from './tuning'
 
 const W = 2400, H = 1200, G = 800
 function flat(): TerrainMask {
@@ -227,8 +227,11 @@ describe('3 pháo + thanh SS', () => {
     expect(s.players[1]!.ss).toBeCloseTo(before + createDefaultTuning().ss.perTurn, 5)
   })
 
-  it('đạn điện giảm giáp mục tiêu 2 lượt của chính nó rồi hết', () => {
-    const { s, mask } = aimAtOpponent('bo-loi', 0)
+  it('đạn có armorBreak giảm giáp mục tiêu 2 lượt của chính nó rồi hết', () => {
+    const shot = TUNING.mobiles['oc-thiet-giap']!.shots[0]
+    shot.armorBreak = { turns: 2, amount: 0.25 }
+    try {
+    const { s, mask } = aimAtOpponent('oc-thiet-giap', 0)
     const target = s.players[1]!
     const base = effectiveArmor(target)
     applyAction(s, { t: 'fire', id: 0, angle: 50, power: 70, slot: 0 }, { mask })
@@ -241,13 +244,14 @@ describe('3 pháo + thanh SS', () => {
     applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask }); applyAction(s, { t: 'endTurn' }, { mask })
     expect(target.armorDebuff.turns).toBe(0)
     expect(effectiveArmor(target)).toBeCloseTo(base, 5)
+    } finally { delete shot.armorBreak }
   })
 
   it('góc ngắm kẹp theo dải góc của từng pháo', () => {
     const { s, mask } = duel('bo-loi', 'chui-khoan')
     applyAction(s, { t: 'aim', id: 0, angle: 0 }, { mask })
-    expect(s.players[0]!.aimAngle).toBe(20)
+    expect(s.players[0]!.aimAngle).toBe(10)
     applyAction(s, { t: 'aim', id: 0, angle: 200 }, { mask })
-    expect(s.players[0]!.aimAngle).toBe(45)   // Bọ Lôi đứng đất bằng: cốc chỉ nâng tới 45°
+    expect(s.players[0]!.aimAngle).toBe(85)
   })
 })

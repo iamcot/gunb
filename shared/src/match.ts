@@ -1,8 +1,9 @@
-import { MAX_PLAYERS, MAX_TURNS } from './constants'
+import { MAX_MINES, MAX_PLAYERS, MAX_TURNS } from './constants'
 import { aimRange, type AimRange } from './aim'
 import { clamp, hashSeed, mulberry32 } from './math'
 import { createBody, stepMobile, type MobileBody, type MoveResult } from './physics/mobileMove'
 import { simulateShot, sanitizeFire } from './shot/simulateShot'
+import { simulateMines, type Mine } from './shot/simulateMines'
 import { weatherForRound, type Weather } from './weather'
 import type { ShotResult, ShotVehicle } from './shot/types'
 import { ITEM_SLOTS, type ItemId } from './items'
@@ -57,6 +58,9 @@ export interface MatchState {
   turnItem: ItemId | null
   /** Quả dịch chuyển đã chạm: áp ở `tick` đầu tiên của pha resolving (sau khi phát lại xong) để xe không nhảy trước khi đạn tới. */
   pendingTeleport: { id: number; x: number; y: number } | null
+  /** Mìn đang nằm trên bản đồ (Cua Lăn đ2). */
+  mines: Mine[]
+  nextMineId: number
 }
 
 export type Action =
@@ -130,7 +134,7 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, shield: def.shield?.max ?? 0, maxShield: def.shield?.max ?? 0, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 },
       items: Array.from({ length: ITEM_SLOTS }, (_, k) => p.items?.[k] ?? null) }
   })
-  const state: MatchState = { seed: opts.seed, players, wind: windForRound(opts.seed, 1), turnPlayerId: 0, turnNo: 1, roundNo: 1, roundStart: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null, turnItem: null, pendingTeleport: null }
+  const state: MatchState = { seed: opts.seed, players, wind: windForRound(opts.seed, 1), turnPlayerId: 0, turnNo: 1, roundNo: 1, roundStart: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null, turnItem: null, pendingTeleport: null, mines: [], nextMineId: 0 }
   state.turnPlayerId = pickNext(players)!.id
   players[state.turnPlayerId]!.body.fuel = t.mobiles[players[state.turnPlayerId]!.mobileId]!.fuel
   return state
@@ -152,7 +156,7 @@ function kill(p: PlayerState): void {
 }
 
 export function vehicles(s: MatchState): ShotVehicle[] {
-  return s.players.map(p => ({ id: p.id, mobileId: p.mobileId, x: p.body.x, y: p.body.y, radius: p.body.radius, hp: p.hp, shield: p.shield, armor: effectiveArmor(p) }))
+  return s.players.map(p => ({ id: p.id, mobileId: p.mobileId, x: p.body.x, y: p.body.y, radius: p.body.radius, hp: p.hp, shield: p.shield, team: p.team, armor: effectiveArmor(p) }))
 }
 
 function winnerOf(s: MatchState): Team | -1 | null {
@@ -202,6 +206,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       const shotDef = tele ? t.items.teleport.shot : undefined
       const weather = weatherOf(s, env.mask.width, env.mask.height, t)
       const sim = (): ShotResult => simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire, weather, shotDef }, t)
+      const oldMines = s.mines.filter(m => m.owner === p.id).map(m => m.id)   // chỉ mìn có từ trước phát này mới bò sau phát bắn
       let shot = sim()
       env.mask.data.set(shot.maskAfter.data)
       if (fire.slot === 2) p.ss = 0
@@ -212,6 +217,16 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
         env.mask.data.set(second.maskAfter.data)
         applyShotEvents(s, p, second, t)
         shot = appendShot(shot, second, shot.endT + t.items.dual.gap)
+      }
+      if (oldMines.length) {   // mìn cũ của người bắn bò về phía địch gần nhất; nổ khi chạm: nối event vào cùng ShotResult để phát lại liền mạch
+        const mv = vehicles(s)
+        const crawlers = s.mines.filter(m => oldMines.includes(m.id))
+        const ms = simulateMines(env.mask, mv, crawlers, p.id, t)
+        if (ms.events.length) {
+          const extra: ShotResult = { paths: [], events: ms.events, endT: ms.endT, terrainHashAfter: env.mask.hash(), maskAfter: env.mask }
+          applyShotEvents(s, p, extra, t)
+          shot = appendShot(shot, extra, shot.endT + 0.4)
+        }
       }
       p.aimAngle = fire.angle
       p.delay += (shotDef ?? def.shots[fire.slot]).delay
@@ -322,6 +337,16 @@ function applyShotEvents(s: MatchState, p: PlayerState, shot: ShotResult, t: Tun
       s.players[e.id]!.shield = e.shieldAfter
     } else if (e.kind === 'armorBreak') {
       s.players[e.id]!.armorDebuff = { turns: e.turns, amount: e.amount }
+    } else if (e.kind === 'mineDrop') {
+      s.mines.push({ id: s.nextMineId++, owner: p.id, team: p.team, x: e.x, y: e.y, crawlPx: e.crawlPx, detect: e.detect, damage: e.damage, blastRadius: e.blastRadius, carveRadius: e.carveRadius })
+      const mine = s.mines.filter(m => m.owner === p.id)
+      for (let k = 0; k < mine.length - MAX_MINES; k++) s.mines.splice(s.mines.indexOf(mine[k]!), 1)   // vượt giới hạn: bỏ quả cũ nhất
+    } else if (e.kind === 'mineMove') {
+      const m = s.mines.find(q => q.id === e.id)
+      if (m) { m.x = e.x; m.y = e.y }
+    } else if (e.kind === 'mineGone') {
+      const k = s.mines.findIndex(q => q.id === e.id)
+      if (k >= 0) s.mines.splice(k, 1)
     } else if (e.kind === 'teleport') {
       s.pendingTeleport = { id: p.id, x: e.x, y: e.y }
     }

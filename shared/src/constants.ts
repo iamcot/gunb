@@ -17,3 +17,4 @@ export const MUZZLE_DIST = 28          // đạn xuất phát cách tâm xe bấ
 export const SHOT_MAX_TIME_S = 30      // mô phỏng một phát tối đa bấy nhiêu giây
 export const SHOT_SAMPLE_EVERY = 2     // lấy mẫu quỹ đạo mỗi N bước mô phỏng
 export const WIND_VERTICAL_RATIO = 0.35 // thành phần gió dọc so với ngang
+export const MAX_MINES = 4            // mìn tối đa mỗi người (quả cũ nhất mất khi vượt)

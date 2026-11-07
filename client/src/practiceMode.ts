@@ -38,10 +38,10 @@ export class PracticeMode implements Mode {
     ctx.world.addChildAt(this.practice.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     const s = this.practice.shooter
     const player = {
-      id: s.id, name: 'Bạn', team: 0, mobileId: s.mobileId, hp: 100, maxHp: 100, aimAngle: 45,
+      id: s.id, name: 'Bạn', team: 0, mobileId: s.mobileId, hp: 100, maxHp: 100, shield: 0, maxShield: 0, aimAngle: 45,
       body: { x: s.x, y: s.y, radius: s.radius, facing: 1, tilt: 0, alive: true },
     } as unknown as PlayerState
-    this.fakeMatch = { players: [player], turnPlayerId: s.id, phase: 'aiming' } as unknown as MatchState
+    this.fakeMatch = { players: [player], turnPlayerId: s.id, phase: 'aiming', mines: [] } as unknown as MatchState
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     ctx.hud.setWind(this.wind)

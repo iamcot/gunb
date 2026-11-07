@@ -15,6 +15,8 @@ export interface Snapshot {
   p: number[][]
   /** Ô item từng người ('' = trống/đã dùng). */
   items: string[][]
+  /** Mìn trên bản đồ: [id, chủ, x, y, bán kính phát hiện, bán kính nổ]. Thiếu = không có. */
+  mines?: number[][]
   /** Item đã dùng lượt này ('' = chưa). */
   turnItem: string
 }
@@ -29,6 +31,7 @@ export function snapshotOf(s: MatchState): Snapshot {
     ]),
     items: s.players.map(p => p.items.map(i => i ?? '')),
     turnItem: s.turnItem ?? '',
+    mines: s.mines.map(m => [m.id, m.owner, m.x, m.y, m.detect, m.blastRadius]),
   }
 }
 
@@ -54,4 +57,5 @@ export function applySnapshot(s: MatchState, snap: Snapshot): void {
     if (it) for (let k = 0; k < p.items.length; k++) { const v = it[k]; p.items[k] = isItemId(v) ? v : null }
   })
   s.turnItem = isItemId(snap.turnItem) ? snap.turnItem : null
+  s.mines = (snap.mines ?? []).map(([id, owner, x, y, detect, blast]) => ({ id: id!, owner: owner!, team: s.players[owner!]?.team ?? 0, x: x!, y: y!, crawlPx: 0, detect: detect ?? 0, damage: 0, blastRadius: blast ?? 0, carveRadius: 0 }))
 }

@@ -445,6 +445,11 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
         return
       }
       if (beh.kind === 'pierce' && tryPierce(s, t, beh)) return
+      if (beh.kind === 'mine') {   // chạm đất: nằm lại thành mìn, không nổ
+        s.alive = false; s.path.push(t, s.p.x, s.p.y)
+        events.push({ t, kind: 'mineDrop', x: s.p.x, y: s.p.y - 2, crawlPx: beh.crawlPx, detect: beh.detect, damage: beh.mineDamage, blastRadius: beh.mineBlast, carveRadius: beh.mineCarve })
+        return
+      }
       explodeShell(s, s.p.x, s.p.y, t)
       return
     }
@@ -454,7 +459,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   }
 
   // Lịch bắn: đạn đầu ở t = 0; chùm liền thì các quả sau theo `interval`.
-  if (beh.kind === 'spread') {
+  if (beh.kind === 'spread' || beh.kind === 'mine') {
     for (let k = 0; k < beh.count; k++) spawn(0, fire.angle + (k - (beh.count - 1) / 2) * beh.spreadDeg)
   } else if (beh.kind === 'tandem') {
     spawn(0, fire.angle, -1, 1)

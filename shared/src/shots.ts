@@ -57,6 +57,8 @@ export type Behavior =
    *  `radius`·(1 − t/`convergeS`)·sin(pha + 2π·`turns`·t/`convergeS`) px (pha chia đều 2π cho các viên), nên xoắn rộng dần rồi hẹp về 0 sau `convergeS` s và bay chồng lên nhau. Mỗi viên va chạm, nổ và tính `damage` riêng
    *  (viên nào chạm trước nổ trước, viên kia bay tiếp). */
   | { kind: 'twin'; count: number; radius: number; convergeS: number; turns: number }
+  /** Mìn (Cua Lăn đ2): bắn cùng lúc `count` quả tỏa ±`spreadDeg`; chạm đất thì quả đó KHÔNG nổ mà nằm lại thành mìn (chạm xe thì nổ như đạn thường bằng `damage` của đạn). Mỗi lần người bắn bắn một phát (bất kỳ đạn nào), sau phát đó các mìn cũ của họ bò `crawlPx` px về phía xe địch gần nhất; chạm xe địch (hoặc tới sát) thì nổ với `damage`/`blastRadius`/`carveRadius` của mìn. `detect`: địch trong bán kính này thì mìn "giương râu đỏ" (hiệu ứng). Mỗi người tối đa `MAX_MINES` (4) quả, quả cũ nhất mất khi vượt. */
+  | { kind: 'mine'; count: number; spreadDeg: number; crawlPx: number; detect: number; mineDamage: number; mineBlast: number; mineCarve: number }
   /** Item Dịch chuyển: chạm đất/xe thì không nổ, chỉ báo event `teleport` (chỗ đứng mới của người bắn). */
   | { kind: 'teleport' }
 

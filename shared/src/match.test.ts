@@ -296,3 +296,53 @@ describe('C1: khiên', () => {
     expect(s.players[0]!.shield).toBe(Math.min(sh.max, 10 + sh.regen))
   })
 })
+
+describe('C3: mìn Cua Lăn', () => {
+  const setup = () => {
+    const t = createDefaultTuning()
+    const mask = flat()
+    const players = [{ name: 'A', team: 0 as const, mobileId: 'cua-lan' }, { name: 'B', team: 1 as const, mobileId: 'oc-thiet-giap' }]
+    const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+    return { t, mask, s, env: { mask, tuning: t } }
+  }
+  it('đạn 2 thả 2 mìn nằm lại ở chỗ chạm đất, không nổ; snapshot mang theo mìn', () => {
+    const { s, env } = setup()
+    const me = s.players[0]!
+    const r = applyAction(s, { t: 'fire', id: me.id, angle: 35, power: 45, slot: 1 }, env)
+    expect(r.ok).toBe(true)
+    expect(r.shot!.events.filter(e => e.kind === 'mineDrop')).toHaveLength(2)
+    expect(r.shot!.events.filter(e => e.kind === 'explode')).toHaveLength(0)
+    expect(s.mines).toHaveLength(2)
+    expect(s.mines.every(m => m.owner === me.id)).toBe(true)
+    const snap = snapshotOf(s)
+    s.mines = []
+    applySnapshot(s, snap)
+    expect(s.mines).toHaveLength(2)
+  })
+  it('lần bắn sau của chủ mìn: mìn bò về phía địch; chạm xe địch thì nổ, trừ máu', () => {
+    const { s, env, mask } = setup()
+    const me = s.players[0]!, foe = s.players[1]!
+    // mìn nằm sẵn cạnh xe địch
+    s.mines.push({ id: 0, owner: me.id, team: 0, x: foe.body.x - 60, y: foe.body.y + foe.body.radius - 3, crawlPx: 110, detect: 220, damage: 380, blastRadius: 70, carveRadius: 40 })
+    s.nextMineId = 1
+    const hp0 = foe.hp
+    const before = mask.countSolid()
+    const r = applyAction(s, { t: 'fire', id: me.id, angle: 80, power: 10, slot: 0 }, env)
+    expect(r.ok).toBe(true)
+    expect(r.shot!.events.some(e => e.kind === 'mineGone')).toBe(true)
+    expect(foe.hp).toBeLessThan(hp0)
+    expect(s.mines).toHaveLength(0)
+    expect(mask.countSolid()).toBeLessThan(before)
+  })
+  it('mìn bò theo hướng địch nhưng chưa tới thì còn lại với vị trí mới', () => {
+    const { s, env } = setup()
+    const me = s.players[0]!, foe = s.players[1]!
+    s.mines.push({ id: 0, owner: me.id, team: 0, x: me.body.x + 40, y: me.body.y + me.body.radius - 3, crawlPx: 110, detect: 220, damage: 380, blastRadius: 70, carveRadius: 40 })
+    s.nextMineId = 1
+    const x0 = s.mines[0]!.x
+    applyAction(s, { t: 'fire', id: me.id, angle: 25, power: 100, slot: 0 }, env)
+    expect(s.mines).toHaveLength(1)
+    expect(Math.sign(s.mines[0]!.x - x0)).toBe(Math.sign(foe.body.x - x0))
+    expect(Math.abs(s.mines[0]!.x - x0)).toBeGreaterThan(50)
+  })
+})

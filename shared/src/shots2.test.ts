@@ -22,9 +22,10 @@ function shoot(mobile: string, slot: ShotSlot, angle: number, power: number, opt
 }
 const firstExplode = (r: ShotResult): { x: number; y: number } => r.events.find(e => e.kind === 'explode') as { x: number; y: number }
 
-describe('Cua Lăn (roller)', () => {
+const rollerDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 28, damage: 300, delay: 0, behavior: { kind: 'roller', distance: 460, speed: 320 } }
+describe('roller (code còn giữ)', () => {
   it('lăn tiếp sau khi chạm đất rồi mới nổ', () => {
-    const r = shoot('cua-lan', 1, 30, 60)
+    const r = shoot('cua-lan', 1, 30, 60, { shotDef: rollerDef })
     const path = r.paths[0]!
     let landX = 0
     for (let i = 0; i < path.length; i += 3) if (path[i + 2]! >= G - 8) { landX = path[i + 1]!; break }
@@ -35,11 +36,11 @@ describe('Cua Lăn (roller)', () => {
   it('gặp vách cao thì nổ ngay trước vách', () => {
     const m = flat()
     for (let y = G - 120; y < G; y++) for (let x = 1000; x < 1040; x++) m.data[y * W + x] = 1
-    const r = shoot('cua-lan', 1, 20, 45, { mask: m })
+    const r = shoot('cua-lan', 1, 20, 45, { mask: m, shotDef: rollerDef })
     expect(firstExplode(r).x).toBeLessThan(1000)
   })
   it('trúng xe đang đứng trên đường lăn', () => {
-    const r = shoot('cua-lan', 1, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)] })
+    const r = shoot('cua-lan', 1, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)], shotDef: rollerDef })
     expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
   })
 })

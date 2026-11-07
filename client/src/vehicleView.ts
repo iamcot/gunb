@@ -123,6 +123,7 @@ function satAltitude(mobileId: string): number {
 export class VehicleViews {
   readonly container = new Container()
   private readonly fan = new Graphics()
+  private readonly mineG = new Graphics()
   private readonly needle = new Sprite()
   private readonly angleText = new Text({ text: '', style: { fontFamily: 'sans-serif', fontSize: 16, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x1a2b3c, width: 4 } } })
   private readonly views = new Map<number, View>()
@@ -138,7 +139,7 @@ export class VehicleViews {
 
   /** `fx`: nếu có thì tung bụi dưới bánh khi xe đi. */
   constructor(match: MatchState, private readonly fx: Fx | null = null) {
-    this.container.addChild(this.fan)
+    this.container.addChild(this.fan, this.mineG)
     this.angleText.anchor.set(0.5, 0)
     this.angleText.visible = false
     this.container.addChild(this.needle, this.angleText)
@@ -196,6 +197,24 @@ export class VehicleViews {
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
+  /** Mìn (cua mìn): thân cam, mắt; có xe địch trong bán kính phát hiện thì râu đỏ vẫy + viền đỏ nhấp nháy. */
+  private drawMines(match: MatchState): void {
+    const g = this.mineG
+    g.clear()
+    for (const m of match.mines) {
+      let alert = false
+      for (const q of match.players) if (q.hp > 0 && q.team !== m.team && Math.hypot(q.body.x - m.x, q.body.y - m.y) <= m.detect) { alert = true; break }
+      const w = alert ? Math.sin(this.bob * 3) * 3 : 0, col = m.team === 0 ? 0x4aa3ff : 0xff6a4a
+      g.ellipse(m.x, m.y - 2, 10, 6.5).fill(0xf08a3c).stroke({ color: 0x5a2a12, width: 1.5 })
+      g.rect(m.x - 8, m.y - 6.5, 16, 2).fill({ color: col, alpha: 0.9 })   // vạch màu đội
+      for (const sx of [-1, 1]) {
+        g.moveTo(m.x + sx * 4, m.y - 7).lineTo(m.x + sx * (6 + w), m.y - 13).stroke({ color: alert ? 0xff2a2a : 0xf5d6a8, width: 1.6, cap: 'round' })
+        g.circle(m.x + sx * (6 + w), m.y - 13, 1.8).fill(alert ? 0xff2a2a : 0xf5d6a8)
+      }
+      if (alert) g.circle(m.x, m.y - 3, 13 + Math.abs(w)).stroke({ color: 0xff2a2a, width: 1, alpha: 0.5 })
+    }
+  }
+
   update(dt: number, match: MatchState, shownHp: ReadonlyMap<number, number>): void {
     this.bob += dt * 6
     if (this.chargeId < 0) this.chargePhase = 0
@@ -207,6 +226,7 @@ export class VehicleViews {
     }
     this.updateGhosts(dt)
     this.fan.clear()
+    this.drawMines(match)
     this.angleText.visible = false
     this.needle.visible = false
     for (const p of match.players) {

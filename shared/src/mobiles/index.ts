@@ -20,6 +20,8 @@ export const MOBILE_IDS = ['oc-thiet-giap', 'chui-khoan', 'bo-loi', 'cua-lan', '
 export const SECRET_MOBILE_IDS = ['long-ngu-co', 'ky-lan-sat'] as const
 /** Mọi xe hợp lệ (cả xe ẩn): server kiểm tra lựa chọn và nút Ngẫu nhiên bốc trong danh sách này. */
 export const ALL_MOBILE_IDS: readonly string[] = [...MOBILE_IDS, ...SECRET_MOBILE_IDS]
+/** Giá trị đặt chỗ "chưa chọn xe" ở phòng online: server bốc ngẫu nhiên trong `ALL_MOBILE_IDS` lúc bấm Bắt đầu (xe ẩn cũng có thể ra). */
+export const RANDOM_MOBILE = 'random'
 export type MobileId = (typeof MOBILE_IDS)[number]
 
 /** Bản sao sâu của thông số mặc định (để Tuning chỉnh được mà không đụng bản gốc). */

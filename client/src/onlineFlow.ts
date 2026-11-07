@@ -1,5 +1,5 @@
 import {
-  GAME_NAME, ITEM_SLOTS, ALL_MOBILE_IDS, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
+  GAME_NAME, ITEM_SLOTS, ALL_MOBILE_IDS, MAX_PLAYERS, MOBILE_IDS, RANDOM_MOBILE, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
   type BotLevel, type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
@@ -322,12 +322,13 @@ export class OnlineFlow {
           continue
         }
         const def = TUNING.mobiles[m.mobileId]
+        const isRand = m.mobileId === RANDOM_MOBILE
         const badge = !m.connected ? '<span class="gs-badge off">Mất kết nối</span>'
           : m.pid === r.hostPid ? '<span class="gs-badge host">Chủ phòng</span>'
           : m.ready || m.bot ? '<span class="gs-badge ready">Sẵn sàng</span>' : '<span class="gs-badge">Đang chọn…</span>'
         html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">
-          <div class="pic"><img data-portrait="${esc(m.mobileId)}" alt=""><span class="fallback">${esc(def?.name ?? m.mobileId)}</span></div>
-          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${badge}</div>
+          <div class="pic">${isRand ? '<img src="/ui/random-mobile.png" alt="?">' : `<img data-portrait="${esc(m.mobileId)}" alt="">`}<span class="fallback">${esc(isRand ? 'Ngẫu nhiên' : def?.name ?? m.mobileId)}</span></div>
+          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(isRand ? 'Ngẫu nhiên (bốc khi vào game)' : def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${badge}</div>
           ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">${ico('remove', '✕', true)}</button>` : ''}</div>`
       }
       el.querySelector(`#team${team}`)!.innerHTML = html
@@ -367,7 +368,9 @@ export class OnlineFlow {
   private renderMobilePicker(current: string, canPick: boolean): void {
     const el = this.el!
     const d = TUNING.mobiles[current]
-    if (d) {
+    if (current === RANDOM_MOBILE) {
+      el.querySelector('#mdetail')!.innerHTML = `<div class="gs-me"><div class="stage"><img src="/ui/random-mobile.png" alt="?"></div></div><div class="nm">Ngẫu nhiên</div><div class="role">Xe được bốc khi chủ phòng bấm Bắt đầu, có thể ra cả xe ẩn.</div>`
+    } else if (d) {
       const stat = (label: string, v: number, txt: string): string => `<div class="gs-stat"><span>${label}</span><div class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></i></div><b>${txt}</b></div>`
       el.querySelector('#mdetail')!.innerHTML = `
         <div class="gs-me"><div class="stage"><img data-portrait="${esc(d.id)}" alt=""><span class="fallback">${esc(d.name)}</span></div></div>
@@ -380,19 +383,19 @@ export class OnlineFlow {
     }
     el.querySelector('#mgrid')!.innerHTML = MOBILE_IDS.map(id => `<button class="gs-pick${id === current ? ' on' : ''}" data-mob="${esc(id)}" title="${esc(TUNING.mobiles[id]!.name)}"${canPick ? '' : ' disabled'}>
         <img data-portrait="${esc(id)}" alt=""><span class="fallback">${esc(TUNING.mobiles[id]!.name)}</span></button>`).join('') +
-      `<button class="gs-pick" id="mrand" title="Ngẫu nhiên"${canPick ? '' : ' disabled'}><img src="/ui/random-mobile.png" alt="?"></button>`
+      `<button class="gs-pick${current === RANDOM_MOBILE ? ' on' : ''}" id="mrand" title="Ngẫu nhiên: bốc xe lúc vào game"${canPick ? '' : ' disabled'}><img src="/ui/random-mobile.png" alt="?"></button>`
     const pick = (id: string): void => {
       try { localStorage.setItem(MOBILE_KEY, id) } catch { /* bỏ qua */ }
       this.net?.send({ t: MsgType.SetSeat, mobileId: id })
     }
     el.querySelectorAll<HTMLButtonElement>('[data-mob]').forEach(b => b.addEventListener('click', () => pick(b.dataset.mob!)))
-    el.querySelector('#mrand')!.addEventListener('click', () => pick(ALL_MOBILE_IDS[Math.floor(Math.random() * ALL_MOBILE_IDS.length)]!))
+    el.querySelector('#mrand')!.addEventListener('click', () => pick(RANDOM_MOBILE))
   }
 
   private savedMobile(): string {
     let id: string | null = null
     try { id = localStorage.getItem(MOBILE_KEY) } catch { /* bỏ qua */ }
-    return id && TUNING.mobiles[id] && ALL_MOBILE_IDS.includes(id) ? id : MOBILE_IDS[0]
+    return id === RANDOM_MOBILE || (id && TUNING.mobiles[id] && ALL_MOBILE_IDS.includes(id)) ? id! : MOBILE_IDS[0]
   }
 
   private renderChat(): void {

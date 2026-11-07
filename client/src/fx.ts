@@ -4,7 +4,7 @@ import type { ShotArt } from './shotArt'
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
 interface Bolt { g: Graphics; age: number }
 /** Vệ tinh Cú Thiên Văn: hiện trên cao trước tia laser, ngắm, bắn, rồi bay mất. `beam` < 0 = đang ngắm; `idle` = thời gian từ lúc tia cuối tắt. */
-interface Sat { x: number; y: number; tx: number; ty: number; ax: number; ay: number; w: number; age: number; charge: number; beam: number; idle: number; spr: Sprite | null }
+interface Sat { x: number; y: number; tx: number; ty: number; ax: number; ay: number; rot: number; w: number; age: number; charge: number; beam: number; idle: number; spr: Sprite | null }
 
 /** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
 interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean
@@ -278,7 +278,7 @@ export class Fx {
     let s: Sat | undefined
     for (const q of this.sats) if (q.idle < SAT_OUT_S && Math.abs(q.tx - sx) < 160 && Math.abs(q.ty - sy) < 160) s = q
     if (!s) {
-      s = { x: sx, y: sy, tx: sx, ty: sy, ax: x, ay: y, w, age: 0, charge: 0, beam: -1, idle: 0, spr: null }
+      s = { x: sx, y: sy, tx: sx, ty: sy, ax: x, ay: y, rot: 0, w, age: 0, charge: 0, beam: -1, idle: 0, spr: null }
       if (ART.satellite) { s.spr = new Sprite(ART.satellite); s.spr.anchor.set(0.5); s.spr.scale.set(SAT_SIZE / ART.satellite.width); this.topArt.addChild(s.spr) }
       this.sats.push(s)
     }
@@ -321,8 +321,11 @@ export class Fx {
       s.y += (s.ty - s.y) * Math.min(1, dt * 10)
       const alpha = Math.min(1, s.age / 0.2) * (1 - s.idle / SAT_OUT_S)
       const by = s.y + Math.sin(s.age * 4) * 3 - s.idle * 220    // nhấp nhô; xong thì bay vút lên
+      // xoay để mắt kính (phía dưới ảnh) chĩa về điểm nhắm: tia thẳng đứng thì không xoay, tia chéo thì nghiêng theo tia
+      const aim = Math.atan2(s.ay - by, s.ax - s.x)
+      s.rot += (aim - Math.PI / 2 - s.rot) * Math.min(1, dt * 12)
       // thân vệ tinh (ảnh assets/fx/satellite.png nếu có, không thì vẽ khối)
-      if (s.spr) { s.spr.position.set(s.x, by); s.spr.alpha = alpha }
+      if (s.spr) { s.spr.position.set(s.x, by); s.spr.rotation = s.rot; s.spr.alpha = alpha }
       else {
         fire.rect(s.x - 34, by - 5, 22, 10).fill({ color: 0x3f6fb5, alpha }).stroke({ color: 0x2a2a3a, width: 1.5, alpha })
         fire.rect(s.x + 12, by - 5, 22, 10).fill({ color: 0x3f6fb5, alpha }).stroke({ color: 0x2a2a3a, width: 1.5, alpha })
@@ -330,17 +333,18 @@ export class Fx {
       }
       // mắt kính sáng dần khi ngắm + vạch ngắm mờ xuống đất
       const ch = Math.min(1, s.charge / SAT_LEAD_S)
-      const ly = by + (s.spr ? s.spr.height * SAT_LENS : 8)
-      glow.circle(s.x, ly, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
-      if (s.beam < 0) this.beamQuad(s.x, ly + 2, s.ax, s.ay, 2, BEAM_OUTER, 0.25 * ch * alpha)
+      const lens = s.spr ? s.spr.texture.height * s.spr.scale.y * SAT_LENS : 8
+      const lx = s.x - Math.sin(s.rot) * lens, ly = by + Math.cos(s.rot) * lens
+      glow.circle(lx, ly, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
+      if (s.beam < 0) this.beamQuad(lx, ly, s.ax, s.ay, 2, BEAM_OUTER, 0.25 * ch * alpha)
       // tia laser: bùng to nhanh rồi thu nhỏ dần
       if (s.beam >= 0 && s.beam < BEAM_S) {
         const k = s.beam / BEAM_S
         const wk = k < 0.15 ? k / 0.15 : 1 - ((k - 0.15) / 0.85) * 0.8
         const ww = 2 * s.w * wk * (0.92 + 0.08 * Math.sin(s.beam * 80))
-        this.beamQuad(s.x, ly, s.ax, s.ay, ww * 1.6, BEAM_OUTER, 0.25 * (1 - k))
-        this.beamQuad(s.x, ly, s.ax, s.ay, ww, BEAM_OUTER, 0.6 * (1 - k * 0.5))
-        this.beamQuad(s.x, ly, s.ax, s.ay, ww * 0.36, BEAM_CORE, 0.95)
+        this.beamQuad(lx, ly, s.ax, s.ay, ww * 1.6, BEAM_OUTER, 0.25 * (1 - k))
+        this.beamQuad(lx, ly, s.ax, s.ay, ww, BEAM_OUTER, 0.6 * (1 - k * 0.5))
+        this.beamQuad(lx, ly, s.ax, s.ay, ww * 0.36, BEAM_CORE, 0.95)
         glow.circle(s.ax, s.ay, s.w * 1.4 * wk).fill({ color: BEAM_CORE, alpha: 0.7 * (1 - k) })
       }
     }

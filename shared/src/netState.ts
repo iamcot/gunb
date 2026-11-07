@@ -3,6 +3,8 @@ import type { MatchPhase, MatchState } from './match'
 /** Ảnh chụp trạng thái động của trận (vị trí, máu, lượt...) gửi từ server xuống client. Thông tin tĩnh (tên, đội, pháo) gửi một lần ở MatchStart. */
 export interface Snapshot {
   turnNo: number
+  roundNo: number
+  roundStart: number
   phase: MatchPhase
   winner: number | null
   turnPlayerId: number
@@ -14,7 +16,7 @@ export interface Snapshot {
 
 export function snapshotOf(s: MatchState): Snapshot {
   return {
-    turnNo: s.turnNo, phase: s.phase, winner: s.winner, turnPlayerId: s.turnPlayerId, turnTimeLeft: s.turnTimeLeft,
+    turnNo: s.turnNo, roundNo: s.roundNo, roundStart: s.roundStart, phase: s.phase, winner: s.winner, turnPlayerId: s.turnPlayerId, turnTimeLeft: s.turnTimeLeft,
     wind: [s.wind.x, s.wind.y],
     p: s.players.map(p => [
       p.body.x, p.body.y, p.body.facing, p.body.tilt, p.hp, p.body.fuel, p.body.onGround ? 1 : 0, p.body.alive ? 1 : 0,
@@ -27,6 +29,8 @@ export function snapshotOf(s: MatchState): Snapshot {
 export function applySnapshot(s: MatchState, snap: Snapshot): void {
   if (snap.p.length !== s.players.length) throw new Error('snapshot không khớp số người chơi')
   s.turnNo = snap.turnNo
+  s.roundNo = snap.roundNo
+  s.roundStart = snap.roundStart
   s.phase = snap.phase
   s.winner = snap.winner as MatchState['winner']
   s.turnPlayerId = snap.turnPlayerId

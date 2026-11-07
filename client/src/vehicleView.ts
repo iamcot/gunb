@@ -364,6 +364,9 @@ export class VehicleViews {
     this.ghosts.push({ s, x: pos.x, y: pos.y, t: 0, sx, sy, ph: Math.random() * 6 })
   }
 
+  /** Còn hồn thoát xác đang bay (chưa vỡ): màn chơi chờ xong mới hiện bảng kết quả. */
+  get dying(): boolean { return this.ghosts.length > 0 }
+
   private updateGhosts(dt: number): void {
     for (let i = this.ghosts.length - 1; i >= 0; i--) {
       const g = this.ghosts[i]!

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
-import { applyAction, createMatch, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
+import { applyAction, createMatch, windForRound, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
 import { createDefaultTuning } from './tuning'
 
 const W = 2400, H = 1200, G = 800
@@ -74,6 +74,35 @@ describe('applyAction', () => {
     expect(s.phase).toBe('aiming')
     expect(s.turnPlayerId).not.toBe(p.id)
     expect(s.turnNo).toBe(2)
+  })
+
+  it('gió + thời tiết giữ nguyên trong một vòng, chỉ đổi khi mọi xe còn sống đã bắn', () => {
+    const { s, mask } = make(4)
+    const w0 = { ...s.wind }
+    const acted = new Set<number>()
+    while (acted.size < 4) {
+      expect(s.roundNo).toBe(1)
+      expect(s.wind).toEqual(w0)
+      acted.add(s.turnPlayerId)
+      applyAction(s, { t: 'fire', id: s.turnPlayerId, angle: 80, power: 20, slot: 0 }, { mask })
+      applyAction(s, { t: 'endTurn' }, { mask })
+    }
+    expect(s.roundNo).toBe(2)
+    expect(s.roundStart).toBe(s.turnNo)
+    expect(s.wind).toEqual(windForRound(s.seed, 2))
+    // xe đã chết không giữ vòng lại
+    const dead = s.players.find(p => p.id !== s.turnPlayerId)!
+    dead.hp = 0; dead.body.alive = false
+    const before = s.roundNo
+    acted.clear()
+    while (acted.size < 3) {
+      expect(s.roundNo).toBe(before)
+      acted.add(s.turnPlayerId)
+      applyAction(s, { t: 'fire', id: s.turnPlayerId, angle: 80, power: 20, slot: 0 }, { mask })
+      applyAction(s, { t: 'endTurn' }, { mask })
+    }
+    expect(s.phase).toBe('aiming')
+    expect(s.roundNo).toBe(before + 1)
   })
 
   it('người vừa dùng đạn delay lớn đi sau những người chưa đi', () => {

@@ -20,7 +20,8 @@
       "grow": {
         "scale": 1.3,
         "tint": "#ffd24a"
-      }
+      },
+      "streak": "ss-fx.png"
     }
   ]
 }

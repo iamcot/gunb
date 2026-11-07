@@ -1621,9 +1621,49 @@
     "modified": "Bản con trỏ xanh viền nâu (ChatGPT): xoá nền trắng, xoay để mũi chỉ sang phải, cắt sát, thu bề rộng về 96 px"
   },
   {
-    "file": "fx/ss-flame.png",
+    "file": "mobiles/oc-thiet-giap/ss-fx.png",
     "author": "IamCoT (tạo bằng ChatGPT)",
-    "source": "Ảnh AI tạo từ prompt quầng lửa + cung gió đạn SS (hội thoại với Claude)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Ốc (xoắn ốc san hô) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/cu-thien-van/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Cú Thiên Văn (sao tím) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/nhim-chum/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Nhím Chùm (gai xanh) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Diều Hâu Giấy (lông vàng) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/bo-loi/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Bọ Lôi (sét xanh) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/chui-khoan/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Chũi Khoan (lửa cam) (hội thoại với Claude)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"

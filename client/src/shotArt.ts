@@ -8,11 +8,11 @@ interface ShotsFile { shots: { file: string; length: number; upright?: boolean; 
 /** `trail: "smoke"` = đạn xả khói + lửa ở đuôi khi bay.
  *  `arcs` = số tia điện (vân sét) nhoáng quanh viên đạn mỗi frame (đạn sét; càng lớn càng nhiều).
  *  `dig` (Chũi Khoan đạn 2/SS) = tên file âm thanh phát lặp khi đạn chui xuyên đất (lúc đó đạn còn vẽ tối + nhòe + rung, bụi đất bắn ra).
- *  `streak` (`#rrggbb`, thường là đạn SS) = vệt xé gió/xé lửa dài sau viên đạn + quầng sáng.
+ *  `streak` (đạn SS) = tên ảnh hiệu ứng (đầu chĩa sang phải) vẽ phía sau viên đạn, xoay theo hướng bay và động đậy; có thì bỏ lửa đuôi, chỉ để khói.
  *  `grow` (đạn airGrow, Ốc / Diều SS) = dạng sau khi "lớn lên": ảnh riêng `file` (+ `length`) nếu có, không thì dùng lại ảnh cũ phóng `scale` lần và nhuộm `tint` (#rrggbb). */
 interface GrowFile { file?: string; length?: number; scale?: number; tint?: string }
 export interface GrowArt { tex: Texture | null; length: number; scale: number; tint: number }
-export interface ShotArt { tex: Texture; length: number; upright: boolean; trail: boolean; arcs: number; dig: boolean; streak: number; grow: GrowArt | null }
+export interface ShotArt { tex: Texture; length: number; upright: boolean; trail: boolean; arcs: number; dig: boolean; streak: Texture | null; grow: GrowArt | null }
 
 /** Phóng to ảnh đạn khi vẽ (chỉ là hình, va chạm vẫn theo shared/). */
 const SHOT_ART_SCALE = 2
@@ -53,7 +53,9 @@ export function preloadShotArt(mobileId: string): void {
         }
         grow = { tex: gtex, length: (s.grow.length ?? s.length) * SHOT_ART_SCALE, scale: gtex ? 1 : (s.grow.scale ?? 1.4), tint: s.grow.tint ? parseInt(s.grow.tint.replace('#', ''), 16) : 0xffffff }
       }
-      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true, trail: s.trail === 'smoke', arcs: s.arcs ?? 0, dig: !!s.dig, streak: s.streak ? parseInt(s.streak.replace('#', ''), 16) : 0, grow }
+      let streak: Texture | null = null
+      if (s.streak) { try { const si = new Image(); si.src = base + s.streak; await si.decode(); streak = Texture.from(si) } catch { streak = null } }
+      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true, trail: s.trail === 'smoke', arcs: s.arcs ?? 0, dig: !!s.dig, streak, grow }
     }))
     cache.set(mobileId, arts)
   })().catch(() => cache.set(mobileId, [])).finally(() => loading.delete(mobileId))

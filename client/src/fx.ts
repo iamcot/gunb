@@ -40,7 +40,7 @@ const BEAM_OUTER = 0x6fe3ff, BEAM_CORE = 0xf4fdff
 /** Ảnh hiệu ứng vẽ tay (plan/14-prompt-no-khoi.md, assets/fx/). Thiếu ảnh nào thì phần đó vẽ bằng code. */
 const ART = {
   fireball: null as Texture | null, shockwave: null as Texture | null, impact: null as Texture | null,
-  muzzle: null as Texture | null, ssFlame: null as Texture | null, spark: null as Texture | null, satellite: null as Texture | null,
+  muzzle: null as Texture | null, spark: null as Texture | null, satellite: null as Texture | null,
   smoke: [] as Texture[], dirt: [] as Texture[], bits: [] as Texture[],
 }
 function loadArt(file: string, done: (t: Texture) => void): void {
@@ -52,7 +52,6 @@ loadArt('fireball.png', t => { ART.fireball = t })
 loadArt('shockwave.png', t => { ART.shockwave = t })
 loadArt('hit-impact.png', t => { ART.impact = t })
 loadArt('muzzle-flash.png', t => { ART.muzzle = t })
-loadArt('ss-flame.png', t => { ART.ssFlame = t })
 loadArt('spark.png', t => { ART.spark = t })
 loadArt('satellite.png', t => { ART.satellite = t })
 for (let i = 0; i < 4; i++) loadArt(`smoke-${i}.png`, t => { ART.smoke.push(t) })
@@ -215,8 +214,8 @@ export class Fx {
     const ga = grown ? a!.grow! : null
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
     this.shellRot[i] = rot
-    this.updateFlame(i, x, y, rot, visible && a !== null && a.streak !== 0, a?.length ?? 0)
-    if (a && (a.trail || a.streak !== 0) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== 0)
+    this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, a?.length ?? 0)
+    if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail)
     // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
     const under = visible && this.shellDig[i] === true
     s.filters = under ? [this.shellBlur[i]!] : []
@@ -237,15 +236,16 @@ export class Fx {
   }
 
   /** Nhả khói + lửa ở đuôi viên đạn `i` theo quãng đã bay kể từ lần trước (p = vị trí cũ, chưa cập nhật). */
-  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean): void {
+  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean, smoke: boolean): void {
     if (!p.visible) { this.trailD[i] = 0; return }
+    if (streak && !smoke) return   // ảnh hiệu ứng SS tự có đuôi, không thêm khói/lửa
     let d = this.trailD[i]! + Math.hypot(x - p.x, y - p.y)
     const cx = Math.cos(rot), cy = Math.sin(rot)
     for (let n = 0; d >= TRAIL_STEP && n < TRAIL_MAX_PER_CALL; n++, d -= TRAIL_STEP) {
       const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
       if (!streak) this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)   // đạn có quầng lửa SS thì bỏ lửa đuôi, chỉ để khói
-      if (streak) {   // đạn SS: khói tối dày sau đuôi
+      if (streak && smoke) {   // đạn SS có `trail: smoke`: khói tối dày sau đuôi
         this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
       }
     }
@@ -274,10 +274,10 @@ export class Fx {
     }
   }
 
-  /** Quầng lửa + cung gió (ảnh `ss-flame.png`) sau đạn SS, hướng theo đường bay; hai lớp co giãn/lắc lệch pha để lửa luôn "động đậy". */
-  private updateFlame(i: number, x: number, y: number, rot: number, on: boolean, len: number): void {
-    const f1 = this.flames[i]!, f2 = this.flames2[i]!, tex = ART.ssFlame
-    if (!on || !tex) { f1.visible = false; f2.visible = false; return }
+  /** Quầng lửa + cung gió (ảnh `streak` của xe, vd. `ss-fx.png`) sau đạn SS, hướng theo đường bay; hai lớp co giãn/lắc lệch pha để lửa luôn "động đậy". */
+  private updateFlame(i: number, x: number, y: number, rot: number, tex: Texture | null, len: number): void {
+    const f1 = this.flames[i]!, f2 = this.flames2[i]!
+    if (!tex) { f1.visible = false; f2.visible = false; return }
     const tt = performance.now() / 1000, k = (len * FLAME_LEN) / tex.width, flip = Math.cos(rot) < 0 ? -1 : 1
     f1.texture = f2.texture = tex
     f1.visible = f2.visible = true

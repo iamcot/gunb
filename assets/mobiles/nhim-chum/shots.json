@@ -19,7 +19,8 @@
       "length": 26,
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
-      "trail": "smoke"
+      "trail": "smoke",
+      "streak": "ss-fx.png"
     }
   ]
 }

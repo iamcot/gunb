@@ -41,6 +41,8 @@ export type Behavior =
    *  `from: 'shooter'` = vệ tinh ở trên đầu xe bắn `altitude` px (chỗ vệ tinh luôn bay theo xe), tia chéo từ đó tới điểm nhắm. Mỗi tia rộng 2×`halfWidth` px, đi thẳng qua điểm nhắm
    *  và đốt xuyên `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), gây `damage` lên mọi xe nằm trên tia (giảm theo khoảng cách tới tia). */
   | { kind: 'satellite'; from: 'sky' | 'shooter'; altitude: number; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number }
+  /** Bay `afterS` s rồi tách thành `count` quả con tỏa đều ±`spreadDeg`/2·(count−1) quanh hướng bay (Rùa Thành SS). Quả con nổ theo thông số `child` (nhỏ hơn); chạm đất/xe trước khi tách thì nổ cả quả với thông số của đạn. */
+  | { kind: 'splitAfter'; afterS: number; count: number; spreadDeg: number; child: { blastRadius: number; carveRadius: number; damage: number } }
   /** Xoắn rồi chụm (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1): bắn cùng lúc `count` viên (2 = hai tia/dòng nước, 3 = ba đĩa) quanh một trục bay chung; mỗi viên lệch khỏi trục theo phương vuông góc vận tốc một đoạn
    *  `radius`·(1 − t/`convergeS`)·sin(pha + 2π·`turns`·t/`convergeS`) px (pha chia đều 2π cho các viên), nên xoắn rộng dần rồi hẹp về 0 sau `convergeS` s và bay chồng lên nhau. Mỗi viên va chạm, nổ và tính `damage` riêng
    *  (viên nào chạm trước nổ trước, viên kia bay tiếp). */

@@ -149,7 +149,8 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     s.path.push(t, x, y)
     if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
     const g = beh.kind === 'airGrow' && s.grown ? beh : null
-    blast(x, y, t, def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : def.carveRadius * (g?.carveMul ?? 1), def.damage * (g?.damageMul ?? 1), true)
+    const c = beh.kind === 'splitAfter' && s.child ? beh.child : null
+    blast(x, y, t, c?.blastRadius ?? def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : c?.carveRadius ?? def.carveRadius * (g?.carveMul ?? 1), c?.damage ?? def.damage * (g?.damageMul ?? 1), true)
     if (beh.kind === 'lightning') scheduleLightning(beh, x, y, t)
     if (beh.kind === 'build') build(x, y, t, beh)
     if (beh.kind === 'satellite') {
@@ -253,7 +254,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (beh.kind !== 'ghost' && mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất (đạn xuyên địa hình thì cứ bay)
   }
 
-  const split = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'splitAtApex' }>): void => {
+  const split = (s: Shell, t: number, b: { count: number; spreadDeg: number }): void => {
     s.alive = false
     s.path.push(t, s.p.x, s.p.y)
     events.push({ t, kind: 'split', x: s.p.x, y: s.p.y })
@@ -389,6 +390,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (r === FLYING) {
       if (hitsVehicle(s, s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
       if (beh.kind === 'splitAtApex' && !s.child && s.p.vy >= 0) { split(s, t, beh); return }
+      if (beh.kind === 'splitAfter' && !s.child && t - s.tStart >= beh.afterS) { split(s, t, beh); return }
       if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
       return
     }

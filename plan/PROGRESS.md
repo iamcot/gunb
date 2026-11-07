@@ -114,3 +114,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Sứa Đèn đ2: mỗi tia là một quả đèn đơn (vàng + xanh ngọc), dùng lại ảnh quả đèn của đ1.
 - Sứa Đèn đ2: chụm sau 2,2 s (3 s dài hơn thời gian bay thường nên chưa kịp chụm); icon đạn twin hiện N viên (shotBar).
 - Sứa Đèn đ2 mỗi tia 200→234, Rùa Thành đ2 mỗi tia 190→205: trúng cả hai ≈ 1,2× đạn 1 (như Bọ Lôi).
+- B7: Behavior `splitAfter` (tách sau afterS s, quả con nổ nhỏ theo `child`). Rùa Thành SS 'Sóng vỡ': bay 1,5 s rồi tách 6 quả (95 dmg/quả, blast 50); chạm trước khi tách thì nổ cả quả (560, blast 90). Quả con tạm dùng chung ảnh với quả mẹ (chưa có water-small). Test build chuyển sang shotDef riêng.

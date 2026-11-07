@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
 import { simulateShot } from './shot/simulateShot'
 import type { ShotResult, ShotVehicle } from './shot/types'
-import type { ShotSlot } from './shots'
+import type { ShotDef, ShotSlot } from './shots'
 import { createDefaultTuning } from './tuning'
 import { WEATHER_KINDS, defaultWeatherTuning, weatherForRound, type Weather } from './weather'
 
@@ -14,10 +14,10 @@ function flat(): TerrainMask {
   return m
 }
 const veh = (id: number, mobileId: string, x: number, hp = 100): ShotVehicle => ({ id, mobileId, x, y: G - 18, radius: 18, hp, armor: 0 })
-function shoot(mobile: string, slot: ShotSlot, angle: number, power: number, opts: { mask?: TerrainMask; wind?: { x: number; y: number }; weather?: Weather | null; others?: ShotVehicle[] } = {}): ShotResult {
+function shoot(mobile: string, slot: ShotSlot, angle: number, power: number, opts: { mask?: TerrainMask; wind?: { x: number; y: number }; weather?: Weather | null; others?: ShotVehicle[]; shotDef?: ShotDef } = {}): ShotResult {
   return simulateShot({
     mask: opts.mask ?? flat(), vehicles: [veh(0, mobile, 400), ...(opts.others ?? [])], wind: opts.wind ?? { x: 0, y: 0 },
-    shooterId: 0, facing: 1, tilt: 0, fire: { angle, power, slot }, weather: opts.weather ?? null,
+    shooterId: 0, facing: 1, tilt: 0, fire: { angle, power, slot }, weather: opts.weather ?? null, shotDef: opts.shotDef,
   }, tuning)
 }
 const firstExplode = (r: ShotResult): { x: number; y: number } => r.events.find(e => e.kind === 'explode') as { x: number; y: number }
@@ -69,21 +69,22 @@ describe('Sứa Đèn (pierce)', () => {
   })
 })
 
-describe('Rùa Thành (build)', () => {
+const buildDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 60, carveRadius: 0, damage: 250, delay: 600, behavior: { kind: 'build', radius: 45, count: 4 } }
+describe('build (đắp đất, code còn giữ cho item sau này)', () => {
   it('đắp thêm đất, không khoét; không đắp khi chạm xe', () => {
     const m = flat()
     const before = m.countSolid()
-    const r = shoot('rua-thanh', 2, 50, 50, { mask: m })
+    const r = shoot('rua-thanh', 2, 50, 50, { mask: m, shotDef: buildDef })
     expect(r.events.some(e => e.kind === 'fill')).toBe(true)
     expect(r.events.some(e => e.kind === 'carve')).toBe(false)
     expect(r.maskAfter.countSolid()).toBeGreaterThan(before)
     const ex = firstExplode(r)
     const target = veh(1, 'oc-thiet-giap', ex.x)
-    const r2 = shoot('rua-thanh', 2, 50, 50, { mask: flat(), others: [target] })
+    const r2 = shoot('rua-thanh', 2, 50, 50, { mask: flat(), others: [target], shotDef: buildDef })
     for (const e of r2.events) if (e.kind === 'fill') expect(Math.hypot(target.x - e.x, target.y - e.y)).toBeGreaterThanOrEqual(e.r + target.radius + 3)
   })
   it('client phát lại fill cho cùng mask như server', () => {
-    const r = shoot('rua-thanh', 2, 50, 55)
+    const r = shoot('rua-thanh', 2, 50, 55, { shotDef: buildDef })
     const replay = flat()
     for (const e of r.events) {
       if (e.kind === 'carve') replay.carveCircle(e.x, e.y, e.r)
@@ -292,5 +293,32 @@ describe('twin (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1)', () => {
   it('deterministic', () => {
     const a = shoot('cua-lan', 0, 40, 65), b = shoot('cua-lan', 0, 40, 65)
     expect(JSON.stringify(a.paths)).toBe(JSON.stringify(b.paths))
+  })
+})
+
+describe('splitAfter (Rùa Thành SS)', () => {
+  it('bay 1,5 s rồi tách 6 quả con, mỗi quả nổ nhỏ riêng', () => {
+    const r = shoot('rua-thanh', 2, 60, 100)
+    expect(r.events.filter(e => e.kind === 'split')).toHaveLength(1)
+    expect(r.paths).toHaveLength(7)
+    const ex = r.events.filter(e => e.kind === 'explode') as { r: number }[]
+    expect(ex).toHaveLength(6)
+    expect(ex.every(e => e.r === 50)).toBe(true)
+  })
+  it('chạm đất trước khi tách thì nổ cả quả (bán kính lớn)', () => {
+    const r = shoot('rua-thanh', 2, 45, 30)
+    expect(r.events.filter(e => e.kind === 'split')).toHaveLength(0)
+    expect(firstExplode(r)).toBeDefined()
+    expect((r.events.find(e => e.kind === 'explode') as { r: number }).r).toBe(90)
+  })
+  it('đứng dưới chỗ tách thì cả 6 quả trúng (gần 6 × 95)', () => {
+    const probe = shoot('rua-thanh', 2, 60, 100)
+    const sp = probe.events.find(e => e.kind === 'split') as { x: number }
+    const ex = probe.events.filter(e => e.kind === 'explode') as { x: number }[]
+    const mid = ex.reduce((a, e) => a + e.x, 0) / ex.length
+    const r = shoot('rua-thanh', 2, 60, 100, { others: [veh(1, 'oc-thiet-giap', mid, 5000)] })
+    const dmg = r.events.filter(e => e.kind === 'damage' && e.id === 1) as { amount: number }[]
+    expect(sp.x).toBeGreaterThan(400)
+    expect(dmg.length).toBeGreaterThanOrEqual(2)
   })
 })

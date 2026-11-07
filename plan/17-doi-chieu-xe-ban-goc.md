@@ -152,7 +152,7 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - B4 (xong). ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS. Đ1 thành đạn nổ thường.
 - B5 (xong). ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
 - B6. ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
-- B7. ⚠️ `splitAfter` → Rùa Thành SS.
+- B7 (xong). ⚠️ `splitAfter` → Rùa Thành SS.
 - B8. ⚠️ `roller` mở rộng → Cua Lăn SS.
 - B9. Nhím Chùm 4 / 6 / 9 quả (chỉ đổi số).
 

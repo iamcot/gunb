@@ -23,10 +23,18 @@ for (const k of WEATHER_KINDS) {
   img.src = url
 }
 
+/** Icon HTML của một loại thời tiết (ảnh nếu đã tải được, không thì SVG vẽ sẵn) — dùng cho thanh trên (hud.ts). */
+export function weatherIconHtml(kind: WeatherKind): string {
+  const art = iconArt.get(kind)
+  return art ? `<img src="${art}" alt="">` : ICON_SVG[kind]
+}
+
 const ORANGE = 0xfb923c, PURPLE = 0xa78bfa
 const LIGHTNING_EVERY = 2.4   // s giữa hai tia sét trang trí của Mây giông
 const LIGHTNING_LEN = 0.28    // s mỗi lần loé
 const BOLT_SEGS = 9
+/** Cột lốc / gương nước vẽ thêm phía trên mép bản đồ (tỉ lệ chiều cao bản đồ): camera nhìn được lên trên tới nửa màn hình. */
+const SKY_ABOVE = 1
 
 /** Số giả ngẫu nhiên 0..1 từ một số nguyên (chỉ để vẽ, không phải gameplay). */
 const hash01 = (n: number): number => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s) }
@@ -48,7 +56,7 @@ export class WeatherView {
     this.label = document.createElement('div')
     this.label.id = 'weather'
     this.label.style.display = 'none'
-    document.body.appendChild(this.label)
+    ;(document.getElementById('hud-top') ?? document.body).prepend(this.label)   // nằm trên vòng gió, đẩy vòng gió xuống (hud.ts)
   }
 
   /** Gọi mỗi frame với thời tiết hiện tại của lượt; chỉ cập nhật chữ khi đổi. */
@@ -59,8 +67,7 @@ export class WeatherView {
     this.w = w
     this.label.style.display = w ? 'flex' : 'none'
     if (!w) return
-    const art = iconArt.get(w.kind)
-    this.label.innerHTML = `<div class="wx-ico">${art ? `<img src="${art}" alt="">` : ICON_SVG[w.kind]}</div>` +
+    this.label.innerHTML = `<div class="wx-ico">${weatherIconHtml(w.kind)}</div>` +
       `<div class="wx-txt"><b>${WEATHER_NAMES[w.kind]}</b><span>${DESC[w.kind]}</span></div>`
     this.label.className = `k-${w.kind}`
     if (changed) { void this.label.offsetWidth; this.label.classList.add('pop') }   // chạy lại hoạt ảnh báo
@@ -81,25 +88,25 @@ export class WeatherView {
 
   /** Cột lốc: cột sáng + phễu xoắn (vòng elip trôi lên, rộng dần lên trên) + mũi tên đi lên + lá cuốn quanh. */
   private drawWhirl(g: Graphics, w: Weather): void {
-    const t = this.t, H = this.mapH, x0 = w.x, hw = w.hw
-    g.rect(x0 - hw, 0, hw * 2, H).fill({ color: 0xffffff, alpha: 0.07 })
-    g.rect(x0 - hw * 0.55, 0, hw * 1.1, H).fill({ color: 0xe8fff0, alpha: 0.08 })
-    const RINGS = 22, gap = H / RINGS
+    const t = this.t, H = this.mapH * (1 + SKY_ABOVE), top = -this.mapH * SKY_ABOVE, x0 = w.x, hw = w.hw
+    g.rect(x0 - hw, top, hw * 2, H).fill({ color: 0xffffff, alpha: 0.07 })
+    g.rect(x0 - hw * 0.55, top, hw * 1.1, H).fill({ color: 0xe8fff0, alpha: 0.08 })
+    const RINGS = Math.round(22 * (1 + SKY_ABOVE)), gap = H / RINGS
     for (let i = 0; i < RINGS; i++) {
-      const y = ((i * gap - t * 240) % H + H) % H
-      const up = 1 - y / H                                   // 0 ở đáy, 1 ở đỉnh
+      const yy = ((i * gap - t * 240) % H + H) % H, y = top + yy
+      const up = 1 - yy / H                                  // 0 ở đáy, 1 ở đỉnh
       const rx = hw * (0.35 + 0.6 * up)
       const cx = x0 + Math.sin(t * 2.4 + y * 0.012) * hw * 0.22
       g.ellipse(cx, y, rx, 7 + up * 6).stroke({ color: 0xffffff, width: 3, alpha: 0.35 + 0.4 * Math.sin(Math.PI * up) })
     }
-    for (let i = 0; i < 7; i++) {                            // mũi tên ^ trôi lên
-      const y = ((i * (H / 7) - t * 180) % H + H) % H
-      const a = 0.5 * Math.min(1, y / 120, (H - y) / 120)
+    for (let i = 0; i < 10; i++) {                           // mũi tên ^ trôi lên
+      const yy = ((i * (H / 10) - t * 180) % H + H) % H, y = top + yy
+      const a = 0.5 * Math.min(1, yy / 120, (H - yy) / 120)
       g.moveTo(x0 - 14, y + 12).lineTo(x0, y).lineTo(x0 + 14, y + 12).stroke({ color: 0xffffff, width: 4, alpha: a, cap: 'round', join: 'round' })
     }
-    for (let i = 0; i < 12; i++) {                           // lá cuốn
-      const y = ((hash01(i) * H - t * (150 + i * 9)) % H + H) % H
-      const up = 1 - y / H
+    for (let i = 0; i < 16; i++) {                           // lá cuốn
+      const yy = ((hash01(i) * H - t * (150 + i * 9)) % H + H) % H, y = top + yy
+      const up = 1 - yy / H
       const ang = t * (3 + (i % 3)) + i * 1.7
       const rx = hw * (0.35 + 0.6 * up)
       const lx = x0 + Math.cos(ang) * rx
@@ -156,25 +163,25 @@ export class WeatherView {
 
   /** Gương nước: màn nước có hai mép gợn sóng, vệt sáng chảy xuống, bọt nổi lên, mũi tên hai chiều báo gió đảo. */
   private drawMirror(g: Graphics, w: Weather): void {
-    const t = this.t, H = this.mapH, x0 = w.x, hw = w.hw
-    g.rect(x0 - hw, 0, hw * 2, H).fill({ color: 0x6FB2E8, alpha: 0.18 })
+    const t = this.t, H = this.mapH * (1 + SKY_ABOVE), top = -this.mapH * SKY_ABOVE, x0 = w.x, hw = w.hw
+    g.rect(x0 - hw, top, hw * 2, H).fill({ color: 0x6FB2E8, alpha: 0.18 })
     for (let s = -1; s <= 1; s += 2) {                       // mép gợn sóng
-      g.moveTo(x0 + s * hw, 0)
-      for (let y = 0; y <= H; y += 24) g.lineTo(x0 + s * (hw + Math.sin(t * 2.2 + y * 0.03) * 5), y)
+      g.moveTo(x0 + s * hw, top)
+      for (let y = top; y <= top + H; y += 24) g.lineTo(x0 + s * (hw + Math.sin(t * 2.2 + y * 0.03) * 5), y)
       g.stroke({ color: 0xd6ebfa, width: 3, alpha: 0.75 })
     }
     for (let i = 0; i < 6; i++) {                            // vệt sáng chảy xuống
       const lx = x0 - hw * 0.8 + (i / 5) * hw * 1.6
-      const y = ((hash01(i + 7) * H + t * (90 + i * 15)) % H)
+      const y = top + ((hash01(i + 7) * H + t * (90 + i * 15)) % H)
       g.moveTo(lx, y).lineTo(lx, y + 70).stroke({ color: 0xffffff, width: 3, alpha: 0.28 })
     }
     for (let i = 0; i < 18; i++) {                           // bọt
-      const y = ((hash01(i + 40) * H - t * (40 + (i % 4) * 12)) % H + H) % H
+      const y = top + ((hash01(i + 40) * H - t * (40 + (i % 4) * 12)) % H + H) % H
       const bx = x0 + (hash01(i + 3) - 0.5) * hw * 1.6 + Math.sin(t * 2 + i) * 6
       g.circle(bx, y, 2 + (i % 3) * 1.5).stroke({ color: 0xffffff, width: 1.5, alpha: 0.6 })
     }
     for (let k = 0; k < 4; k++) {                            // ⇄ gió đảo chiều
-      const y = H * (0.15 + k * 0.22) + Math.sin(t * 1.5 + k) * 6
+      const y = top + H * (0.15 + k * 0.22) + Math.sin(t * 1.5 + k) * 6
       const a = 0.55 + 0.25 * Math.sin(t * 3 + k)
       const L = hw * 0.55
       g.moveTo(x0 - L, y - 6).lineTo(x0 + L, y - 6).moveTo(x0 + L - 8, y - 12).lineTo(x0 + L, y - 6).lineTo(x0 + L - 8, y)

@@ -174,6 +174,7 @@ export class OnlineMode implements Mode {
     }
     if (!this.playback) this.shownHp.clear()
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)

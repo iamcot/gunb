@@ -1133,5 +1133,37 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Chỉnh màu 70% về màu dải đất nâu của Đảo nổi, thu về 256×256"
+  },
+  {
+    "file": "ui/hud/weather-whirl.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-whirl.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-storm.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-storm.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-mirror.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-mirror.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-portal.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-portal.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
   }
 ]

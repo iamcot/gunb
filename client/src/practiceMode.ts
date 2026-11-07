@@ -34,6 +34,7 @@ export class PracticeMode implements Mode {
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     ctx.hud.setWind(this.wind)
+    ctx.hud.setWeatherTurn(null)
     ctx.cam.follow(this.practice.shooter.x, this.practice.shooter.y, 1)
     window.addEventListener('keydown', this.onKey)
     this.aim.ssReady = true   // tập bắn: SS luôn sẵn sàng

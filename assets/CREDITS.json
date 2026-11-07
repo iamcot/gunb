@@ -67,12 +67,12 @@
     "url": ""
   },
   {
-    "file": "maps/dao-noi-ve/music.ogg",
+    "file": "audio/lobby.ogg",
     "author": "IamCoT (tạo bằng ElevenLabs)",
     "source": "Nhạc AI tạo trên ElevenLabs, file gốc bg-sound-pathway.mp3 (60 s, 192 kbps). Ghi chú ở assets/source/prompts/dao-noi-ve-music.txt",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s)"
+    "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s). Chuyển từ nhạc bản đồ Đảo nổi sang nhạc sảnh"
   },
   {
     "file": "mobiles/oc-thiet-giap/body.png",
@@ -709,5 +709,421 @@
     "source": "Tự viết",
     "license": "Tự tạo",
     "url": ""
+  },
+  {
+    "file": "audio/battle.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Nhạc AI tạo trên ElevenLabs từ prompt music_battle trong plan/11-prompt-am-thanh.md (file gốc music_battle.mp3, 60 s)",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Crossfade 0.5 s đuôi→đầu để lặp liền mạch, xuất OGG Vorbis 128 kbps (59.5 s)"
+  },
+  {
+    "file": "mobiles/bo-loi/bolt-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_bolt-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.03–2.03 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–1.72 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–0.93 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.04–1.74 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–0.86 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.21–1.16 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/bo-loi/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt bo-loi_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.07–1.21 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 3.7–5.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.46–2.46 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.03–0.93 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/chui-khoan/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.09–1.79 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.41–2.11 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–2.02 s của bản gốc 7.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.09–0.94 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.03–0.88 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cua-lan/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cua-lan_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.86–2.0 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.13–1.56 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.07–0.43 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.17–2.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.77–1.42 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 1.16–2.3 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–1.11 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.3 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.06–1.36 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.08–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–0.96 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/nhim-chum/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt nhim-chum_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.27–1.41 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.7 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.5 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–2.01 s của bản gốc 12.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.04–1.18 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt oc-thiet-giap_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–1.7 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.08–1.78 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.09–2.09 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.15–1.2 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.06–1.11 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/rua-thanh/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt rua-thanh_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.14–1.28 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "audio/hit.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sfx_hit trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.38–1.13 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "audio/turn.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sfx_turn trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.06–1.2 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_boom-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–1.34 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/boom-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_boom-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–0.66 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_boom-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–2.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_fire-1 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_fire-2 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.05–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/sua-den/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_fire-3 trong plan/11-prompt-am-thanh.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.03–1.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
   }
 ]

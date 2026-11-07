@@ -151,9 +151,9 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - B3 (xong phần cơ chế). ⚠️ `beam` + `twin`/`orbit` → Sứa Đèn đ1, đ2; Rùa Thành đ1, đ2 (đạn nước); Cua Lăn đ1 (3 đĩa).
 - B4 (xong). ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS. Đ1 thành đạn nổ thường.
 - B5 (xong). ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
-- B6. ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
+- B6 (xong, cần chỉnh bằng F4). ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
 - B7 (xong). ⚠️ `splitAfter` → Rùa Thành SS.
-- B8. ⚠️ `roller` mở rộng → Cua Lăn SS.
+- B8 (xong, trừ mìn C3). ⚠️ `roller` mở rộng → Cua Lăn SS.
 - B9 (xong, chưa có spreadGrowth). Nhím Chùm 4 / 6 / 9 quả (chỉ đổi số).
 
 **Đợt C – Hệ thống**

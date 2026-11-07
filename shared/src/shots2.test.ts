@@ -359,3 +359,30 @@ describe('curve / boomerang (Diều Hâu Giấy)', () => {
     expect(shoot('dieu-hau-giay', 1, 45, 60).paths).toHaveLength(4)
   })
 })
+
+describe('roller.crawl (Cua Lăn SS)', () => {
+  it('bò ngay sau khi chạm đất, tự nổ sau 6 s kể từ lần chạm đầu', () => {
+    const r = shoot('cua-lan', 2, 30, 40)
+    const ex = r.events.filter(e => e.kind === 'explode')
+    expect(ex).toHaveLength(1)
+    const path = r.paths[0]!
+    let land = -1
+    for (let i = 0; i < path.length; i += 3) if (path[i + 2]! >= G - 8) { land = path[i]!; break }
+    expect(land).toBeGreaterThan(0)
+    expect(ex[0]!.t - land).toBeGreaterThan(5.5)
+    expect(ex[0]!.t - land).toBeLessThan(6.6)
+  })
+  it('gặp vách cao thì quay đầu, bò về tới xe bắn mới nổ', () => {
+    const m = flat()
+    for (let y = G - 150; y < G; y++) for (let x = 700; x < 760; x++) m.data[y * W + x] = 1
+    const r = shoot('cua-lan', 2, 20, 30, { mask: m })
+    const ex = firstExplode(r)
+    expect(r.events.find(e => e.kind === 'explode')!.t).toBeGreaterThan(2.5)   // nổ khi bò về tới xe bắn (chạm xe nào cũng nổ), không nổ ở vách
+    expect(ex.x).toBeLessThan(700)
+  })
+  it('chạm xe thì nổ ngay', () => {
+    const r = shoot('cua-lan', 2, 20, 40, { others: [veh(1, 'oc-thiet-giap', 800)] })
+    expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
+    expect(r.events.find(e => e.kind === 'explode')!.t).toBeLessThan(5)
+  })
+})

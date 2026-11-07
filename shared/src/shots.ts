@@ -29,7 +29,9 @@ export type Behavior =
   /** Bắn cùng lúc `count` quả tỏa đều quanh hướng bắn, cách nhau `spreadDeg` độ (không đổi tốc độ). */
   | { kind: 'spread'; count: number; spreadDeg: number }
   /** Chạm đất thì lăn theo mặt đất về hướng đang bay tới `distance` px (tốc độ `speed` px/s); gặp xe, vách cao hoặc hết quãng thì nổ; hết đất thì rơi tiếp. */
-  | { kind: 'roller'; distance: number; speed: number }
+  | { kind: 'roller'; distance: number; speed: number
+      /** Bò dài (Cua Lăn SS): bỏ qua `distance`; gặp vách dốc thì quay đầu thay vì nổ; tự nổ sau `fuseS` s kể từ lần chạm đất đầu; chạm xe nào (trừ người bắn trong 0,3 s đầu) cũng nổ. */
+      crawl?: { fuseS: number } }
   /** Chạm lớp đất dày ≤ `maxThickness` px thì xuyên qua (khoét lỗ bán kính `holeRadius` ở chỗ vào/ra), tối đa `maxPierce` lần; dày hơn thì nổ. */
   | { kind: 'pierce'; maxThickness: number; maxPierce: number; holeRadius: number }
   /** Nổ không khoét mà ĐẮP đất: `count` hình tròn bán kính `radius` xếp chồng thẳng đứng từ điểm nổ lên trên (bỏ qua nếu chạm xe). */

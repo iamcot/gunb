@@ -26,6 +26,7 @@ interface Shell {
   grown: boolean          // airGrow: đã bay đủ lâu
   pierced: number         // số lần đã xuyên đất (pierce)
   tp: number              // lần cuối qua cổng (portal)
+  fuseAt: number          // roller.crawl: thời điểm tự nổ (-1 = chưa chạm đất)
   head: number            // tandem: 1 = đầu 1, 2 = đầu 2 (0 = không phải tandem)
   twinK: number           // twin: số thứ tự viên (-1 = không xoắn)
   off: number             // twin: độ lệch hiện tại khỏi trục bay (px, theo phương vuông góc vận tốc)
@@ -86,7 +87,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0, head: 0,
+      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0, head: 0, fuseAt: -1,
     }
     shells.push(s)
     return s
@@ -306,12 +307,16 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
 
   /** Lăn theo mặt đất (Cua Lăn): bám mặt đất, rơi tiếp khi hết đất, nổ khi gặp xe/vách cao/hết quãng. */
   const stepRoll = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'roller' }>): void => {
-    const adv = Math.min(b.speed * DT_SIM, s.remaining)
+    if (b.crawl && t >= s.fuseAt) { explodeShell(s, s.p.x, s.p.y, t); return }
+    const adv = b.crawl ? b.speed * DT_SIM : Math.min(b.speed * DT_SIM, s.remaining)
     const nx = s.p.x + s.dx * adv
     const up = tuning.move.stepUp, down = tuning.move.snapDown + 6
     let gy = -1
     for (let y = Math.floor(s.p.y) - up; y <= s.p.y + down; y++) if (mask.isSolid(nx, y)) { gy = y; break }
-    if (gy === Math.floor(s.p.y) - up) { explodeShell(s, s.p.x, s.p.y, t); return }          // vách cao: nổ
+    if (gy === Math.floor(s.p.y) - up) {                                                       // vách cao: nổ (crawl: quay đầu)
+      if (b.crawl) { s.dx = -s.dx; if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y); return }
+      explodeShell(s, s.p.x, s.p.y, t); return
+    }
     if (gy < 0) {                                                                              // hết đất: rơi tiếp
       s.mode = 'fly'; s.p.x = nx; s.p.vx = s.dx * b.speed; s.p.vy = 0
       s.path.push(t, s.p.x, s.p.y)
@@ -321,7 +326,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (hitsVehicle(s, s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
     s.remaining -= adv
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
-    if (s.remaining <= 1e-6) explodeShell(s, s.p.x, s.p.y, t)
+    if (!b.crawl && s.remaining <= 1e-6) explodeShell(s, s.p.x, s.p.y, t)
   }
 
   /** Xuyên lớp đất mỏng (Sứa Đèn). Trả true nếu xuyên được (đạn tiếp tục bay). */
@@ -413,6 +418,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       }
       if (beh.kind === 'roller') {
         s.mode = 'roll'; s.dx = Math.sign(s.p.vx) || input.facing; s.remaining = beh.distance
+        if (beh.crawl && s.fuseAt < 0) s.fuseAt = t + beh.crawl.fuseS
         s.p.alive = true; s.p.y -= 3
         s.path.push(t, s.p.x, s.p.y)
         return

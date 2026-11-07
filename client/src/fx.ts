@@ -6,6 +6,7 @@ interface Bolt { g: Graphics; age: number }
 
 /** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
 interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean }
+const SOUL_COLORS = [0xffffff, 0xcfe8ff, 0xfff3b0] as const
 const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 5
 
 // Thông số hình ảnh của vụ nổ (chỉ là hình, không ảnh hưởng gameplay)
@@ -163,6 +164,15 @@ export class Fx {
       const sp = rnd(15, 70)
       this.spawn(P_SMOKE, x + cx * 6, y + cy * 6, cx * sp + rnd(-12, 12), cy * sp - rnd(5, 20), rnd(0.5, 0.9), rnd(4, 7), 0x8c847c)
     }
+  }
+
+  /** Hồn thoát xác vỡ tung: chùm tia sáng nhạt + vài cụm khói trắng. */
+  soulBurst(x: number, y: number): void {
+    for (let i = 0; i < 22; i++) {
+      const a = Math.random() * Math.PI * 2, sp = rnd(60, 200)
+      this.spawn(P_SPARK, x, y, Math.cos(a) * sp, Math.sin(a) * sp - 40, rnd(0.4, 0.8), rnd(1.5, 3), SOUL_COLORS[i % SOUL_COLORS.length]!)
+    }
+    for (let i = 0; i < 5; i++) this.spawn(P_DUST, x + rnd(-8, 8), y + rnd(-8, 8), rnd(-20, 20), -rnd(10, 40), rnd(0.5, 0.9), rnd(5, 9), 0xe8f2ff)
   }
 
   /** Một cụm bụi nhỏ dưới bánh xe khi di chuyển. */

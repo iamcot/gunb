@@ -125,6 +125,7 @@ export class HotseatMode implements Mode {
         if (this.playback.update(dt)) {
           this.lastHash = this.playback.hashMatches
           this.playback = null
+          this.shownHp.clear()   // đã phát hết sự kiện: máu hiển thị = máu trận
         }
       } else {
         applyAction(m, { t: 'tick', dt }, { mask: this.mask })   // xe mất đất dưới chân rơi xuống

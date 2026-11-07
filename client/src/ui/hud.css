@@ -86,7 +86,6 @@ body.in-match #title, body.in-match #menubtn, body.in-match #mutebtn { display: 
 .tb-next i { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: #fff; border: 2px solid var(--h-cream-d); }
 .tb-next i:first-child { border-color: var(--h-earth); }
 .tb-next i img, .tb-next i svg { width: 26px; height: 26px; object-fit: contain; }
-.tb-next i.clear::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--h-cream-d); }
 .tb-items { opacity: .7; }
 .tb-slot { position: relative; width: 52px; height: 40px; border-radius: 9px; border: 2px dashed var(--h-cream-d); background: #fff6; }
 .tb-slot small { position: absolute; top: 1px; left: 4px; font-size: 9px; color: var(--h-earth); }

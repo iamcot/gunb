@@ -1,6 +1,6 @@
 # 14 – Prompt ảnh vụ nổ và khói
 
-Thay phần vụ nổ đang vẽ bằng code (hình tròn cam, khói xám, chấm mảnh đất) bằng ảnh vẽ tay.
+Thay phần vụ nổ đang vẽ bằng code (hình tròn cam, khói xám, chấm mảnh đất) bằng ảnh vẽ tay, và thêm hiệu ứng đạn trúng xe (mục 7, 8).
 
 Game sẽ **không** dùng ảnh động nhiều khung, vì AI vẽ các khung liên tiếp thường không khớp nhau. Thay vào đó, game dùng vài ảnh tĩnh làm "hạt":
 - phóng to dần;
@@ -57,6 +57,18 @@ Same art style, line weight and palette as the weather icons and storm cloud in 
 Ngôi sao loé nhỏ, game rắc nhiều hạt này quanh vụ nổ. Không có ảnh này thì tia lửa vẫn vẽ bằng code.
 ```
 Same art style, line weight and palette as the weather icons and storm cloud in this chat: bright cheerful 2D hand-painted game art. A single small four-pointed sparkle star, bright yellow-white center, golden points, soft warm glow. Centered. Transparent background, no text, no frame.
+```
+
+## 7. Va chạm đạn với xe – `fx-hit-impact.png` (vuông, khoảng 1024×1024)
+Hiện ngay chỗ đạn trúng xe, đè lên vụ nổ thường: một "bụp" kiểu truyện tranh cho biết đã trúng. Game phóng to nhanh, lắc nhẹ, rồi tắt trong khoảng 0,3 giây.
+```
+Same art style, line weight and palette as the weather icons and storm cloud in this chat: bright cheerful 2D hand-painted game art, thick dark brown outlines, two-tone cel shading. A single comic-book style hit impact burst for a 2D game, seen straight on: a jagged spiky star shape with 8 to 10 uneven sharp points, white-hot center, bright yellow middle, coral-red outer rim, a few small white impact streaks radiating out between the points. Centered, fills most of the square. No text, no letters, no smoke. Transparent background, no frame.
+```
+
+## 8. Mảnh kim loại văng khi trúng xe – `fx-hit-bits.png` (ngang, khoảng 1024×512)
+Vài mảnh nhỏ văng ra từ xe bị trúng (game ám màu theo đội).
+```
+Same art style, line weight and palette as the weather icons and storm cloud in this chat: bright cheerful 2D hand-painted game art, thick dark brown outlines, two-tone cel shading. A sprite sheet of eight separate small cartoon debris pieces in two rows with lots of empty space between them: bent metal plates, a tiny bolt, a tiny gear, a small rivet, a screw, light neutral grey-silver with cream highlights. Pieces do not touch each other. Transparent background, no text, no frame.
 ```
 
 ---

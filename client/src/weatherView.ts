@@ -29,6 +29,14 @@ export function weatherIconHtml(kind: WeatherKind): string {
   return art ? `<img src="${art}" alt="">` : ICON_SVG[kind]
 }
 
+/** Icon "trời quang" (lượt không có thời tiết): ảnh `assets/ui/hud/weather-clear.png` nếu có, không thì mặt trời SVG. */
+const CLEAR_SVG = '<svg viewBox="0 0 32 32"><g stroke="#e8902a" stroke-width="2.5" stroke-linecap="round"><path d="M16 2v4M16 26v4M2 16h4M26 16h4M6 6l3 3M23 23l3 3M6 26l3-3M23 9l3-3"/></g><circle cx="16" cy="16" r="7" fill="#ffd25e" stroke="#7a5233" stroke-width="2"/></svg>'
+let clearArt = ''
+{ const img = new Image(); img.onload = () => { clearArt = img.src }; img.src = '/ui/hud/weather-clear.png' }
+export function clearIconHtml(): string {
+  return clearArt ? `<img src="${clearArt}" alt="">` : CLEAR_SVG
+}
+
 /** Ảnh hiệu ứng trong bản đồ (plan/13-prompt-thoi-tiet.md): dải lặp dọc cho cột lốc / gương nước; chưa có/chưa tải xong thì vẽ bằng code.
  *  `width` = bề ngang ảnh so với vùng ảnh hưởng, `speed` = px/s (âm = trôi lên). */
 interface StripDef { url: string; width: number; speed: number; alpha: number; sway: number; swayHz: number; tex: Texture | null }

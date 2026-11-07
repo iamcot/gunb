@@ -1,7 +1,7 @@
 import { ANGLE_MAX, ANGLE_MIN, TUNING, WEATHER_NAMES, WIND_MAX, weatherForTurn, windMagnitude, type Wind } from '@gunb/shared'
 import { audio } from './audio'
 import './ui/hud.css'
-import { weatherIconHtml } from './weatherView'
+import { clearIconHtml, weatherIconHtml } from './weatherView'
 
 const WIND_LEVELS = 5
 const WEATHER_AHEAD = 5   // số lượt thời tiết sắp tới hiện trên thanh trên
@@ -150,12 +150,12 @@ export class Hud {
       return
     }
     const now = weatherForTurn(seed, turnNo, mapW, mapH, TUNING.weather)
-    this.wxNow.className = 'tb-now' + (now ? ` k-${now.kind}` : ' none')
-    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Lượt này</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : '<span><small>Lượt này</small><b>Trời quang</b></span>'
+    this.wxNow.className = 'tb-now' + (now ? ` k-${now.kind}` : ' k-clear')
+    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Lượt này</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Lượt này</small><b>Trời quang</b></span>`
     let html = ''
     for (let k = 1; k <= WEATHER_AHEAD; k++) {
       const w = weatherForTurn(seed, turnNo + k, mapW, mapH, TUNING.weather)
-      html += w ? `<i class="k-${w.kind}" title="+${k} lượt: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} lượt: trời quang"></i>`
+      html += w ? `<i class="k-${w.kind}" title="+${k} lượt: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} lượt: trời quang">${clearIconHtml()}</i>`
     }
     this.wxNext.innerHTML = html
   }

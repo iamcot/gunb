@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
+import { BlurFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import type { ShotArt } from './shotArt'
 
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
@@ -19,6 +19,9 @@ const BOOM_S = 0.4          // phần "lõi" vụ nổ: playback chờ hết ph�
 const BOOM_LIFE = 0.6       // chớp sáng + sóng xung kích tắt hẳn
 const FLASH_S = 0.12
 const BOLT_S = 0.42
+/** Đạn xuyên đất dưới đất: màu tối, độ mờ, độ nhòe, biên độ rung (px). Đạn SS: số vệt xé gió, số đoạn mỗi vệt. */
+const DIG_TINT = 0x4a3326, DIG_ALPHA = 0.7, DIG_BLUR = 3, DIG_SHAKE = 2.2
+const STREAKS = 7, STREAK_SEGS = 5
 const BOLT_HEIGHT = 900
 const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
@@ -112,6 +115,9 @@ export class Fx {
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
   private readonly shellGrown: boolean[] = []
   private readonly trailD: number[] = []
+  private readonly shellRot: number[] = []
+  private readonly shellDig: boolean[] = []   // đạn xuyên đất đang ở dưới đất
+  private readonly shellBlur: BlurFilter[] = []
   private readonly popArt = new Container()
   private readonly pops: { text: Text; age: number; alive: boolean; baseY: number; k: number }[] = []
   private nextPop = 0
@@ -190,6 +196,8 @@ export class Fx {
       this.shellPos.push({ x: 0, y: 0, visible: false })
       this.shellGrown.push(false)
       this.trailD.push(0)
+      this.shellRot.push(0); this.shellDig.push(false)
+      this.shellBlur.push(new BlurFilter({ strength: DIG_BLUR }))
     }
     const g = this.shells[i]!, s = this.shellSprites[i]!, p = this.shellPos[i]!
     const art = this.shellArt !== null
@@ -201,7 +209,12 @@ export class Fx {
     const grown = this.shellGrown[i] === true && a?.grow != null
     const ga = grown ? a!.grow! : null
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
-    if (a && a.trail && visible) this.trail(i, p, x, y, rot, a.length)
+    this.shellRot[i] = rot
+    if (a && (a.trail || a.streak !== 0) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== 0)
+    // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
+    const under = visible && this.shellDig[i] === true
+    s.filters = under ? [this.shellBlur[i]!] : []
+    if (under) { s.tint = DIG_TINT; s.alpha = DIG_ALPHA; s.position.set(x + rnd(-DIG_SHAKE, DIG_SHAKE), y + rnd(-DIG_SHAKE, DIG_SHAKE)) } else s.alpha = 1
     if (a && a.upright) {
       const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = 0
@@ -212,12 +225,13 @@ export class Fx {
       s.rotation = rot
       s.scale.set(k, Math.cos(rot) < 0 ? -k : k)
     } else s.rotation = rot
+    if (under) s.rotation += rnd(-0.12, 0.12)
     if (!visible) this.trailD[i] = 0
     p.x = x; p.y = y; p.visible = visible
   }
 
   /** Nhả khói + lửa ở đuôi viên đạn `i` theo quãng đã bay kể từ lần trước (p = vị trí cũ, chưa cập nhật). */
-  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number): void {
+  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean): void {
     if (!p.visible) { this.trailD[i] = 0; return }
     let d = this.trailD[i]! + Math.hypot(x - p.x, y - p.y)
     const cx = Math.cos(rot), cy = Math.sin(rot)
@@ -225,6 +239,10 @@ export class Fx {
       const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
       this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)
+      if (streak) {   // đạn SS: thêm lửa to và tàn lửa văng ra
+        this.spawn(P_FIRE, tx, ty, -cx * 60 + rnd(-30, 30), -cy * 60 + rnd(-30, 30), rnd(0.25, 0.4), rnd(11, 16), FIRE_HOT)
+        this.spawn(P_EMBER, tx, ty, -cx * 90 + rnd(-60, 60), -cy * 90 + rnd(-60, 60), rnd(0.4, 0.8), rnd(1.5, 2.6), 0xffa030)
+      }
     }
     this.trailD[i] = d >= TRAIL_STEP ? 0 : d
   }
@@ -251,6 +269,36 @@ export class Fx {
     }
   }
 
+  /** Vệt xé gió / xé lửa của đạn SS (`streak` trong shots.json): quầng sáng quanh đạn + vài vệt dài mỏng nhạt dần ra sau, nhoáng mỗi frame. */
+  private drawShellStreaks(glow: Graphics): void {
+    const a = this.shellArt
+    if (!a || a.streak === 0) return
+    for (let i = 0; i < this.shellPos.length; i++) {
+      const p = this.shellPos[i]!
+      if (!p.visible) continue
+      const rot = this.shellRot[i]!, cx = Math.cos(rot), cy = Math.sin(rot), nx = -cy, ny = cx
+      glow.circle(p.x, p.y, a.length * 0.75).fill({ color: a.streak, alpha: 0.12 })
+      glow.circle(p.x, p.y, a.length * 0.4).fill({ color: 0xffffff, alpha: 0.07 })
+      for (let n = 0; n < STREAKS; n++) {
+        const off = rnd(-a.length * 0.5, a.length * 0.5), len = a.length * rnd(1.4, 3.2), core = n < 2
+        const sx = p.x - cx * a.length * 0.3 + nx * off, sy = p.y - cy * a.length * 0.3 + ny * off
+        for (let k = 0; k < STREAK_SEGS; k++) {
+          const f0 = k / STREAK_SEGS, f1 = (k + 1) / STREAK_SEGS
+          glow.moveTo(sx - cx * len * f0, sy - cy * len * f0).lineTo(sx - cx * len * f1, sy - cy * len * f1)
+            .stroke({ color: core ? 0xfff2c0 : a.streak, width: (core ? 3.2 : 2.4) * (1 - f0 * 0.7), alpha: 0.85 * (1 - f0), cap: 'round' })
+        }
+      }
+    }
+  }
+
+  /** Đạn `i` (đạn xuyên đất) đang ở dưới đất hay không (do playback xét theo mask). */
+  setShellDig(i: number, under: boolean): void { if (i < this.shellDig.length) this.shellDig[i] = under }
+
+  /** Đất bụi bắn ra từ đạn xuyên đất đang chui dưới đất. */
+  digPuff(x: number, y: number, color: number | null): void {
+    this.spawn(P_DUST, x + rnd(-4, 4), y + rnd(-4, 4), rnd(-40, 40), rnd(-60, -10), rnd(0.35, 0.6), rnd(3, 6), color ?? DIRT_FALLBACK)
+  }
+
   /** Viên đạn `i` (airGrow) bay đủ lâu: đổi sang dạng lớn (ảnh `grow` trong shots.json) + chớp sáng nhỏ. */
   growShell(i: number, x: number, y: number): void {
     this.shellGrown[i] = true
@@ -275,7 +323,7 @@ export class Fx {
   }
 
   hideProjectiles(): void {
-    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false }
+    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false; this.shellDig[i] = false; this.shellSprites[i]!.filters = [] }
   }
 
   /** Viên đạn đầu tiên đang hiện (camera bám theo), hoặc null. */
@@ -501,6 +549,7 @@ export class Fx {
     fire.clear()
     glow.clear()
     this.drawShellArcs(glow)
+    this.drawShellStreaks(glow)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt

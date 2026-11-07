@@ -22,7 +22,8 @@
       "trail": "smoke",
       "grow": {
         "scale": 1.6
-      }
+      },
+      "streak": "#ff8a3a"
     }
   ]
 }

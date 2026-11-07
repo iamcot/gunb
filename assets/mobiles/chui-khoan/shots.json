@@ -10,13 +10,16 @@
       "file": "shot-2.png",
       "length": 18,
       "fire": "fire-2.ogg",
-      "boom": "boom-2.ogg"
+      "boom": "boom-2.ogg",
+      "dig": true
     },
     {
       "file": "shot-3.png",
       "length": 28,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg"
+      "boom": "boom-3.ogg",
+      "streak": "#ffb36b",
+      "dig": true
     }
   ]
 }

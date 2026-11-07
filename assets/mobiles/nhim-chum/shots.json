@@ -16,7 +16,8 @@
       "file": "shot-3.png",
       "length": 26,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg"
+      "boom": "boom-3.ogg",
+      "streak": "#ff9a5a"
     }
   ]
 }

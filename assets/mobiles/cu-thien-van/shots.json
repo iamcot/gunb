@@ -22,7 +22,8 @@
       "upright": true,
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
-      "beam": "beam-3.ogg"
+      "beam": "beam-3.ogg",
+      "streak": "#b58cff"
     }
   ]
 }

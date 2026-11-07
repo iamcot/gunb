@@ -4,13 +4,15 @@ import { audio, type ShotSfx } from './audio'
 /** `assets/mobiles/<id>/shots.json`: ảnh 3 loại đạn (vẽ nằm ngang, đầu chĩa sang phải), `length` = chiều dài khi vẽ (px bản đồ),
  *  `upright` = không xoay theo đường bay, chỉ lật trái/phải theo hướng bay (đạn có "đầu trên" như cục đất có lâu đài).
  *  `fire` / `boom` / `bolt` / `beam` (tuỳ chọn) = file âm thanh lúc bắn / lúc nổ / lúc sét giáng / lúc vệ tinh bắn laser; thiếu thì dùng tiếng tạo bằng code. */
-interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string; beam?: string; trail?: 'smoke'; arcs?: number; grow?: GrowFile }[] }
+interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string; beam?: string; trail?: 'smoke'; arcs?: number; dig?: boolean; streak?: string; grow?: GrowFile }[] }
 /** `trail: "smoke"` = đạn xả khói + lửa ở đuôi khi bay.
  *  `arcs` = số tia điện (vân sét) nhoáng quanh viên đạn mỗi frame (đạn sét; càng lớn càng nhiều).
+ *  `dig` (Chũi Khoan đạn 2/SS) = đạn chui xuyên đất: lúc ở dưới đất vẽ tối + nhòe + rung, phát tiếng bắn lặp, đất bụi bắn ra.
+ *  `streak` (`#rrggbb`, thường là đạn SS) = vệt xé gió/xé lửa dài sau viên đạn + quầng sáng.
  *  `grow` (đạn airGrow, Ốc / Diều SS) = dạng sau khi "lớn lên": ảnh riêng `file` (+ `length`) nếu có, không thì dùng lại ảnh cũ phóng `scale` lần và nhuộm `tint` (#rrggbb). */
 interface GrowFile { file?: string; length?: number; scale?: number; tint?: string }
 export interface GrowArt { tex: Texture | null; length: number; scale: number; tint: number }
-export interface ShotArt { tex: Texture; length: number; upright: boolean; trail: boolean; arcs: number; grow: GrowArt | null }
+export interface ShotArt { tex: Texture; length: number; upright: boolean; trail: boolean; arcs: number; dig: boolean; streak: number; grow: GrowArt | null }
 
 /** Phóng to ảnh đạn khi vẽ (chỉ là hình, va chạm vẫn theo shared/). */
 const SHOT_ART_SCALE = 2
@@ -50,7 +52,7 @@ export function preloadShotArt(mobileId: string): void {
         }
         grow = { tex: gtex, length: (s.grow.length ?? s.length) * SHOT_ART_SCALE, scale: gtex ? 1 : (s.grow.scale ?? 1.4), tint: s.grow.tint ? parseInt(s.grow.tint.replace('#', ''), 16) : 0xffffff }
       }
-      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true, trail: s.trail === 'smoke', arcs: s.arcs ?? 0, grow }
+      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true, trail: s.trail === 'smoke', arcs: s.arcs ?? 0, dig: s.dig === true, streak: s.streak ? parseInt(s.streak.replace('#', ''), 16) : 0, grow }
     }))
     cache.set(mobileId, arts)
   })().catch(() => cache.set(mobileId, [])).finally(() => loading.delete(mobileId))

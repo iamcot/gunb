@@ -40,6 +40,7 @@ class AudioEngine {
   private manifest: SoundsFile = {}
   private scene: MusicScene = { kind: 'lobby' }
   private track: { url: string; src: AudioBufferSourceNode; gain: GainNode } | null = null
+  private digLoop: { g: GainNode; src: AudioBufferSourceNode; url: string } | null = null
   private charge: { g: GainNode; srcs: AudioBufferSourceNode[] } | null = null
   muted = false
 
@@ -242,6 +243,30 @@ class AudioEngine {
     ch.g.gain.setValueAtTime(ch.g.gain.value, c.currentTime)
     ch.g.gain.linearRampToValueAtTime(0, c.currentTime + CHARGE_FADE)
     for (const s of ch.srcs) s.stop(c.currentTime + CHARGE_FADE + 0.02)
+  }
+
+  /** Tiếng rè lặp khi đạn chui dưới đất (Chũi Khoan): bật khi `on`, tắt (fade ngắn) khi không. Dùng file bắn của đạn đó; chưa tải được thì im. */
+  digLoopSet(on: boolean, url?: string): void {
+    const c = this.ctx
+    if (!c || !this.master) return
+    if (!on) {
+      const d = this.digLoop
+      if (!d) return
+      this.digLoop = null
+      d.g.gain.setValueAtTime(d.g.gain.value, c.currentTime)
+      d.g.gain.linearRampToValueAtTime(0, c.currentTime + CHARGE_FADE)
+      d.src.stop(c.currentTime + CHARGE_FADE + 0.02)
+      return
+    }
+    if (this.digLoop || !url) return
+    const buf = this.samples.get(url)
+    if (!buf) return
+    const g = c.createGain(), src = c.createBufferSource()
+    g.gain.value = SFX_FILE_VOL * 0.8
+    src.buffer = buf; src.loop = true
+    src.connect(g).connect(this.master)
+    src.start()
+    this.digLoop = { g, src, url }
   }
 
   turn(): void {

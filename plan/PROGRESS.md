@@ -113,3 +113,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Sứa Đèn đ2: xoắn lâu hơn (convergeS 1,6 → 3 s, turns 1,5 → 3) cho khó chụm hơn.
 - Sứa Đèn đ2: mỗi tia là một quả đèn đơn (vàng + xanh ngọc), dùng lại ảnh quả đèn của đ1.
 - Sứa Đèn đ2: chụm sau 2,2 s (3 s dài hơn thời gian bay thường nên chưa kịp chụm); icon đạn twin hiện N viên (shotBar).
+- Sứa Đèn đ2 mỗi tia 200→234, Rùa Thành đ2 mỗi tia 190→205: trúng cả hai ≈ 1,2× đạn 1 (như Bọ Lôi).

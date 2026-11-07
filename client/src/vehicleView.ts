@@ -53,6 +53,8 @@ const RECOIL_PUSH = 5         // px: cả xe lùi về sau
 const RECOIL_KICK = 7         // px: nòng giật lùi dọc trục nòng
 /** Nòng phình ra khi xe bật lên sau cú nhún (phần âm của u): to ngang thêm tối đa 45%, dài thêm 12%. */
 const BULGE_FAT = 0.45, BULGE_LONG = 0.12, BULGE_FULL = 0.3   // |u| âm đạt BULGE_FULL thì phình hết cỡ
+/** Tụ lực: độ nén thân thêm tối đa, rung ngang tối đa (px), nhịp (vòng/s) lúc lực 0 và lúc đầy. */
+const CHARGE_SQUASH = 0.45, CHARGE_SHAKE = 1.2, CHARGE_HZ0 = 3, CHARGE_HZ1 = 8
 /** Lúc lắc khi đi: pha tăng theo quãng đường (đi nhanh lắc nhanh). */
 const WOBBLE_PER_PX = 0.14    // rad pha / px
 const WOBBLE_ROT = 0.045      // rad nghiêng qua lại
@@ -127,6 +129,10 @@ export class VehicleViews {
   private readonly tmp: Vec2 = { x: 0, y: 0 }
   private readonly range: AimRange = { min: 0, max: 90 }
   private bob = 0
+  /** Xe đang tụ lực (id, mức 0..1; id < 0 = không ai): thân nhún và nòng phập phồng, càng đầy càng nhanh/mạnh. */
+  private chargeId = -1
+  private chargeK = 0
+  private chargePhase = 0
   /** Hồn thoát xác đang bay (tạo lúc xe chết, không phải mỗi frame). */
   private readonly ghosts: { s: Sprite; x: number; y: number; t: number; sx: number; sy: number; ph: number }[] = []
 
@@ -192,6 +198,8 @@ export class VehicleViews {
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
   update(dt: number, match: MatchState, shownHp: ReadonlyMap<number, number>): void {
     this.bob += dt * 6
+    if (this.chargeId < 0) this.chargePhase = 0
+    else this.chargePhase += dt * Math.PI * 2 * (CHARGE_HZ0 + (CHARGE_HZ1 - CHARGE_HZ0) * this.chargeK)
     for (const v of this.views.values()) {
       if (v.art && v.art.swingT >= 0) v.art.swingT += dt
       if (v.recoilT >= 0) { v.recoilT += dt; if (v.recoilT > RECOIL_S) v.recoilT = -1 }
@@ -221,17 +229,27 @@ export class VehicleViews {
     }
   }
 
+  /** Báo xe `id` đang tụ lực mức `k` (0..1); gọi với id < 0 khi không tụ. */
+  setCharge(id: number, k: number): void { this.chargeId = id; this.chargeK = k }
+
   private drawOne(v: View, p: PlayerState, hp: number, alive: boolean, isCur: boolean): void {
     const b = p.body, r = b.radius
     v.root.position.set(b.x, b.y)
     v.root.alpha = alive ? 1 : 0.35
     v.root.visible = b.alive || hp > 0 || true
     // chuyển động phụ: u = độ nén khi bắn (âm = bật ngược), lắc khi đi, giật khi trúng đạn
-    const u = this.recoilU(v)
+    let u = this.recoilU(v)
+    let chargeBulge = 0, shake = 0
+    if (alive && p.id === this.chargeId) {   // tụ lực: nhún (nén thân + nòng thụt) và nòng phình theo nhịp, gồng dần
+      const k = this.chargeK, ph = this.chargePhase
+      u += CHARGE_SQUASH * (0.4 + 0.6 * k) * (0.5 - 0.5 * Math.cos(ph))
+      chargeBulge = (0.5 + 0.5 * Math.sin(ph + 1.2)) * (0.25 + 0.6 * k)
+      shake = Math.sin(ph * 3.1) * CHARGE_SHAKE * k
+    }
     const sinP = Math.sin(v.phase), bounce = (1 - Math.cos(2 * v.phase)) * 0.5
     const rot = -b.tilt + sinP * WOBBLE_ROT * v.moveAmt
     const hitK = v.hitT >= 0 ? 1 - v.hitT / HIT_S : 0
-    const ox = -b.facing * RECOIL_PUSH * Math.max(0, u) + Math.sin(v.hitT * 70) * HIT_SHAKE * hitK
+    const ox = -b.facing * RECOIL_PUSH * Math.max(0, u) + Math.sin(v.hitT * 70) * HIT_SHAKE * hitK + shake
     const oy = -bounce * WOBBLE_BOB * v.moveAmt
     const sy = 1 - RECOIL_SQUASH * u - 0.03 * v.moveAmt * (bounce - 0.5)
     const sx = 1 + RECOIL_SQUASH * 0.6 * u
@@ -256,7 +274,7 @@ export class VehicleViews {
       // nòng giật lùi dọc trục (hướng đầu nòng trong khung = flip·(cos, sin) của góc quay)
       const kick = RECOIL_KICK * Math.max(0, u) * a.flip
       a.barrel.position.set(a.barrelX - Math.cos(a.barrel.rotation) * kick, a.barrelY - Math.sin(a.barrel.rotation) * kick)
-      const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+      const bl = Math.max(chargeBulge, Math.min(1, Math.max(0, -u) / BULGE_FULL))
       a.barrel.scale.set(a.barrelSX * (1 + BULGE_LONG * bl), a.barrelSY * (1 + BULGE_FAT * bl))
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
@@ -271,7 +289,7 @@ export class VehicleViews {
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+    const bl = Math.max(chargeBulge, Math.min(1, Math.max(0, -u) / BULGE_FULL))
     v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6 * (1 + BULGE_FAT * bl), cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)

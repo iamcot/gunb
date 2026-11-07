@@ -94,3 +94,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Thước ngắm: tâm cung ở đầu nòng (đúng chỗ đạn xuất phát), cung và kim trong suốt hơn, gradient mịn hơn.
 - Kim ngắm đổi sang con trỏ xanh viền nâu mới (xoay chỉ sang phải); cung trắng thêm 20% nữa mờ bằng nửa phần 30%.
 - Thanh máu + tên chuyển xuống dưới xe: thanh theo màu đội, 4 ô, quầng sáng nhẹ theo đội; mũi tên lượt đứng cao hơn nòng.
+- Hiệu ứng tụ lực: thân nhún + nòng phập phồng + rung nhẹ, nhanh/mạnh dần theo lực (mọi xe; VehicleViews.setCharge).

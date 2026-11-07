@@ -97,6 +97,7 @@ export class PracticeMode implements Mode {
     const pb = this.fakeMatch.players[0]!
     pb.aimAngle = aim.angle; pb.body.facing = aim.facing; pb.body.tilt = practice.tilt
     pb.hp = practice.shooter.hp
+    this.views?.setCharge(aim.charging ? practice.shooter.id : -1, aim.power / 100)
     this.views?.update(dt, this.fakeMatch, NO_HP)
     ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     this.shotBar.update(TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!, aim.slot, 100, 100)

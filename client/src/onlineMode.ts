@@ -199,6 +199,7 @@ export class OnlineMode implements Mode {
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
     ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
+    this.vehicles.setCharge(this.aim.charging && m.phase === 'aiming' ? m.turnPlayerId : -1, this.aim.power / 100)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const me = m.players[this.start.youId]

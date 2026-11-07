@@ -14,9 +14,11 @@
     },
     {
       "file": "shot-3.png",
-      "length": 26,
+      "length": 46,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg"
+      "boom": "boom-3.ogg",
+      "upright": true,
+      "wobble": true
     }
   ]
 }

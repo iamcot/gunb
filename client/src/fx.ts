@@ -231,6 +231,12 @@ export class Fx {
       const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = 0
       s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
+      if (a.wobble) {   // con vật bò (Cua SS): lắc nhẹ, nhún lên xuống theo nhịp bước
+        const tw = performance.now() / 1000
+        s.rotation = Math.sin(tw * 16 + i) * 0.07
+        s.position.y = y - Math.abs(Math.sin(tw * 10 + i)) * 4
+        s.scale.y = k * (1 + 0.04 * Math.sin(tw * 20 + i))
+      }
     } else if (a) {
       // xoay theo hướng bay; bay sang trái thì lật dọc để ảnh không bị lộn ngược
       const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)

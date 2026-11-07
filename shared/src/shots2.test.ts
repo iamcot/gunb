@@ -271,9 +271,9 @@ describe('twin (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1)', () => {
     expect(r.paths).toHaveLength(2)
     expect(maxOffset(r.paths[0]!, r.paths[1]!)).toBeGreaterThan(30)
     const a = r.paths[0]!, b = r.paths[1]!
-    // gần thời điểm chụm (3 s) hai viên gần như trùng nhau
+    // gần thời điểm chụm (2,2 s) hai viên gần như trùng nhau
     let checked = 0
-    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 3) < 0.05) { checked++; expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(10) }
+    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 2.2) < 0.05) { checked++; expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(10) }
     expect(checked).toBeGreaterThan(0)
     expect(r.events.filter(e => e.kind === 'explode')).toHaveLength(2)
   })

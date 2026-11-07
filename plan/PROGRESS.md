@@ -91,3 +91,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Thước ngắm: chỉ vẽ cung (dải góc + 20% mỗi đầu) tâm ở gốc nòng, xanh gradient đậm ngoài/nhạt trong; tụ lực chuột: lực tự tăng, kéo phải +, kéo trái −.
 - Âm thanh tụ lực: aim.ogg (tăng dần ~2 s) rồi aim_loop.ogg (lặp), phát khi bắt đầu tụ (Space/chuột), tắt khi nhả/hủy.
 - Kim ngắm dùng ảnh assets/ui/aim-needle.png (do người dùng tạo), mũi tên vẽ bằng code còn làm dự phòng.
+- Thước ngắm: tâm cung ở đầu nòng (đúng chỗ đạn xuất phát), cung và kim trong suốt hơn, gradient mịn hơn.

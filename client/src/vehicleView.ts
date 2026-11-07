@@ -6,9 +6,10 @@ import { preloadShotArt } from './shotArt'
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
-const ARC_GREEN = 0x4fb35a, ARC_BANDS = 10   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
+const ARC_GREEN = 0x4fb35a, ARC_BANDS = 16   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
 const ARC_EXTEND = 0.2, DEG = Math.PI / 180   // cung vẽ thêm 20% bề rộng dải góc ở mỗi đầu
 const NEEDLE_W = 46, NEEDLE_ANCHOR_X = 0.936, NEEDLE_ANCHOR_Y = 0.46   // ảnh kim: bề rộng khi vẽ (px) và toạ độ mũi trên ảnh (0..1)
+const NEEDLE_ALPHA = 0.85   // kim hơi trong suốt cho đỡ thô
 let needleTex: Texture | null = null
 void loadImage('/ui/aim-needle.png').then(img => { needleTex = Texture.from(img) }).catch(() => { /* dùng mũi tên vẽ bằng code */ })
 const NEEDLE_COLOR = 0x5ec4ff
@@ -346,7 +347,14 @@ export class VehicleViews {
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan, a = this.views.get(p.id)?.art
     let cx = b.x, cy = b.y - 4
-    if (a) {   // gốc nòng trong toạ độ bản đồ (không tính lắc/nhún để thước đứng yên); khung xe có pivot (0, radius)
+    const mz = TUNING.mobiles[p.mobileId]!.muzzle
+    if (mz) {   // tâm cung = đầu nòng, đúng chỗ đạn xuất phát (cùng công thức với simulateShot trong shared/)
+      const d = aimDir(this.tmp, p.aimAngle, b.facing)
+      const f = b.facing, c = Math.cos(-b.tilt), sn = Math.sin(-b.tilt)
+      const gx = f * mz.px, gy = mz.py, nx = f > 0 ? -d.y : d.y, ny = f > 0 ? d.x : -d.x
+      cx = b.x + gx * c - gy * sn + d.x * mz.ox + nx * mz.oy
+      cy = b.y + gx * sn + gy * c + d.y * mz.ox + ny * mz.oy
+    } else if (a) {   // xe chưa có đầu nòng (Rùa Thành): lấy gốc nòng; khung xe có pivot (0, radius)
       const rot = -b.tilt, sx = b.facing * a.flip, c = Math.cos(rot), sn = Math.sin(rot)
       const lx = a.barrelX * sx, ly = a.barrelY - a.radius
       cx = b.x + lx * c - ly * sn - a.radius * sn
@@ -363,11 +371,11 @@ export class VehicleViews {
       for (let k = 0; k < ARC_BANDS; k++) {
         const rr = RING_IN + (k + 0.5) * bw, t = (k + 1) / ARC_BANDS
         g.moveTo(cx + Math.cos(s0) * rr, cy + Math.sin(s0) * rr)
-        g.arc(cx, cy, rr, s0, s1).stroke({ color, width: bw + 0.6, alpha: aMax * t * t })
+        g.arc(cx, cy, rr, s0, s1).stroke({ color, width: bw + 0.6, alpha: aMax * t })
       }
     }
-    arc(r.min - ext, r.max + ext, 0xffffff, 0.55)
-    arc(r.min, r.max, ARC_GREEN, 0.95)
+    arc(r.min - ext, r.max + ext, 0xffffff, 0.5)
+    arc(r.min, r.max, ARC_GREEN, 0.6)
     for (let ang = Math.ceil(r.min / 15) * 15; ang <= r.max; ang += 15) {
       const d = aimDir(this.tmp, ang, b.facing)
       g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })
@@ -379,7 +387,7 @@ export class VehicleViews {
     if (needleTex) {
       const n = this.needle
       if (!n.texture || n.texture !== needleTex) { n.texture = needleTex; n.anchor.set(NEEDLE_ANCHOR_X, NEEDLE_ANCHOR_Y); n.scale.set(NEEDLE_W / needleTex.width) }
-      n.position.set(tx, ty); n.rotation = Math.atan2(d.y, d.x); n.visible = true
+      n.alpha = NEEDLE_ALPHA; n.position.set(tx, ty); n.rotation = Math.atan2(d.y, d.x); n.visible = true
     } else {
       for (let i = 0; i < NEEDLE.length; i += 2) {
         const u = NEEDLE[i]!, w2 = NEEDLE[i + 1]!   // u: lùi dọc theo kim, w2: lệch ngang

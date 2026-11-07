@@ -1,5 +1,5 @@
 import {
-  GAME_NAME, ITEM_SLOTS, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
+  GAME_NAME, ITEM_SLOTS, ALL_MOBILE_IDS, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
   type BotLevel, type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
@@ -386,13 +386,13 @@ export class OnlineFlow {
       this.net?.send({ t: MsgType.SetSeat, mobileId: id })
     }
     el.querySelectorAll<HTMLButtonElement>('[data-mob]').forEach(b => b.addEventListener('click', () => pick(b.dataset.mob!)))
-    el.querySelector('#mrand')!.addEventListener('click', () => pick(MOBILE_IDS[Math.floor(Math.random() * MOBILE_IDS.length)]!))
+    el.querySelector('#mrand')!.addEventListener('click', () => pick(ALL_MOBILE_IDS[Math.floor(Math.random() * ALL_MOBILE_IDS.length)]!))
   }
 
   private savedMobile(): string {
     let id: string | null = null
     try { id = localStorage.getItem(MOBILE_KEY) } catch { /* bỏ qua */ }
-    return id && TUNING.mobiles[id] && (MOBILE_IDS as readonly string[]).includes(id) ? id : MOBILE_IDS[0]
+    return id && TUNING.mobiles[id] && ALL_MOBILE_IDS.includes(id) ? id : MOBILE_IDS[0]
   }
 
   private renderChat(): void {

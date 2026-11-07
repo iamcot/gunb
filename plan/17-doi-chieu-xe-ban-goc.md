@@ -158,9 +158,9 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 
 **Đợt C – Hệ thống**
 - C1 (xong). ⚠️ Khiên (`MobileDef.shield`, `PlayerState.shield`, hồi mỗi vòng; Snapshot thêm trường; thanh máu có phần xanh) + SS Sứa Đèn xoá khiên.
-- C2. Hai xe ẩn (sau #11 merge, vì Kỳ Lân Sắt dùng `satellite`).
+- C2 (xong phần cơ chế). Hai xe ẩn (sau #11 merge, vì Kỳ Lân Sắt dùng `satellite`).
 - C3. ⚠️ Mìn nằm chờ (`MatchState.mines`, giao thức, client) → Cua Lăn đ2.
-- C4. Cú Thiên Văn: sửa theo mục 3 (sau #11 merge).
+- C4 (xong). Cú Thiên Văn: sửa theo mục 3 (sau #11 merge).
 
 **Thứ tự:** A0 → A1 → B1 → B5 → B4 → B3 → B7 → B2 → B9 → A2 → B6 → B8 → C1 → C2 → C4 → C3. Chọn B5, B4, B3 sớm vì người dùng chỉ rõ là thiếu nhất. B6 để sau A0 vì cần nhiều vòng chỉnh. Cuối mỗi đợt chạy lại `npm run balance` và chỉnh số.
 

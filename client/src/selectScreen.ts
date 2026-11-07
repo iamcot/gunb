@@ -1,4 +1,4 @@
-import { MOBILE_IDS, TEAM_NAMES, TUNING, type Team } from '@gunb/shared'
+import { ALL_MOBILE_IDS, MOBILE_IDS, TEAM_NAMES, TUNING, type Team } from '@gunb/shared'
 
 export interface SelectHandlers { onStart: (mobileIds: string[]) => void; onBack: () => void }
 
@@ -29,8 +29,8 @@ export class SelectScreen {
         <div class="row" style="margin-top:12px"><button id="back">Quay lại</button><button id="rand">Ngẫu nhiên</button><button id="go">Bắt đầu</button></div></div>`
       this.el.querySelectorAll<HTMLElement>('.card').forEach(c => c.addEventListener('click', () => { picks[Number(c.dataset.p)] = Number(c.dataset.k); render() }))
       this.el.querySelector('#back')!.addEventListener('click', () => h.onBack())
-      this.el.querySelector('#rand')!.addEventListener('click', () => { for (let i = 0; i < total; i++) picks[i] = Math.floor(Math.random() * MOBILE_IDS.length); render() })
-      this.el.querySelector('#go')!.addEventListener('click', () => h.onStart(picks.map(k => MOBILE_IDS[k]!)))
+      this.el.querySelector('#rand')!.addEventListener('click', () => { for (let i = 0; i < total; i++) picks[i] = Math.floor(Math.random() * ALL_MOBILE_IDS.length); render() })
+      this.el.querySelector('#go')!.addEventListener('click', () => h.onStart(picks.map(k => ALL_MOBILE_IDS[k]!)))
     }
     render()
     document.body.appendChild(this.el)

@@ -125,3 +125,5 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - A1: delay đạn theo tỉ lệ 1 : 1,6 : 3,2 cho mọi xe (giữ đ1; đ2 = 1,6×, SS = 3,2×).
 - A2: `Tuning.turn.delayPerSecond` = 10, `MobileDef.delayPerSecondMul` (Rùa Thành 1,2): khi bắn cộng delay theo số giây đã suy nghĩ trong lượt.
 - C1: khiên. `MobileDef.shield {max, regen}`, `PlayerState.shield/maxShield`, `ShotVehicle.shield`, event damage thêm `shieldAfter` + event `shield`, `ShotDef.shieldBreak`; Snapshot thêm khiên (cuối mảng); khiên hồi mỗi vòng; thanh khiên xanh trên thanh máu. Sứa Đèn: khiên 230, hồi 80/vòng; SS 'Đèn khổng lồ' = đạn thường nổ rộng 140, xoá khiên mọi xe trong vùng. Practice mode chưa có khiên.
+- C4: Cú Thiên Văn: vệ tinh đ1 cao 200, đ2 cao 600 (gấp 3), tia lệch có seed (`satellite.jitter`); SS 'Quét sáng' = 5 tia thẳng đứng quét trái→phải (`satellite.sweep`).
+- C2: 2 xe ẩn Long Ngư Cơ (SS rồng con: Behavior `converge`, event `summon`) và Kỳ Lân Sắt (kiếm = `satellite` thông số khác); chỉ có qua nút Ngẫu nhiên (`SECRET_MOBILE_IDS`, `ALL_MOBILE_IDS`; server nhận cả xe ẩn). Chưa có ảnh đạn/shots.json cho 2 xe này (vẽ đạn bằng code); client chưa vẽ rồng con (chỉ vụ nổ).

@@ -1,6 +1,6 @@
 import { DT_SIM, MUZZLE_DIST, SHOT_MAX_TIME_S, SHOT_SAMPLE_EVERY } from '../constants'
 import { aimDir, aimRange, type AimRange } from '../aim'
-import { clamp, degToRad, type Vec2 } from '../math'
+import { clamp, degToRad, mulberry32, type Vec2 } from '../math'
 import type { MobileDef } from '../mobiles'
 import { FLYING, HIT_TERRAIN, stepProjectile, type ProjectileState } from '../physics/projectile'
 import type { ShotDef } from '../shots'
@@ -39,6 +39,7 @@ interface Bolt { t: number; x: number; y: number; ang: number; march: boolean; a
 interface After { t: number; id: number; damage: number }
 const BOLT_STEP = 3, BOLT_MAX_ANG = degToRad(70), ZERO_ANGLES: readonly number[] = [0]
 type SatelliteBeh = Extract<ShotDef['behavior'], { kind: 'satellite' }>
+interface Converge { t: number; x: number; y: number; def: Extract<ShotDef['behavior'], { kind: 'converge' }> }
 interface Beam { t: number; x: number; y: number; def: SatelliteBeh }
 
 const sanRange: AimRange = { min: 0, max: 90 }
@@ -84,6 +85,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const hitNow: number[] = []
   const strike = { x: 0, y: 0, x0: 0, y0: 0 }
   const beams: Beam[] = []
+  const converges: Converge[] = []
 
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
@@ -170,11 +172,22 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (beh.kind === 'lightning') scheduleLightning(beh, x, y, t)
     if (beh.kind === 'build') build(x, y, t, beh)
     if (beh.kind === 'satellite') {
+      const rng = beh.jitter ? mulberry32((fire.angle * 1009 + Math.round(fire.power) * 31 + Math.round(shooter.x)) >>> 0) : null
       for (let k = 0; k < beh.count; k++) {
-        const off = k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
-        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off, y, def: beh })
+        const off = beh.sweep ? (k - (beh.count - 1) / 2) * beh.spacing : k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
+        const jit = rng ? (rng() * 2 - 1) * beh.jitter! : 0
+        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off + jit, y, def: beh })
       }
       beams.sort((a, b) => a.t - b.t)
+    }
+    if (beh.kind === 'converge') {
+      for (let k = 0; k < beh.count; k++) {
+        const a = Math.PI * (k + 0.5) / beh.count   // nửa vòng tròn phía trên: từ phải (0) qua đỉnh tới trái (π)
+        const arrive = t + beh.delay + k * beh.interval
+        events.push({ t, kind: 'summon', x, y, x0: x + Math.cos(a) * beh.radius, y0: y - Math.sin(a) * beh.radius, arrive })
+        converges.push({ t: arrive, x, y, def: beh })
+      }
+      converges.sort((p, q) => p.t - q.t)
     }
   }
 
@@ -476,6 +489,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (amount <= 0) continue
       hurt(a.id, amount, t)
     }
+    while (converges.length && converges[0]!.t <= t + 1e-9) { const c = converges.shift()!; blast(c.x, c.y, t, c.def.blastRadius, c.def.carveRadius, c.def.damage, false) }
     while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamRay(b.x, b.y, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp
       const s = shells[k]!
@@ -484,7 +498,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       else if (s.mode === 'roll') stepRoll(s, t, beh as Extract<ShotDef['behavior'], { kind: 'roller' }>)
       else stepFly(s, t)
     }
-    if (!pending.length && !bolts.length && !afters.length && !beams.length && shells.every(s => !s.alive)) break
+    if (!pending.length && !bolts.length && !afters.length && !beams.length && !converges.length && shells.every(s => !s.alive)) break
   }
   // hết giờ mô phỏng: đạn còn bay coi như ra ngoài
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }

@@ -48,6 +48,7 @@ export type ShotEvent =
   | { t: number; kind: 'grow'; shell: number; x: number; y: number }    // đạn airGrow bay đủ lâu và lớn lên (hiệu ứng; `shell` = chỉ số trong `paths`)
   | { t: number; kind: 'beam'; x: number; y: number; w: number; sky: boolean; x0: number; y0: number }  // tia laser vệ tinh tới (x, y), nửa bề rộng w: sky = từ tận trời thẳng đứng, không thì từ vệ tinh ở (x0, y0); (x0, y0) luôn là chỗ vệ tinh bay theo trên đầu xe bắn (hiệu ứng; khoét + sát thương có event riêng)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }
+  | { t: number; kind: 'summon'; x: number; y: number; x0: number; y0: number; arrive: number }   // con vật triệu hồi hiện ở (x0, y0) và bò tới (x, y), tới nơi lúc `arrive` (hiệu ứng; vụ nổ khi tới có event explode riêng)
   | { t: number; kind: 'teleport'; x: number; y: number }   // quả dịch chuyển chạm: người bắn chuyển tới đây
 
 export interface ShotResult {

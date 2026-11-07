@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import {
-  BOT_ITEMS, MAX_PLAYERS, MOBILE_IDS, MsgType, decodeMsg, encodeMsg, sanitizeItems,
+  ALL_MOBILE_IDS, BOT_ITEMS, MAX_PLAYERS, MOBILE_IDS, MsgType, decodeMsg, encodeMsg, sanitizeItems,
   type BotLevel, type ItemId, type Msg, type RoomInfo, type RoomMember, type RoomStatus, type RoomSummary, type Team,
 } from '@gunb/shared'
 import { MatchRunner, RECONNECT_GRACE_S } from './matchRunner'
@@ -236,7 +236,7 @@ export class Lobby {
     const me = room?.members.find(x => x.pid === c.pid)
     if (!room || !me || room.status !== 'lobby') return
     if (m.team === 0 || m.team === 1) { me.team = m.team; me.ready = false }
-    if (typeof m.mobileId === 'string' && (MOBILE_IDS as readonly string[]).includes(m.mobileId)) me.mobileId = m.mobileId
+    if (typeof m.mobileId === 'string' && ALL_MOBILE_IDS.includes(m.mobileId)) me.mobileId = m.mobileId
     if (Array.isArray(m.items) && !(me.ready && room.hostPid !== c.pid)) me.items = sanitizeItems(m.items)
     if (typeof m.ready === 'boolean') me.ready = m.ready
     this.pushRoom(room)

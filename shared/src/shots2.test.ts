@@ -96,6 +96,10 @@ describe('build (đắp đất, code còn giữ cho item sau này)', () => {
 })
 
 describe('Cú Thiên Văn (satellite)', () => {
+  it('đạn 2: vệ tinh cao gấp 3 đạn 1', () => {
+    const t = createDefaultTuning().mobiles['cu-thien-van']!.shots
+    expect((t[1].behavior as { altitude: number }).altitude).toBe(3 * (t[0].behavior as { altitude: number }).altitude)
+  })
   type BeamEv = Extract<ShotResult['events'][number], { kind: 'beam' }>
   const beamsOf = (r: ShotResult): BeamEv[] => r.events.filter(e => e.kind === 'beam') as BeamEv[]
   it('đạn 1: vệ tinh trên đầu xe bắn tia chéo qua điểm nổ, đốt vào đất', () => {
@@ -106,22 +110,25 @@ describe('Cú Thiên Văn (satellite)', () => {
     const e = b[0]!
     expect(e.sky).toBe(false)
     expect(e.x0).toBe(400)                     // ngay trên đầu xe bắn
-    expect(e.y0).toBe(G - 18 - 400)           // vệ tinh bay theo cao 400 px trên tâm xe
+    expect(e.y0).toBe(G - 18 - 200)           // vệ tinh bay theo cao 200 px trên tâm xe (đ2 cao gấp 3)
     expect(e.t - ex.t).toBeCloseTo(0.5, 1)
     // điểm cuối nằm trên đường thẳng (x0, y0) → điểm nổ, phía sau điểm nổ
     const cross = (ex.x - e.x0) * (e.y - e.y0) - (ex.y - e.y0) * (e.x - e.x0)
-    expect(Math.abs(cross) / Math.hypot(e.x - e.x0, e.y - e.y0)).toBeLessThan(1.5)
+    expect(Math.abs(cross) / Math.hypot(e.x - e.x0, e.y - e.y0)).toBeLessThan(9)   // tia hơi lệch (jitter 8 px)
     expect(e.y).toBeGreaterThan(ex.y)
     expect(e.x).toBeGreaterThan(ex.x)
   })
   it('SS: từ tận trời thẳng đứng xuống cột điểm nổ', () => {
     const r = shoot('cu-thien-van', 2, 45, 60)
     const ex = firstExplode(r)
-    const e = beamsOf(r)[0]!
+    const bs = beamsOf(r)
+    expect(bs).toHaveLength(5)                       // quét 5 tia từ trái sang phải
+    for (let i = 1; i < bs.length; i++) expect(bs[i]!.x).toBeGreaterThan(bs[i - 1]!.x)
+    const e = bs[2]!
     expect(e.sky).toBe(true)
-    expect(e.x).toBe(ex.x)
+    expect(e.x).toBeCloseTo(ex.x, 5)                // tia giữa đúng điểm nổ
     expect(e.y).toBeGreaterThan(G)
-    expect(e.y).toBeLessThanOrEqual(G + 110)        // cầu sáng không khoét, tia đốt sâu 110 từ mặt đất
+    expect(e.y).toBeLessThanOrEqual(G + 70)         // cầu sáng không khoét, tia đốt sâu 70 từ mặt đất
   })
   it('cầu sáng không gây sát thương, không khoét đất: chỉ laser mới gây sát thương', () => {
     for (const slot of [0, 1, 2] as const) {
@@ -413,5 +420,35 @@ describe('khiên (Sứa Đèn)', () => {
     expect(dmg.shieldAfter).toBe(0)
     expect(dmg.hpAfter).toBeLessThan(5000)
     expect(target(0).shield).toBe(0)
+  })
+})
+
+describe('xe ẩn (C2) + converge + jitter', () => {
+  it('Long Ngư Cơ: đ2 bốn quả; SS triệu hồi 4 con rồng nổ tại tâm theo thứ tự', () => {
+    expect(shoot('long-ngu-co', 1, 45, 60).paths).toHaveLength(4)
+    const r = shoot('long-ngu-co', 2, 45, 60)
+    expect(r.events.filter(e => e.kind === 'summon')).toHaveLength(4)
+    const ex = r.events.filter(e => e.kind === 'explode') as { t: number; x: number; r: number }[]
+    expect(ex).toHaveLength(5)                       // 1 nổ đánh dấu + 4 rồng
+    expect(ex.slice(1).every(e => e.r === 55 && Math.abs(e.x - ex[0]!.x) < 1e-6)).toBe(true)
+    expect(ex[4]!.t).toBeGreaterThan(ex[1]!.t)
+  })
+  it('Long Ngư Cơ: đứng ngay điểm chạm thì ăn cả 4 con rồng', () => {
+    const x = firstExplode(shoot('long-ngu-co', 2, 45, 60)).x
+    const r = shoot('long-ngu-co', 2, 45, 60, { others: [veh(1, 'oc-thiet-giap', x, 9999)] })
+    expect(r.events.filter(e => e.kind === 'damage' && e.id === 1).length).toBe(4)
+  })
+  it('Kỳ Lân Sắt: đ1 4 tia lệch có seed (cùng lệnh cùng kết quả), đ2 5 tia, SS quét 7 tia', () => {
+    const a = shoot('ky-lan-sat', 0, 45, 60), b = shoot('ky-lan-sat', 0, 45, 60)
+    const xs = (r: ShotResult) => r.events.filter(e => e.kind === 'beam').map(e => (e as { x: number }).x)
+    expect(xs(a)).toHaveLength(4)
+    expect(xs(a)).toEqual(xs(b))
+    expect(shoot('ky-lan-sat', 1, 45, 60).events.filter(e => e.kind === 'beam')).toHaveLength(5)
+    expect(shoot('ky-lan-sat', 2, 45, 60).events.filter(e => e.kind === 'beam')).toHaveLength(7)
+  })
+  it('xe ẩn có đủ trong tuning và danh sách hợp lệ nhưng không có ở lưới chọn', () => {
+    const t = createDefaultTuning()
+    expect(t.mobiles['long-ngu-co']).toBeDefined()
+    expect(t.mobiles['ky-lan-sat']).toBeDefined()
   })
 })

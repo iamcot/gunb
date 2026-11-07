@@ -42,7 +42,13 @@ export type Behavior =
    *  ±`spacing` px theo phương ngang (phải, trái, phải xa...), cách nhau `interval` s. `from: 'sky'` = vệ tinh ở tận trời, tia thẳng đứng xuống;
    *  `from: 'shooter'` = vệ tinh ở trên đầu xe bắn `altitude` px (chỗ vệ tinh luôn bay theo xe), tia chéo từ đó tới điểm nhắm. Mỗi tia rộng 2×`halfWidth` px, đi thẳng qua điểm nhắm
    *  và đốt xuyên `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), gây `damage` lên mọi xe nằm trên tia (giảm theo khoảng cách tới tia). */
-  | { kind: 'satellite'; from: 'sky' | 'shooter'; altitude: number; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number }
+  | { kind: 'satellite'; from: 'sky' | 'shooter'; altitude: number; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number
+      /** Tia không chính xác tuyệt đối: mỗi tia lệch ngẫu nhiên (có seed, xác định theo lệnh bắn) tối đa ±`jitter` px theo phương ngang. Mặc định 0. */
+      jitter?: number
+      /** Quét: các tia đi lần lượt từ trái sang phải (cách nhau `spacing`, đối xứng quanh điểm nhắm) thay vì giữa-phải-trái. */
+      sweep?: boolean }
+  /** Sau khi nổ ở điểm chạm (đạn đánh dấu, không cần sát thương) triệu hồi `count` con vật xếp nửa vòng tròn bán kính `radius` phía trên điểm chạm rồi bò vào tâm: mỗi con tới tâm sau `delay` s (cách nhau `interval` s) thì nổ với thông số riêng. */
+  | { kind: 'converge'; count: number; radius: number; delay: number; interval: number; damage: number; blastRadius: number; carveRadius: number }
   /** Đạn hai đầu (Ốc Thiết Giáp đ2): hai quả nối đuôi nhau cách `gapS` s, cùng hướng/lực. Đầu 1 nổ với `damage` của đạn; đầu 2 bay tiếp (qua hố đầu 1 vừa khoét) tới vật kế tiếp rồi nổ với `secondDamage`, và **bỏ qua giáp** của xe đã trúng đầu 1 trong phát bắn này. */
   | { kind: 'tandem'; gapS: number; secondDamage: number }
   /** Bay `afterS` s rồi tách thành `count` quả con tỏa đều ±`spreadDeg`/2·(count−1) quanh hướng bay (Rùa Thành SS). Quả con nổ theo thông số `child` (nhỏ hơn); chạm đất/xe trước khi tách thì nổ cả quả với thông số của đạn. */

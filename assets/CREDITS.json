@@ -1197,5 +1197,213 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Cắt sát, thu về cao 512 px"
+  },
+  {
+    "file": "fx/bits-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-4.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-5.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-6.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-7.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-4.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-5.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-6.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-7.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/fireball.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/14-prompt-no-khoi.md (fx-fireball.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/hit-impact.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 7 trong plan/14-prompt-no-khoi.md (fx-hit-impact.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/muzzle-flash.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/14-prompt-no-khoi.md (fx-muzzle-flash.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/shockwave.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 4 trong plan/14-prompt-no-khoi.md (fx-shockwave.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/spark.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 trong plan/14-prompt-no-khoi.md (fx-spark.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "ui/hud/weather-clear.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1e trong plan/11-prompt-hud.md (weather-clear.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu về 128 px"
   }
 ]

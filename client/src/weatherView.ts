@@ -50,8 +50,9 @@ for (const d of Object.values(STRIPS)) {
   img.src = d.url
 }
 
-/** Mây giông + tia sét bằng ảnh (thiếu file thì vẽ bằng code). Mây rộng CLOUD_ART_W × bề ngang khung mây; sét dài BOLT_ART_LEN px. */
-const CLOUD_ART_W = 1.3, BOLT_ART_LEN = 330
+/** Mây giông + tia sét bằng ảnh (thiếu file thì vẽ bằng code). Mây rộng CLOUD_ART_W × bề ngang khung mây.
+ *  Tia sét dài từ đáy mây tới mặt đất bên dưới, mọc dài ra trong BOLT_GROW s rồi tắt dần. */
+const CLOUD_ART_W = 1.3, BOLT_GROW = 0.09
 let cloudTex: Texture | null = null, boltTex: Texture | null = null
 {
   const c = new Image(); c.onload = () => { cloudTex = Texture.from(c) }; c.src = '/ui/weather/storm-cloud.png'
@@ -60,7 +61,7 @@ let cloudTex: Texture | null = null, boltTex: Texture | null = null
 
 const ORANGE = 0xfb923c, PURPLE = 0xa78bfa
 const LIGHTNING_EVERY = 2.4   // s giữa hai tia sét trang trí của Mây giông
-const LIGHTNING_LEN = 0.28    // s mỗi lần loé
+const LIGHTNING_LEN = 0.4     // s mỗi lần loé (gồm cả lúc tia sét mọc dài ra)
 const BOLT_SEGS = 9
 /** Cột lốc / gương nước vẽ thêm phía trên mép bản đồ (tỉ lệ chiều cao bản đồ): camera nhìn được lên trên tới nửa màn hình. */
 const SKY_ABOVE = 1
@@ -84,11 +85,13 @@ export class WeatherView {
   private stripBack: TilingSprite | null = null   // lớp sau: cùng ảnh, lật ngang, trôi nhanh hơn, mờ hơn -> có chiều sâu
   private cloud: Sprite | null = null
   private bolt: Sprite | null = null
+  private boltMask: Graphics | null = null
   private w: Weather | null = null
   private t = 0
   private lastKey = ''
 
-  constructor(private readonly mapH: number) {
+  /** `groundY(x)`: y mặt đất tại cột x (để tia sét trang trí vừa chạm đất); không có thì sét dài tới đáy bản đồ. */
+  constructor(private readonly mapH: number, private readonly groundY: ((x: number, fromY: number) => number) | null = null) {
     this.container.addChild(this.g)
     this.label = document.createElement('div')
     this.label.id = 'weather'
@@ -118,6 +121,7 @@ export class WeatherView {
     if (this.stripBack) this.stripBack.visible = false
     if (this.cloud) this.cloud.visible = false
     if (this.bolt) this.bolt.visible = false
+    this.boltMask?.clear()
     if (!w) return
     const strip = STRIPS[w.kind]
     if (strip?.tex) { this.drawStripArt(w, strip, strip.tex); return }
@@ -257,12 +261,26 @@ export class WeatherView {
     }
     // tia sét: ảnh nếu có, không thì đường gấp khúc cố định theo số lần loé
     if (flash > 0 && boltTex) {
-      if (!this.bolt) { this.bolt = new Sprite(boltTex); this.bolt.anchor.set(0.5, 0); this.container.addChildAt(this.bolt, 0) }
-      const b = this.bolt, k = BOLT_ART_LEN / boltTex.height
+      if (!this.bolt || !this.boltMask) {
+        this.bolt = new Sprite(boltTex); this.bolt.anchor.set(0.5, 0)
+        this.boltMask = new Graphics()
+        this.bolt.mask = this.boltMask
+        this.container.addChildAt(this.bolt, 0)
+        this.container.addChild(this.boltMask)
+      }
+      const b = this.bolt, flip = hash01(cycle * 7) < 0.5 ? -1 : 1
+      const top = bottom - 10, bx = x + (hash01(cycle) - 0.5) * hw
+      // ảnh sét xiên: mũi dưới lệch về một phía, lấy mặt đất ngay dưới mũi
+      const ground = this.groundY ? this.groundY(bx - flip * hw * 0.15, top) : -1
+      const len = Math.max(80, (ground > top ? ground : this.mapH) - top + 6)
+      const k = len / boltTex.height
       b.visible = true
-      b.scale.set(k * (hash01(cycle * 7) < 0.5 ? -1 : 1), k)
-      b.position.set(x + (hash01(cycle) - 0.5) * hw, bottom - 10)
-      b.alpha = flash
+      b.scale.set(k * flip, k)
+      b.position.set(bx, top)
+      const grow = Math.min(1, inCycle / BOLT_GROW)                    // mọc dài ra từ mây xuống
+      b.alpha = inCycle < BOLT_GROW ? 1 : Math.min(1, flash * 1.6) * (0.75 + 0.25 * Math.sin(inCycle * 90))   // chập chờn rồi tắt
+      const halfW = boltTex.width * k
+      this.boltMask.clear().rect(bx - halfW, top - 2, halfW * 2, len * grow + 4).fill(0xffffff)
     } else if (flash > 0) {
       let bx = x + (hash01(cycle) - 0.5) * hw, by = bottom
       g.moveTo(bx, by)

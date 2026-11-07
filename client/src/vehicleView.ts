@@ -258,7 +258,9 @@ export class VehicleViews {
   /** Xe `id` trúng đạn: giật ngang + ửng đỏ một thoáng. */
   hitAnim(id: number): void {
     const v = this.views.get(id)
-    if (v) v.hitT = 0
+    if (!v) return
+    v.hitT = 0
+    this.fx?.hitImpact(v.root.x + (Math.random() - 0.5) * 10, v.root.y - 6)
   }
 
   /** Độ nén khi bắn: 0 → 1 rất nhanh, rồi dao động tắt dần quanh 0. */

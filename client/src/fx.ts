@@ -1,13 +1,14 @@
-import { Container, Graphics, Sprite } from 'pixi.js'
+import { Container, Graphics, Sprite, Texture } from 'pixi.js'
 import type { ShotArt } from './shotArt'
 
-interface Boom { x: number; y: number; age: number; r: number }
+interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
 interface Bolt { g: Graphics; age: number }
 
 /** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
-interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean }
+interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean
+  rot: number; vr: number; spr: boolean }   // spr = vẽ bằng ảnh (Sprite cùng chỉ số trong pool)
 const SOUL_COLORS = [0xffffff, 0xcfe8ff, 0xfff3b0] as const
-const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 5
+const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 5, P_BIT = 6, P_IMPACT = 7, P_MUZZLE = 8
 
 // Thông số hình ảnh của vụ nổ (chỉ là hình, không ảnh hưởng gameplay)
 const BOOM_S = 0.4          // phần "lõi" vụ nổ: playback chờ hết phần này mới chuyển lượt
@@ -19,6 +20,34 @@ const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
 const SMOKE_RISE = 40       // px/s khói bay lên
 const DIRT_FALLBACK = 0x8a5a36
+
+/** Ảnh hiệu ứng vẽ tay (plan/14-prompt-no-khoi.md, assets/fx/). Thiếu ảnh nào thì phần đó vẽ bằng code. */
+const ART = {
+  fireball: null as Texture | null, shockwave: null as Texture | null, impact: null as Texture | null,
+  muzzle: null as Texture | null, spark: null as Texture | null,
+  smoke: [] as Texture[], dirt: [] as Texture[], bits: [] as Texture[],
+}
+function loadArt(file: string, done: (t: Texture) => void): void {
+  const img = new Image()
+  img.onload = () => done(Texture.from(img))
+  img.src = '/fx/' + file
+}
+loadArt('fireball.png', t => { ART.fireball = t })
+loadArt('shockwave.png', t => { ART.shockwave = t })
+loadArt('hit-impact.png', t => { ART.impact = t })
+loadArt('muzzle-flash.png', t => { ART.muzzle = t })
+loadArt('spark.png', t => { ART.spark = t })
+for (let i = 0; i < 4; i++) loadArt(`smoke-${i}.png`, t => { ART.smoke.push(t) })
+for (let i = 0; i < 8; i++) loadArt(`dirt-${i}.png`, t => { ART.dirt.push(t) })
+for (let i = 0; i < 8; i++) loadArt(`bits-${i}.png`, t => { ART.bits.push(t) })
+const pick = (a: Texture[]): Texture | null => a.length ? a[(Math.random() * a.length) | 0]! : null
+
+/** Lõi cầu lửa của vụ nổ (ảnh): nở tới CORE_GROW × bán kính trong CORE_POP s, giữ tới CORE_HOLD s rồi tắt hẳn ở CORE_END s. */
+const CORE_GROW = 1.15, CORE_POP = 0.12, CORE_HOLD = 0.18, CORE_END = 0.45
+/** Va chạm đạn với xe: "bụp" rộng IMPACT_SIZE px, sống IMPACT_S s, văng IMPACT_BITS mảnh kim loại. */
+const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
+/** Lửa đầu nòng: dài MUZZLE_LEN px, sống MUZZLE_S s. */
+const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
 const FIRE_HOT = 0xfff3b0, FIRE_MID = 0xff8a20, FIRE_COOL = 0xa8280e
 
@@ -46,6 +75,12 @@ export class Fx {
   private readonly fire = new Graphics()
   /** Lớp cộng sáng: tia lửa, chớp, sóng xung kích, than hồng. */
   private readonly glow = new Graphics()
+  /** Các lớp ảnh tương ứng (đặt ngay trên lớp vẽ cùng loại) + lớp trên cùng cho "bụp" va chạm. */
+  private readonly backArt = new Container()
+  private readonly fireArt = new Container()
+  private readonly glowArt = new Container()
+  private readonly topArt = new Container()
+  private readonly psprites: (Sprite | null)[] = []
   private readonly parts: Particle[] = []
   private nextPart = 0
   private bolts: Bolt[] = []
@@ -57,15 +92,42 @@ export class Fx {
 
   constructor() {
     this.glow.blendMode = 'add'
-    this.container.addChild(this.back, this.fire, this.glow)
-    for (let i = 0; i < MAX_PARTICLES; i++) this.parts.push({ kind: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 1, size: 1, color: 0, alive: false })
+    this.container.addChild(this.back, this.backArt, this.fire, this.fireArt, this.glow, this.glowArt, this.topArt)
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      this.parts.push({ kind: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 1, size: 1, color: 0, alive: false, rot: 0, vr: 0, spr: false })
+      this.psprites.push(null)
+    }
   }
 
   /** Lấy một hạt từ vùng nhớ (vòng tròn: hết chỗ thì đè hạt cũ nhất). */
   private spawn(kind: number, x: number, y: number, vx: number, vy: number, life: number, size: number, color: number): void {
-    const p = this.parts[this.nextPart]!
+    const i = this.nextPart, p = this.parts[i]!
     this.nextPart = (this.nextPart + 1) % MAX_PARTICLES
     p.kind = kind; p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.age = 0; p.life = life; p.size = size; p.color = color; p.alive = true
+    p.rot = Math.random() * Math.PI * 2; p.vr = 0; p.spr = false
+    const s = this.psprites[i]
+    if (s) s.visible = false
+    let t: Texture | null = null, layer = this.backArt
+    switch (kind) {
+      case P_FIRE: t = ART.fireball; layer = this.fireArt; break
+      case P_SMOKE: case P_DUST: t = pick(ART.smoke); p.vr = rnd(-0.6, 0.6); break
+      case P_SPARK: t = ART.spark; layer = this.glowArt; break
+      case P_DEBRIS: t = pick(ART.dirt); p.vr = rnd(-10, 10); break
+      case P_BIT: t = pick(ART.bits); p.vr = rnd(-14, 14); break
+      case P_IMPACT: t = ART.impact; layer = this.topArt; break
+      case P_MUZZLE: t = ART.muzzle; layer = this.fireArt; p.rot = vx; p.vx = 0; break   // vx mang hướng nòng
+      default: break
+    }
+    if (!t) return
+    let sp = s
+    if (!sp) { sp = new Sprite(); this.psprites[i] = sp }
+    sp.texture = t
+    sp.anchor.set(kind === P_MUZZLE ? 0.12 : 0.5, 0.5)
+    sp.blendMode = kind === P_SPARK ? 'add' : 'normal'
+    sp.tint = 0xffffff
+    if (sp.parent !== layer) layer.addChild(sp)
+    sp.visible = true
+    p.spr = true
   }
 
   /** Ảnh đạn cho phát bắn sắp phát lại (null = đạn tròn mặc định). */
@@ -121,7 +183,10 @@ export class Fx {
 
   /** Vụ nổ bán kính `r`. `dirt` = màu đất tại chỗ nổ (null = nổ giữa không trung, không bắn mảnh đất). */
   explosion(x: number, y: number, r: number, shake = true, dirt: number | null = DIRT_FALLBACK): void {
-    this.booms.push({ x, y, age: 0, r })
+    const b: Boom = { x, y, age: 0, r, core: null, ring: null }
+    if (ART.fireball) { b.core = new Sprite(ART.fireball); b.core.anchor.set(0.5); b.core.rotation = Math.random() * Math.PI * 2; this.fireArt.addChild(b.core) }
+    if (ART.shockwave) { b.ring = new Sprite(ART.shockwave); b.ring.anchor.set(0.5); b.ring.blendMode = 'add'; this.glowArt.addChild(b.ring) }
+    this.booms.push(b)
     if (shake) this.shake = Math.max(this.shake, Math.min(14, r / 5))
     const nFire = 6 + Math.round(r / 6)
     for (let i = 0; i < nFire; i++) {
@@ -156,6 +221,7 @@ export class Fx {
   /** Khói + chớp lửa ở đầu nòng lúc bắn; `dir` = hướng bay ban đầu (radian, trục màn hình). */
   muzzle(x: number, y: number, dir: number): void {
     const cx = Math.cos(dir), cy = Math.sin(dir)
+    if (ART.muzzle) this.spawn(P_MUZZLE, x, y, dir, 0, MUZZLE_S, MUZZLE_LEN, 0xffffff)
     for (let i = 0; i < 5; i++) {
       const sp = rnd(40, 160)
       this.spawn(P_FIRE, x + cx * 4, y + cy * 4, cx * sp + rnd(-20, 20), cy * sp + rnd(-20, 20), rnd(0.08, 0.16), rnd(4, 8), FIRE_HOT)
@@ -203,7 +269,14 @@ export class Fx {
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt
-      if (b.age >= BOOM_LIFE) { this.booms.splice(i, 1); continue }
+      if (b.age >= BOOM_LIFE) { b.core?.destroy(); b.ring?.destroy(); this.booms.splice(i, 1); continue }
+      if (b.core) {
+        const c = b.core, w = c.texture.width
+        c.position.set(b.x, b.y)
+        c.scale.set((2 * b.r * CORE_GROW * (0.35 + 0.65 * Math.min(1, b.age / CORE_POP))) / w)
+        c.alpha = b.age < CORE_HOLD ? 1 : Math.max(0, 1 - (b.age - CORE_HOLD) / (CORE_END - CORE_HOLD))
+        c.tint = lerpColor(0xffffff, 0xff9a70, Math.min(1, b.age / CORE_END))
+      }
       // chớp sáng
       if (b.age < FLASH_S) {
         const f = 1 - b.age / FLASH_S
@@ -211,14 +284,19 @@ export class Fx {
       }
       // sóng xung kích: vòng mỏng nở nhanh rồi tan
       const k = b.age / BOOM_LIFE, e = 1 - (1 - k) * (1 - k) * (1 - k)
-      glow.circle(b.x, b.y, b.r * (0.5 + 1.3 * e)).stroke({ color: 0xffe2a8, width: Math.max(1, 4 * (1 - k)), alpha: 0.5 * (1 - k) })
+      if (b.ring) {
+        b.ring.position.set(b.x, b.y)
+        b.ring.scale.set((2 * b.r * (0.5 + 1.3 * e)) / b.ring.texture.width)
+        b.ring.alpha = 0.7 * (1 - k)
+      } else glow.circle(b.x, b.y, b.r * (0.5 + 1.3 * e)).stroke({ color: 0xffe2a8, width: Math.max(1, 4 * (1 - k)), alpha: 0.5 * (1 - k) })
     }
     for (let i = 0; i < MAX_PARTICLES; i++) {
       const p = this.parts[i]!
       if (!p.alive) continue
       p.age += dt
-      if (p.age >= p.life) { p.alive = false; continue }
+      if (p.age >= p.life) { p.alive = false; const s = this.psprites[i]; if (s) s.visible = false; continue }
       const k = p.age / p.life
+      if (p.spr) { this.drawArt(p, this.psprites[i]!, k, dt); continue }
       switch (p.kind) {
         case P_FIRE: {
           p.vx *= 1 - 3 * dt; p.vy = p.vy * (1 - 3 * dt) - 40 * dt
@@ -265,6 +343,66 @@ export class Fx {
     this.shake = Math.max(0, this.shake - dt * 30)
     this.shakeX = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
     this.shakeY = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0
+  }
+
+  /** Vẽ + di chuyển một hạt bằng ảnh. */
+  private drawArt(p: Particle, s: Sprite, k: number, dt: number): void {
+    const w = s.texture.width
+    switch (p.kind) {
+      case P_FIRE: {
+        p.vx *= 1 - 3 * dt; p.vy = p.vy * (1 - 3 * dt) - 40 * dt
+        s.scale.set((2 * p.size * (0.7 + 0.6 * k) * (1 - 0.5 * k * k)) / w)
+        s.tint = lerpColor(0xffffff, 0xff8a60, k)
+        s.alpha = 0.95 * (1 - k * k)
+        break
+      }
+      case P_SMOKE: case P_DUST: {
+        p.vx *= 1 - 1.5 * dt; p.vy *= 1 - 1.2 * dt
+        if (p.kind === P_SMOKE) p.vy -= 12 * dt
+        s.scale.set((2 * p.size * (1 + 1.2 * k)) / w)
+        s.tint = lerpColor(p.color, 0xffffff, 0.5)
+        s.alpha = 0.7 * Math.min(1, p.age / 0.12) * (1 - k)
+        break
+      }
+      case P_SPARK: {
+        p.vy += GRAVITY * 0.6 * dt
+        s.scale.set((p.size * 5) / w)
+        s.alpha = 1 - k
+        break
+      }
+      case P_DEBRIS: case P_BIT: {
+        p.vy += GRAVITY * dt
+        s.scale.set((p.size * 3) / w)
+        if (p.kind === P_DEBRIS) s.tint = lerpColor(p.color, 0xffffff, 0.45)
+        s.alpha = k < 0.75 ? 1 : (1 - k) / 0.25
+        break
+      }
+      case P_IMPACT: {
+        s.scale.set((p.size * (0.55 + 0.45 * Math.min(1, k / 0.3))) / w)
+        s.alpha = 1 - k * k
+        break
+      }
+      case P_MUZZLE: {
+        s.scale.set((p.size * (0.7 + 0.5 * k)) / w)
+        s.alpha = 1 - k
+        break
+      }
+      default: break
+    }
+    p.x += p.vx * dt; p.y += p.vy * dt
+    p.rot += p.vr * dt
+    s.position.set(p.x, p.y)
+    s.rotation = p.rot
+  }
+
+  /** Đạn trúng xe: "bụp" kiểu truyện tranh + vài mảnh kim loại văng lên. */
+  hitImpact(x: number, y: number): void {
+    this.spawn(P_IMPACT, x, y, 0, 0, IMPACT_S, IMPACT_SIZE, 0xffffff)
+    if (!ART.bits.length) return
+    for (let i = 0; i < IMPACT_BITS; i++) {
+      const a = -Math.PI * rnd(0.15, 0.85), sp = rnd(120, 300)
+      this.spawn(P_BIT, x, y, Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.7, 1.1), rnd(2.5, 4), 0xffffff)
+    }
   }
 
   /** Còn phần chính của vụ nổ / tia sét đang chạy (khói, mảnh đất bay tiếp không tính, để không làm chậm lượt). */

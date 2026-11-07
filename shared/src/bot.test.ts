@@ -3,7 +3,7 @@ import { TerrainMask } from './terrain/mask'
 import { applyAction, createMatch, currentPlayer, vehicles, type MatchState } from './match'
 import { BOT_LEVELS, botRng, planShot, type BotLevel } from './bot'
 import { sanitizeFire, simulateShot } from './shot/simulateShot'
-import { windForTurn } from './match'
+import { windForRound } from './match'
 import { TUNING } from './tuning'
 
 const W = 2400, H = 1200, G = 800
@@ -63,7 +63,7 @@ describe('bot', () => {
       const N = 20
       for (let i = 0; i < N; i++) {
         const { s, mask } = game(100 + i)
-        s.wind = windForTurn(900 + i, 1 + i)
+        s.wind = windForRound(900 + i, 1 + i)
         if (hitsEnemy(s, mask, planShot(s, mask, level, botRng(100 + i, 1)))) hit++
       }
       return hit / N

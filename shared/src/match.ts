@@ -3,7 +3,7 @@ import { aimRange, type AimRange } from './aim'
 import { clamp, hashSeed, mulberry32 } from './math'
 import { createBody, stepMobile, type MobileBody, type MoveResult } from './physics/mobileMove'
 import { simulateShot, sanitizeFire } from './shot/simulateShot'
-import { weatherForTurn, type Weather } from './weather'
+import { weatherForRound, type Weather } from './weather'
 import type { ShotResult, ShotVehicle } from './shot/types'
 import type { ShotSlot } from './shots'
 import type { MobileDef } from './mobiles'
@@ -41,6 +41,10 @@ export interface MatchState {
   wind: Wind
   turnPlayerId: number
   turnNo: number
+  /** Vòng hiện tại (từ 1). Hết một vòng = mọi xe còn sống đều đã bắn ít nhất một lượt kể từ đầu vòng; gió + thời tiết chỉ đổi khi sang vòng mới. */
+  roundNo: number
+  /** Số lượt (turnNo) lúc vòng hiện tại bắt đầu. */
+  roundStart: number
   turnTimeLeft: number
   phase: MatchPhase
   /** Đội thắng; -1 = hoà; null = chưa hết trận. */
@@ -81,9 +85,9 @@ export const mobileOf = (p: PlayerState, t: Tuning = TUNING): MobileDef => t.mob
 const out: MoveResult = { moved: 0, damage: 0, died: false }
 const aimRng: AimRange = { min: 0, max: 90 }
 
-/** Gió của lượt `turnNo`: sinh từ seed của trận nên mọi nơi tính ra như nhau. */
-export function windForTurn(seed: number, turnNo: number): Wind {
-  return makeWind(mulberry32((seed ^ Math.imul(turnNo, 0x9e3779b1)) >>> 0))
+/** Gió của vòng `roundNo`: sinh từ seed của trận nên mọi nơi tính ra như nhau. */
+export function windForRound(seed: number, roundNo: number): Wind {
+  return makeWind(mulberry32((seed ^ Math.imul(roundNo, 0x9e3779b1)) >>> 0))
 }
 
 export function createMatch(opts: CreateMatchOptions): MatchState {
@@ -116,14 +120,14 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     body.tilt = slopeAt(opts.mask, x, body.y + r - 2 * t.move.stepUp, r * 0.8)
     return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 } }
   })
-  const state: MatchState = { seed: opts.seed, players, wind: windForTurn(opts.seed, 1), turnPlayerId: 0, turnNo: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null }
+  const state: MatchState = { seed: opts.seed, players, wind: windForRound(opts.seed, 1), turnPlayerId: 0, turnNo: 1, roundNo: 1, roundStart: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null }
   state.turnPlayerId = pickNext(players)!.id
   players[state.turnPlayerId]!.body.fuel = t.mobiles[players[state.turnPlayerId]!.mobileId]!.fuel
   return state
 }
 
-/** Sự kiện thời tiết của lượt hiện tại (null nếu không có). */
-export const weatherOf = (s: MatchState, mapW: number, mapH: number, t: Tuning = TUNING): Weather | null => weatherForTurn(s.seed, s.turnNo, mapW, mapH, t.weather)
+/** Sự kiện thời tiết của vòng hiện tại (null nếu không có). */
+export const weatherOf = (s: MatchState, mapW: number, mapH: number, t: Tuning = TUNING): Weather | null => weatherForRound(s.seed, s.roundNo, mapW, mapH, t.weather)
 
 export const currentPlayer = (s: MatchState): PlayerState => s.players[s.turnPlayerId]!
 
@@ -252,7 +256,12 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       s.turnPlayerId = next.id
       next.body.fuel = t.mobiles[next.mobileId]!.fuel
       next.ss = Math.min(t.ss.max, next.ss + t.ss.perTurn)
-      s.wind = windForTurn(s.seed, s.turnNo)
+      // mọi xe còn sống đã bắn trong vòng này → sang vòng mới, đổi gió (thời tiết suy từ roundNo)
+      if (s.players.every(p => p.hp <= 0 || p.lastActed >= s.roundStart)) {
+        s.roundNo++
+        s.roundStart = s.turnNo
+        s.wind = windForRound(s.seed, s.roundNo)
+      }
       s.turnTimeLeft = t.turn.timeS
       s.phase = 'aiming'
       return { ok: true }

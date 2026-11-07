@@ -1,4 +1,4 @@
-import { ANGLE_MAX, ANGLE_MIN, TUNING, WEATHER_NAMES, WIND_MAX, weatherForTurn, windMagnitude, type Wind } from '@gunb/shared'
+import { ANGLE_MAX, ANGLE_MIN, TUNING, WEATHER_NAMES, WIND_MAX, weatherForRound, windMagnitude, type Wind } from '@gunb/shared'
 import { audio } from './audio'
 import './ui/hud.css'
 import { clearIconHtml, weatherIconHtml } from './weatherView'
@@ -139,8 +139,8 @@ export class Hud {
    * Thời tiết lượt này + WEATHER_AHEAD lượt sau, suy ra từ seed + số lượt (giống server, shared/weather.ts).
    * null = không có thời tiết (tập bắn). Gọi mỗi frame được (chỉ tính lại khi đổi lượt).
    */
-  setWeatherTurn(seed: number | null, turnNo = 0, mapW = 0, mapH = 0): void {
-    const key = seed === null ? '-' : `${seed}:${turnNo}`
+  setWeatherTurn(seed: number | null, roundNo = 0, mapW = 0, mapH = 0): void {
+    const key = seed === null ? '-' : `${seed}:${roundNo}`
     if (key === this.weatherKey) return
     this.weatherKey = key
     if (seed === null) {
@@ -149,13 +149,13 @@ export class Hud {
       this.wxNext.innerHTML = ''
       return
     }
-    const now = weatherForTurn(seed, turnNo, mapW, mapH, TUNING.weather)
+    const now = weatherForRound(seed, roundNo, mapW, mapH, TUNING.weather)
     this.wxNow.className = 'tb-now' + (now ? ` k-${now.kind}` : ' k-clear')
-    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Lượt này</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Lượt này</small><b>Trời quang</b></span>`
+    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Vòng ${roundNo}</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Vòng ${roundNo}</small><b>Trời quang</b></span>`
     let html = ''
     for (let k = 1; k <= WEATHER_AHEAD; k++) {
-      const w = weatherForTurn(seed, turnNo + k, mapW, mapH, TUNING.weather)
-      html += w ? `<i class="k-${w.kind}" title="+${k} lượt: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} lượt: trời quang">${clearIconHtml()}</i>`
+      const w = weatherForRound(seed, roundNo + k, mapW, mapH, TUNING.weather)
+      html += w ? `<i class="k-${w.kind}" title="+${k} vòng: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} vòng: trời quang">${clearIconHtml()}</i>`
     }
     this.wxNext.innerHTML = html
   }

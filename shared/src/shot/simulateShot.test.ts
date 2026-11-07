@@ -97,24 +97,47 @@ describe('simulateShot: behavior', () => {
     expect(new Set(xs.map(Math.round)).size).toBe(3)    // 3 điểm rơi khác nhau
   })
 
-  it('drill (Chũi Khoan, đạn 1): chui vào đất rồi mới nổ, hố sâu hơn điểm chạm', () => {
-    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })], fire: { angle: 45, power: 60, slot: 0 } }))
+  const drillDef = (direction: 'velocity' | 'horizontal' | 'down', length: number): ShotDef => ({ name: 't', maxSpeed: 760, windFactor: 0.8, gravityFactor: 1, blastRadius: 60, carveRadius: 35, damage: 460, delay: 0, behavior: { kind: 'drill', length, tunnelRadius: 12, direction, speed: 450 } })
+  it('drill: chui vào đất rồi mới nổ, hố sâu hơn điểm chạm', () => {
+    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })], fire: { angle: 45, power: 60, slot: 0 }, shotDef: drillDef('velocity', 90) }))
     expect(explodes(r)).toHaveLength(1)
     const ex = explodes(r)[0]!
     expect(ex.y).toBeGreaterThan(GROUND)          // nổ bên dưới mặt đất
     expect(r.events.filter(e => e.kind === 'carve').length).toBeGreaterThan(2)   // có đường hầm
   })
-
-  it('drill ngang (đạn 2) đi ngang, drill xuống (SS) đi thẳng xuống', () => {
+  it('drill ngang đi ngang, drill xuống đi thẳng xuống', () => {
     const base = { vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })] }
-    const h = simulateShot(input({ ...base, fire: { angle: 45, power: 60, slot: 1 } }))
+    const h = simulateShot(input({ ...base, fire: { angle: 45, power: 60, slot: 1 }, shotDef: drillDef('horizontal', 160) }))
     const carves = h.events.filter((e): e is Extract<ShotEvent, { kind: 'carve' }> => e.kind === 'carve')
     expect(Math.abs(carves[carves.length - 1]!.y - carves[0]!.y)).toBeLessThan(40)
     expect(carves[carves.length - 1]!.x).toBeGreaterThan(carves[0]!.x + 60)
-    const d = simulateShot(input({ ...base, fire: { angle: 45, power: 60, slot: 2 } }))
+    const d = simulateShot(input({ ...base, fire: { angle: 45, power: 60, slot: 2 }, shotDef: drillDef('down', 220) }))
     const dc = d.events.filter((e): e is Extract<ShotEvent, { kind: 'carve' }> => e.kind === 'carve')
     expect(dc[dc.length - 1]!.y).toBeGreaterThan(dc[0]!.y + 100)
     expect(Math.abs(dc[dc.length - 1]!.x - dc[0]!.x)).toBeLessThan(5)
+  })
+  it('lặn trồi (Chũi Khoan đạn 2): lặn xuống dưới mặt đất rồi trồi lên và nổ ở mặt đất, xa hơn chỗ lặn', () => {
+    const base = { vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })], fire: { angle: 45, power: 60, slot: 1 as const } }
+    const r = simulateShot(input(base))
+    const carves = r.events.filter((e): e is Extract<ShotEvent, { kind: 'carve' }> => e.kind === 'carve')
+    const deepest = Math.max(...carves.map(c => c.y))
+    expect(deepest).toBeGreaterThan(GROUND + 30)             // có lặn sâu
+    const ex = explodes(r)
+    expect(ex).toHaveLength(1)
+    expect(ex[0]!.y).toBeLessThan(GROUND + 25)               // nổ gần mặt đất, không phải dưới sâu
+    expect(ex[0]!.x).toBeGreaterThan(carves[0]!.x + 40)      // chỗ trồi cách chỗ lặn
+  })
+  it('xuyên địa hình (Chũi Khoan SS): bay xuyên đất, chỉ nổ khi chạm xe (kể cả xác xe)', () => {
+    const base = { fire: { angle: 5, power: 90, slot: 2 as const } }
+    const free = simulateShot(input({ ...base, vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })] }))
+    expect(explodes(free)).toHaveLength(0)                    // không có xe nào: xuyên đi mất
+    expect(free.events.some(e => e.kind === 'out')).toBe(true)
+    const path = free.paths[0]!, k = Math.floor(path.length / 3 / 2) * 3   // điểm giữa đường bay
+    const px = path[k + 1]!, py = path[k + 2]!
+    const dead = simulateShot(input({ ...base, vehicles: [veh(1, 200, { mobileId: 'chui-khoan' }), veh(2, px, { hp: 0, y: py })] }))
+    const ex = explodes(dead)
+    expect(ex).toHaveLength(1)                                // chạm xác xe thì nổ
+    expect(Math.hypot(ex[0]!.x - px, ex[0]!.y - py)).toBeLessThan(30)
   })
 
   describe('lightning (Bọ Lôi)', () => {

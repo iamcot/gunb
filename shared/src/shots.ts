@@ -10,7 +10,11 @@ export type Behavior =
   /** Khi lên tới đỉnh quỹ đạo thì tách thành `count` quả, tỏa ± `spreadDeg` độ quanh hướng bay. */
   | { kind: 'splitAtApex'; count: number; spreadDeg: number }
   /** Chạm đất thì khoan tiếp `length` px (theo vận tốc / ngang / thẳng xuống) với tốc độ `speed` px/s, đào hầm bán kính `tunnelRadius`, rồi nổ. */
-  | { kind: 'drill'; length: number; tunnelRadius: number; direction: 'velocity' | 'horizontal' | 'down'; speed: number }
+  | { kind: 'drill'; length: number; tunnelRadius: number; direction: 'velocity' | 'horizontal' | 'down'; speed: number
+      /** Lặn rồi trồi (Chũi Khoan đạn 2): lặn `diveLength` px theo `direction`, rồi đào chếch lên `riseDeg`° (so với phương ngang, về phía đang bắn) tối đa `riseMax` px cho tới khi chui ra khỏi mặt đất thì nổ ở chỗ trồi lên (`length` bị bỏ qua). Hết `riseMax` mà chưa ra thì nổ ngay tại đó. */
+      resurface?: { diveLength: number; riseDeg: number; riseMax: number } }
+  /** Xuyên mọi địa hình (Chũi Khoan SS): bay như đạn thường nhưng không va đất, khoét hầm bán kính `tunnelRadius` dọc đường; chỉ nổ khi chạm xe (kể cả đồng đội và xác xe), ra khỏi bản đồ thì thôi. */
+  | { kind: 'ghost'; tunnelRadius: number }
   /** Nổ như đạn thường, rồi `delay` s sau có tia sét giáng thẳng xuống đúng điểm nổ (thêm một vụ nổ với thông số riêng). */
   | { kind: 'lightning'; delay: number; damage: number; blastRadius: number; carveRadius: number
       /** Các tia sét giáng xuống chỗ đạn chạm, mỗi phần tử là độ lệch khỏi phương thẳng đứng (độ; 0 = thẳng từ trời xuống, ±35 = chéo từ hai bên). Mặc định [0]; mảng rỗng = không có tia ở chỗ chạm. Tia đi từ trời xuống và dừng ở vật rắn đầu tiên trên đường (đất hoặc xe): có đất che phía trên thì sét đánh vào đất, không trúng xe. */

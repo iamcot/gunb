@@ -17,6 +17,7 @@ interface Shell {
   tStart: number
   child: boolean          // quả con sau khi tách: không tách nữa
   mode: 'fly' | 'drill' | 'roll'
+  rising: boolean         // drill.resurface: đang ở pha trồi lên
   dx: number; dy: number  // hướng khoan
   remaining: number       // px khoan còn lại
   sinceCarve: number
@@ -81,7 +82,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1,
+      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1,
     }
     shells.push(s)
     return s
@@ -226,10 +227,10 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return -1
   }
 
-  const hitsVehicle = (s: Shell, x: number, y: number): ShotVehicle | undefined => {
+  const hitsVehicle = (s: Shell, x: number, y: number, corpses = false): ShotVehicle | undefined => {
     for (const v of input.vehicles) {
       if (v.id === input.shooterId && s.p.t - s.tStart < IMMUNE_S) continue
-      if ((hp.get(v.id) ?? 0) > 0 && Math.hypot(v.x - x, v.y - y) <= v.radius) return v
+      if ((corpses || (hp.get(v.id) ?? 0) > 0) && Math.hypot(v.x - x, v.y - y) <= v.radius) return v
     }
     return undefined
   }
@@ -246,7 +247,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       y = shooter.y + gx * sn + gy * c + dir.y * mz.ox + ny * mz.oy
     }
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
-    if (mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất
+    if (beh.kind !== 'ghost' && mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất (đạn xuyên địa hình thì cứ bay)
   }
 
   const split = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'splitAtApex' }>): void => {
@@ -266,7 +267,8 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     const inside = nx >= 0 && nx < mask.width && ny >= 0 && ny < mask.height
     // Mỗi lần khoan khoét hố bán kính R quanh đầu khoan nên "đất phía trước" phải xét cách R: hết đất trong phạm vi đó thì nổ luôn.
     const ahead = b.tunnelRadius + 1
-    if (!inside || !mask.isSolid(nx + s.dx * ahead, ny + s.dy * ahead) || hitsVehicle(s, nx, ny)) { explodeShell(s, inside ? nx : s.p.x, inside ? ny : s.p.y, t); return }
+    const diving = !!b.resurface && !s.rising   // đang lặn: chưa xét chuyện ra khỏi đất
+    if (!inside || (!diving && !mask.isSolid(nx + s.dx * ahead, ny + s.dy * ahead)) || hitsVehicle(s, nx, ny)) { explodeShell(s, inside ? nx : s.p.x, inside ? ny : s.p.y, t); return }
     s.p.x = nx; s.p.y = ny; s.p.t = t
     s.remaining -= adv
     s.sinceCarve += adv
@@ -276,7 +278,13 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       events.push({ t, kind: 'carve', x: nx, y: ny, r: b.tunnelRadius })
     }
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, nx, ny)
-    if (s.remaining <= 1e-6) explodeShell(s, nx, ny, t)
+    if (s.remaining <= 1e-6) {
+      if (diving) {   // hết đoạn lặn: quay đầu đào chếch lên
+        const up = degToRad(b.resurface!.riseDeg)
+        s.rising = true; s.dx = (Math.sign(s.p.vx) || input.facing) * Math.cos(up); s.dy = -Math.sin(up); s.remaining = b.resurface!.riseMax
+        s.path.push(t, nx, ny)
+      } else explodeShell(s, nx, ny, t)
+    }
   }
 
   /** Lăn theo mặt đất (Cua Lăn): bám mặt đất, rơi tiếp khi hết đất, nổ khi gặp xe/vách cao/hết quãng. */
@@ -320,12 +328,31 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return false
   }
 
+  /** Đạn xuyên địa hình: bay theo trọng lực/gió như thường nhưng không va đất, khoét hầm dọc đường, nổ khi chạm xe (kể cả xác). */
+  const stepGhost = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'ghost' }>, sax: number, say: number): void => {
+    s.p.vx += sax * DT_SIM; s.p.vy += say * DT_SIM
+    const adv = Math.hypot(s.p.vx, s.p.vy) * DT_SIM
+    s.p.x += s.p.vx * DT_SIM; s.p.y += s.p.vy * DT_SIM; s.p.t = t
+    if (s.p.x < 0 || s.p.x >= mask.width || s.p.y >= mask.height) {
+      s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }); return
+    }
+    if (hitsVehicle(s, s.p.x, s.p.y, true)) { explodeShell(s, s.p.x, s.p.y, t); return }
+    s.sinceCarve += adv
+    if (s.sinceCarve >= Math.max(4, b.tunnelRadius / 2) && mask.isSolid(s.p.x, s.p.y)) {
+      s.sinceCarve = 0
+      mask.carveCircle(s.p.x, s.p.y, b.tunnelRadius)
+      events.push({ t, kind: 'carve', x: s.p.x, y: s.p.y, r: b.tunnelRadius })
+    }
+    if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
+  }
+
   const stepFly = (s: Shell, t: number): void => {
     let sax = ax, say = ay
     if (W) {
       if (W.kind === 'whirl' && Math.abs(s.p.x - W.x) <= W.hw) say -= wt.whirl.lift
       else if (W.kind === 'mirror' && Math.abs(s.p.x - W.x) <= W.hw) { sax = ax - 2 * wax; say = ay - 2 * way }
     }
+    if (beh.kind === 'ghost') { stepGhost(s, t, beh, sax, say); return }
     const r = stepProjectile(s.p, sax, say, DT_SIM, mask)
     s.p.t = t
     if (beh.kind === 'airGrow' && !s.grown && t - s.tStart >= beh.afterS) {
@@ -360,7 +387,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
         if (beh.direction === 'horizontal') { dx = Math.sign(s.p.vx) || input.facing; dy = 0 }
         else if (beh.direction === 'down') { dx = 0; dy = 1 }
         const n = Math.hypot(dx, dy) || 1
-        s.mode = 'drill'; s.dx = dx / n; s.dy = dy / n; s.remaining = beh.length; s.sinceCarve = 0
+        s.mode = 'drill'; s.dx = dx / n; s.dy = dy / n; s.remaining = beh.resurface ? beh.resurface.diveLength : beh.length; s.sinceCarve = 0
         s.path.push(t, s.p.x, s.p.y)
         return
       }

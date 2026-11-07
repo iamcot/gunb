@@ -262,73 +262,71 @@ img.empty { display: none; }
 .gs-mitems .it-ico b { font-size: 11px; }
 
 
-/* phòng chờ (bố cục mới): hai đội ở hai bên, giữa là thông tin + nút, dưới là chọn xe + item, bóng thoại chat trên khung người nói */
-.gs-roomx { display: flex !important; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
-.gs-arena { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 1fr 200px 1fr; grid-template-rows: minmax(0, 1fr); gap: 10px; }
-.gs-arena .gs-team { position: relative; padding: 0; gap: 0; overflow: visible; background: linear-gradient(#0b1d3acc, #0b1d3a99); border-radius: 14px; border: 3px solid; }
-.gs-arena .gs-team.t0 { border-color: #3b82f6; background: linear-gradient(#17356acc, #0f2347aa); }
-.gs-arena .gs-team.t1 { border-color: #ef4444; background: linear-gradient(#5a1d1dcc, #3a1212aa); }
-.gs-arena .gs-team h4 { position: absolute; left: 8px; top: -14px; z-index: 3; height: auto; background: none !important; padding: 0; justify-content: flex-start; }
-.gs-arena .gs-team.t1 h4 { left: auto; right: 8px; }
-.gs-arena .gs-team h4 img { height: 54px; margin: 0; }
-.gs-arena .gs-team h4 span { font-size: 12px; background: #0008; padding: 1px 8px; border-radius: 8px; margin-top: 22px; }
-.gs-arena .slots { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 22px 8px; padding: 40px 8px 8px; }
-.gs-arena .gs-slot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 0; max-height: none; height: 100%; padding: 4px 4px 0; border-radius: 10px; border: 2px solid #ffffff33; background: #ffffff14; text-align: center; overflow: visible; }
+/* phòng chờ: hai đội hai bên, giữa là bản đồ + tuỳ chọn ván; dưới là lưới xe | xe đang chọn | item; cuối là nút phòng + chat */
+.gs-roomx { display: flex !important; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; --tblue: #3f8fe6; --tblue-d: #2a66b8; --tred: #ee5a36; --tred-d: #b83a1c; }
+.gs-arena { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: 1fr 210px 1fr; grid-template-rows: minmax(0, 1fr); gap: 10px; }
+.gs-arena .gs-team { position: relative; display: flex; flex-direction: column; padding: 0; gap: 0; overflow: visible; border-radius: 14px; border: 3px solid; }
+.gs-arena .gs-team.t0 { border-color: var(--tblue-d); background: linear-gradient(#5aa5f0, var(--tblue)); }
+.gs-arena .gs-team.t1 { border-color: var(--tred-d); background: linear-gradient(#f57a58, var(--tred)); }
+.gs-arena .gs-team img.logo { position: absolute; left: -10px; top: -16px; height: 58px; z-index: 4; filter: drop-shadow(0 2px 2px #0006); pointer-events: none; }
+.gs-arena .slots { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, 150px); align-content: start; gap: 8px; padding: 8px; }
+.gs-arena .gs-slot { position: relative; display: flex; flex-direction: column; min-height: 0; max-height: none; height: 100%; padding: 0; border-radius: 10px; border: 2px solid #ffffff55; background: #0000; text-align: center; overflow: visible; }
 .gs-arena .gs-slot.me { box-shadow: 0 0 0 3px #ffe08a; }
-.gs-arena .gs-slot.emptyslot { height: 100%; background: #ffffff0d !important; border: 2px dashed #ffffff40; color: #ffffffaa; justify-content: center; }
-.gs-arena .gs-slot .pic { flex: 1 1 0; min-height: 0; width: 100%; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; gap: 0; }
-.gs-arena .gs-slot .pic img.pilot { height: 70%; max-height: 84px; width: auto; margin-right: -14px; z-index: 1; align-self: flex-end; filter: drop-shadow(0 2px 2px #0006); }
-.gs-arena .gs-slot .pic img.car { height: 92%; width: auto; max-width: 76%; object-fit: contain; object-position: center bottom; }
-.gs-arena .gs-team.t1 .gs-slot .pic img { transform: none; }
-.gs-arena .gs-team.t1 .gs-slot .pic img.pilot { order: 2; margin: 0 0 0 -14px; transform: scaleX(-1); }
+.gs-arena .gs-slot .pic { position: relative; flex: 1 1 0; min-height: 0; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; border-radius: 8px 8px 0 0; background: linear-gradient(#ffffff40, #ffffff1a); padding: 14px 4px 4px; }
+.gs-arena .gs-slot .pic img.car { max-height: 100%; max-width: 100%; width: auto; height: auto; object-fit: contain; object-position: center bottom; }
+.gs-arena .gs-team .gs-slot { display: flex; align-items: stretch; grid-template-columns: none; padding: 0; text-align: center; background: #0000; border-color: #ffffff55; }
+.gs-arena .gs-team .gs-slot.me { border-color: #ffe08a; }
+.gs-arena .gs-team .gs-slot.emptyslot { background: #ffffff1a; border: 2px dashed #ffffff80; }
+.gs-arena .gs-team .gs-slot .pic { order: 0; height: auto; }
+.gs-arena .gs-team .gs-slot.emptyslot { align-items: center; }
+.gs-arena .gs-team .gs-slot .pic img { transform: none; }
 .gs-arena .gs-team.t1 .gs-slot .pic img.car { transform: scaleX(-1); }
-.gs-arena .gs-slot .plate { width: calc(100% + 8px); margin: 0 -4px; background: #0b1328d9; color: #fff; border-radius: 0 0 8px 8px; padding: 2px 4px 3px; }
-.gs-arena .gs-slot .plate b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gs-arena .gs-slot .plate small { display: block; color: #cbd5e1; font-size: 10px; font-weight: 700; }
-.gs-arena .gs-slot .plate .gs-badge { margin: 1px 0 0; }
-.gs-arena .gs-slot .gs-mitems { position: absolute; left: 3px; top: 3px; display: flex; gap: 1px; transform: scale(.7); transform-origin: top left; }
-.gs-arena .gs-slot .rm { top: 2px; right: 2px; }
-.gs-arena .gs-team.t1 .gs-slot .rm { left: auto; right: 2px; }
+.gs-arena .gs-slot .plate { flex: none; background: #141b33; color: #fff; border-radius: 0 0 8px 8px; padding: 3px 6px; display: flex; align-items: center; gap: 4px; }
+.gs-arena .gs-slot .plate b { flex: 1; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-arena .gs-slot .gs-key { position: absolute; right: 4px; top: 2px; z-index: 3; font-size: 18px; line-height: 1; filter: drop-shadow(0 1px 1px #0008); }
+.gs-arena .gs-slot .gs-mitems { position: absolute; left: 3px; bottom: 3px; display: flex; gap: 1px; transform: scale(.75); transform-origin: bottom left; }
+.gs-arena .gs-slot .gs-st { position: absolute; right: 4px; bottom: 4px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 900; color: #fff; background: #94a3b8; }
+.gs-arena .gs-slot .gs-st.ok { background: #22a05a; }
+.gs-arena .gs-slot .gs-st.off { background: #6b7280; }
+.gs-arena .gs-slot.emptyslot { justify-content: center; align-items: center; background: #ffffff1a; border: 2px dashed #ffffff80; color: #ffffffcc; font-weight: 800; }
+.gs-arena .gs-slot .rm { position: absolute; top: 2px; right: 2px; z-index: 3; }
 .gs-slot .bubble { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); z-index: 5; max-width: 150px; background: #fff; color: #1f2937; border: 2px solid #1f2937; border-radius: 12px; padding: 3px 9px; font-size: 12px; font-weight: 800; line-height: 1.25; word-break: break-word; box-shadow: 0 2px 0 #0005; animation: gs-pop .18s ease-out; }
 .gs-slot .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 10px; height: 10px; background: #fff; border-right: 2px solid #1f2937; border-bottom: 2px solid #1f2937; transform: translateX(-50%) rotate(45deg); }
 @keyframes gs-pop { from { transform: translateX(-50%) scale(.6); opacity: 0; } }
-.gs-roomx .gs-mid { gap: 8px; justify-content: flex-start; }
-.gs-roomx .gs-info { grid-template-columns: 1fr; gap: 6px; padding: 6px; }
-.gs-roomx .gs-info .thumb { min-height: 90px; }
-.gs-roomx .gs-info dl { font-size: 12px; gap: 1px 8px; }
-.gs-actions { display: flex; flex-direction: column; gap: 8px; align-items: stretch; justify-content: center; flex: 1; }
-.gs-actions .vs { text-align: center; font-size: 30px; font-weight: 900; color: var(--coral); text-shadow: 0 3px 0 var(--earth); line-height: 1; }
-.gs-bottom { display: grid; grid-template-columns: 1fr 300px; gap: 10px; height: 190px; flex: none; min-height: 0; }
-.gs-carbox { display: grid; grid-template-columns: 1fr 240px; gap: 10px; min-height: 0; overflow: hidden; }
-.gs-carbox .gs-grid { grid-template-columns: repeat(5, 1fr); align-content: start; overflow-y: auto; min-height: 0; }
-.gs-carbox .gs-pick { height: 52px; }
-.gs-carbox .gs-detail { overflow-y: auto; min-height: 0; font-size: 12px; }
-.gs-carbox .gs-detail .stage { height: 64px; }
-.gs-carbox .gs-detail .nm { font-size: 15px; }
+/* giữa: bản đồ + tuỳ chọn ván (sẽ thêm) */
+.gs-roomx .gs-mid { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: hidden; }
+.gs-mid .vs { text-align: center; font-size: 22px; font-weight: 900; color: var(--coral); text-shadow: 0 3px 0 var(--earth); line-height: 1; }
+.gs-roomx .gs-info { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; }
+.gs-roomx .gs-info .thumb { flex: none; height: 96px; min-height: 0; }
+.gs-roomx .gs-info dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; font-size: 12px; }
+.gs-roomx .gs-info dt { color: #6b5440; } .gs-roomx .gs-info dd { margin: 0; font-weight: 800; text-align: right; }
+/* dưới: lưới xe | xe đang chọn | item */
+.gs-bottom { display: grid; grid-template-columns: 1fr 210px 300px; gap: 10px; height: 200px; flex: none; min-height: 0; }
+.gs-pickcol { min-height: 0; overflow-y: auto; }
+.gs-pickcol .gs-grid { grid-template-columns: repeat(5, 1fr); align-content: start; }
+.gs-pickcol .gs-pick { height: 56px; }
+.gs-preview { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: hidden; padding: 6px 8px; background: linear-gradient(#e8f4ff, #c9e3fb); }
+.gs-preview .nm { text-align: center; font-size: 14px; font-weight: 900; color: var(--earth); letter-spacing: .5px; }
+.gs-preview .stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.gs-preview .stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.gs-preview .role { text-align: center; font-size: 11px; color: #6b5440; }
+.gs-preview .stats { display: grid; gap: 2px; }
+.gs-preview .gs-stat { grid-template-columns: 56px 1fr 40px; font-size: 11px; }
+.gs-preview .gs-stat .bar { height: 6px; }
 .gs-itembox { overflow-y: auto; min-height: 0; }
-.gs-itembox .ttl { font-weight: 900; color: var(--earth); margin-bottom: 6px; }
-.gs-chatbar { flex: none; display: flex; align-items: center; gap: 8px; background: var(--cream-l); border: 3px solid var(--cream-d); border-radius: 12px; padding: 4px 10px; }
+.gs-itembox .ttl { font-weight: 900; color: var(--earth); margin-bottom: 4px; }
+.gs-itembox .gs-items { grid-template-columns: 1fr 1fr; }
+.gs-itembox .gs-item .tx small, .gs-itembox .gs-item .dl { display: none; }
+.gs-itembox .gs-islot { height: 36px; }
+/* cuối: nút phòng | chat | nút bắt đầu */
+.gs-footer { flex: none; display: flex; align-items: center; gap: 10px; }
+.gs-fl, .gs-fr { display: flex; align-items: center; gap: 8px; flex: none; }
+.gs-chatbar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; background: var(--cream-l); border: 3px solid var(--cream-d); border-radius: 12px; padding: 4px 10px; }
 .gs-chatbar .ico { height: 30px; }
-.gs-chatbar input { flex: 1; width: 100%; }
+.gs-chatbar input { flex: 1; width: 100%; min-width: 0; }
 @media (max-width: 860px) {
   .gs-arena { grid-template-columns: 1fr; }
   .gs-bottom { grid-template-columns: 1fr; height: auto; }
-  .gs-carbox { grid-template-columns: 1fr; }
   .gs-arena .gs-slot { min-height: 130px; }
+  .gs-footer { flex-wrap: wrap; }
 }
-.gs-arena .gs-team.t1 .gs-slot { background: #ffffff14; border-color: #ffffff33; padding: 4px 4px 0; text-align: center; display: flex; }
-.gs-arena .gs-team.t1 .gs-slot .pic { order: 0; }
-.gs-arena .gs-team.t1 .gs-slot.me { box-shadow: 0 0 0 3px #ffe08a; }
-.gs-arena .gs-team.t0 .gs-slot { background: #ffffff14; border-color: #ffffff33; }
-.gs-arena .gs-team.t0 .gs-slot.me, .gs-arena .gs-team.t0 .gs-slot.me:hover { border-color: #ffe08a; }
-.gs-arena .gs-team.t1 .gs-slot.emptyslot, .gs-arena .gs-team.t0 .gs-slot.emptyslot { background: #ffffff0d !important; border: 2px dashed #ffffff40; }
-.gs-roomx .gs-mid { overflow: hidden; min-height: 0; }
-.gs-roomx .gs-info .thumb { min-height: 56px; height: 56px; }
-.gs-roomx .gs-info dt:nth-of-type(n+3), .gs-roomx .gs-info dd:nth-of-type(n+3) { display: none; }
-.gs-actions { gap: 6px; }
-.gs-actions .vs { font-size: 22px; }
-.gs-actions .gs-btn.big { padding-top: 6px; padding-bottom: 6px; }
-.gs-carbox .gs-detail .stage { height: 62px; background: none !important; border: 0 !important; box-shadow: none !important; }
-.gs-carbox .gs-detail .stage img { max-height: 62px; }
-.gs-carbox .gs-detail .gs-shots { display: none; }
-.gs-carbox .gs-detail .gs-me { margin: 0; }

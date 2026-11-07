@@ -52,7 +52,7 @@ export class HotseatMode implements Mode {
     this.match = createMatch({ seed: (Date.now() & 0x7fffffff) >>> 0, mask: this.mask, spawnZones: ctx.map.spawnZones, players })
     this.stats = newStats(this.match.players.length)
     this.bot = setup.botLevel ? new BotDriver(setup.botLevel) : null
-    this.vehicles = new VehicleViews(this.match)
+    this.vehicles = new VehicleViews(this.match, ctx.fx)
     this.weather = new WeatherView(ctx.map.height)
     ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
@@ -90,7 +90,7 @@ export class HotseatMode implements Mode {
     this.aim.locked = true
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
+      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
     }, getShotArt(p.mobileId, slot))
   }
 

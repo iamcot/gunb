@@ -1,12 +1,17 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import { TEAM_NAMES, TUNING, aimDir, aimRange, type AimRange, type MatchState, type PlayerState, type Vec2 } from '@gunb/shared'
+import type { Fx } from './fx'
 import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const FAN_RADIUS = 80
 
-interface View { root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null }
+interface View {
+  root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null
+  // chuyển động phụ (chỉ là hình): lúc lắc khi đi, nhún khi bắn, giật khi trúng đạn
+  lastX: number; moveAmt: number; phase: number; dustAcc: number; recoilT: number; hitT: number
+}
 
 /** `assets/mobiles/<id>/rig.json`. Toạ độ chuẩn hoá 0..1 theo ảnh tương ứng. */
 interface Rig {
@@ -23,10 +28,25 @@ interface Rig {
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture; pilot: PilotArt | null }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number; radius: number; barrelX: number; barrelY: number }
 
 /** Cú vung của máy bắn đá (chỉ là hình): góc vung (độ), thời gian vung lên / giữ / hạ về (giây). */
 const SWING_DEG = 125, SWING_UP = 0.18, SWING_HOLD = 0.12, SWING_BACK = 0.6
+
+/** Nhún khi bắn: nén nhanh trong RECOIL_ATTACK giây rồi bật lại như lò xo tắt dần. */
+const RECOIL_ATTACK = 0.05, RECOIL_DAMP = 7, RECOIL_FREQ = 19, RECOIL_S = 0.9
+const RECOIL_SQUASH = 0.14    // thân dẹt xuống tối đa 14%
+const RECOIL_PUSH = 5         // px: cả xe lùi về sau
+const RECOIL_KICK = 7         // px: nòng giật lùi dọc trục nòng
+/** Lúc lắc khi đi: pha tăng theo quãng đường (đi nhanh lắc nhanh). */
+const WOBBLE_PER_PX = 0.14    // rad pha / px
+const WOBBLE_ROT = 0.045      // rad nghiêng qua lại
+const WOBBLE_BOB = 1.8        // px nảy lên
+const WOBBLE_EASE = 8         // 1/s: tốc độ bắt đầu / dừng lắc
+const DUST_EVERY = 14         // px: mỗi quãng này tung một cụm bụi
+const TELEPORT_PX = 30        // dịch chuyển lớn hơn thế trong 1 frame = đặt lại vị trí, không tính là đi
+/** Giật khi trúng đạn. */
+const HIT_S = 0.35, HIT_SHAKE = 3
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -81,7 +101,8 @@ export class VehicleViews {
   private readonly range: AimRange = { min: 0, max: 90 }
   private bob = 0
 
-  constructor(match: MatchState) {
+  /** `fx`: nếu có thì tung bụi dưới bánh khi xe đi. */
+  constructor(match: MatchState, private readonly fx: Fx | null = null) {
     this.container.addChild(this.fan)
     for (const p of match.players) {
       const root = new Container()
@@ -94,7 +115,7 @@ export class VehicleViews {
       marker.visible = false
       root.addChild(body, barrel, bar, name, marker)
       this.container.addChild(root)
-      const view: View = { root, body, barrel, bar, name, marker, art: null }
+      const view: View = { root, body, barrel, bar, name, marker, art: null, lastX: p.body.x, moveAmt: 0, phase: 0, dustAcc: 0, recoilT: -1, hitT: -1 }
       this.views.set(p.id, view)
       preloadShotArt(p.mobileId)
       void loadRig(p.mobileId).then(ra => { if (ra && !root.destroyed) this.attachArt(view, ra, p.body.radius) })
@@ -129,19 +150,26 @@ export class VehicleViews {
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1 }
+    // xoay/co giãn quanh điểm chạm đất (để nhún không làm xe nhấc khỏi mặt đất); vị trí khung đặt lại mỗi frame
+    frame.pivot.set(0, radius)
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1, radius, barrelX: barrel.x, barrelY: barrel.y }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
   update(dt: number, match: MatchState, shownHp: ReadonlyMap<number, number>): void {
     this.bob += dt * 6
-    for (const v of this.views.values()) if (v.art && v.art.swingT >= 0) v.art.swingT += dt
+    for (const v of this.views.values()) {
+      if (v.art && v.art.swingT >= 0) v.art.swingT += dt
+      if (v.recoilT >= 0) { v.recoilT += dt; if (v.recoilT > RECOIL_S) v.recoilT = -1 }
+      if (v.hitT >= 0) { v.hitT += dt; if (v.hitT > HIT_S) v.hitT = -1 }
+    }
     this.fan.clear()
     for (const p of match.players) {
       const v = this.views.get(p.id)!
       const hp = shownHp.get(p.id) ?? p.hp
       const alive = p.body.alive && (hp > 0 || p.hp > 0)
       const isCur = p.id === match.turnPlayerId && match.phase === 'aiming'
+      this.trackMove(v, p, dt)
       this.drawOne(v, p, hp, alive, isCur)
       if (isCur) this.drawFan(p)
     }
@@ -152,11 +180,23 @@ export class VehicleViews {
     v.root.position.set(b.x, b.y)
     v.root.alpha = alive ? 1 : 0.35
     v.root.visible = b.alive || hp > 0 || true
+    // chuyển động phụ: u = độ nén khi bắn (âm = bật ngược), lắc khi đi, giật khi trúng đạn
+    const u = this.recoilU(v)
+    const sinP = Math.sin(v.phase), bounce = (1 - Math.cos(2 * v.phase)) * 0.5
+    const rot = -b.tilt + sinP * WOBBLE_ROT * v.moveAmt
+    const hitK = v.hitT >= 0 ? 1 - v.hitT / HIT_S : 0
+    const ox = -b.facing * RECOIL_PUSH * Math.max(0, u) + Math.sin(v.hitT * 70) * HIT_SHAKE * hitK
+    const oy = -bounce * WOBBLE_BOB * v.moveAmt
+    const sy = 1 - RECOIL_SQUASH * u - 0.03 * v.moveAmt * (bounce - 0.5)
+    const sx = 1 + RECOIL_SQUASH * 0.6 * u
+    const tint = !alive ? 0x777777 : hitK > 0 ? lerpTint(0xffffff, 0xff7070, hitK) : 0xffffff
     if (v.art) {
       const a = v.art
-      a.frame.rotation = -b.tilt
-      a.frame.scale.x = b.facing * a.flip
-      a.body.tint = a.barrel.tint = alive ? 0xffffff : 0x777777
+      a.frame.rotation = rot
+      a.frame.scale.set(b.facing * a.flip * sx, sy)
+      // khung xoay quanh điểm chạm đất (pivot) nhưng tương đương xoay quanh tâm xe như trước
+      a.frame.position.set(ox - a.radius * Math.sin(rot), oy + a.radius * Math.cos(rot))
+      a.body.tint = a.barrel.tint = tint
       if (a.catapult) {
         a.barrel.rotation = this.swingRad(a)
         this.drawLabels(v, p, hp, alive, isCur, a.top)
@@ -166,11 +206,18 @@ export class VehicleViews {
       const d = aimDir(this.tmp, p.aimAngle, 1, -b.facing * b.tilt)
       // xe lật ngược (reverse): khung bị lật thêm một lần và ảnh nòng cũng lật, nên góc quay đổi dấu
       a.barrel.rotation = Math.atan2(d.y * a.flip, d.x)
+      // nòng giật lùi dọc trục (hướng đầu nòng trong khung = flip·(cos, sin) của góc quay)
+      const kick = RECOIL_KICK * Math.max(0, u) * a.flip
+      a.barrel.position.set(a.barrelX - Math.cos(a.barrel.rotation) * kick, a.barrelY - Math.sin(a.barrel.rotation) * kick)
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
     }
+    v.body.position.set(ox, oy)
+    v.body.scale.set(sx, sy)
+    v.body.tint = v.barrel.tint = tint
+    v.barrel.position.set(ox, oy)
     v.body.clear()
-    v.body.rotation = -b.tilt
+    v.body.rotation = rot
     v.body.roundRect(-r, -r * 0.6, r * 2, r * 1.2, 5).fill(alive ? TEAM_COLORS[p.team] : 0x777777).stroke({ color: TEAM_DARK[p.team], width: 2 })
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
@@ -180,10 +227,44 @@ export class VehicleViews {
     this.drawLabels(v, p, hp, alive, isCur, -30)
   }
 
-  /** Phát hình vung cần (máy bắn đá) của xe `id` khi bắn; xe khác không làm gì. */
+  /** Hình lúc bắn của xe `id`: nhún + nòng giật lùi; máy bắn đá thì vung cần. */
   fireAnim(id: number): void {
-    const a = this.views.get(id)?.art
-    if (a && a.catapult) a.swingT = 0
+    const v = this.views.get(id)
+    if (!v) return
+    v.recoilT = 0
+    if (v.art && v.art.catapult) v.art.swingT = 0
+  }
+
+  /** Xe `id` trúng đạn: giật ngang + ửng đỏ một thoáng. */
+  hitAnim(id: number): void {
+    const v = this.views.get(id)
+    if (v) v.hitT = 0
+  }
+
+  /** Độ nén khi bắn: 0 → 1 rất nhanh, rồi dao động tắt dần quanh 0. */
+  private recoilU(v: View): number {
+    const t = v.recoilT
+    if (t < 0) return 0
+    if (t < RECOIL_ATTACK) return t / RECOIL_ATTACK
+    const s = t - RECOIL_ATTACK
+    return Math.exp(-s * RECOIL_DAMP) * Math.cos(s * RECOIL_FREQ)
+  }
+
+  /** Theo dõi xe có đang đi không (so vị trí x giữa các frame) để lắc + tung bụi. */
+  private trackMove(v: View, p: PlayerState, dt: number): void {
+    const b = p.body
+    const dx = b.x - v.lastX
+    v.lastX = b.x
+    const moving = b.alive && Math.abs(dx) > 0.05 && Math.abs(dx) < TELEPORT_PX
+    v.moveAmt += ((moving ? 1 : 0) - v.moveAmt) * Math.min(1, dt * WOBBLE_EASE)
+    if (!moving) return
+    v.phase += Math.abs(dx) * WOBBLE_PER_PX
+    v.dustAcc += Math.abs(dx)
+    if (v.dustAcc >= DUST_EVERY && this.fx) {
+      v.dustAcc = 0
+      const dir = dx > 0 ? 1 : -1
+      this.fx.dust(b.x - dir * b.radius * 0.7, b.y + b.radius, dir)
+    }
   }
 
   /** Góc quay cần máy bắn đá theo thời gian vung (radian, dương = theo chiều kim đồng hồ: hất về phía trước). */
@@ -228,6 +309,11 @@ export class VehicleViews {
   }
 
   destroy(): void { this.container.destroy({ children: true }) }
+}
+
+function lerpTint(a: number, b: number, k: number): number {
+  const ar = a >> 16, ag = (a >> 8) & 255, ab = a & 255
+  return ((ar + ((b >> 16) - ar) * k) << 16) | ((ag + (((b >> 8) & 255) - ag) * k) << 8) | ((ab + ((b & 255) - ab) * k) | 0)
 }
 
 export const teamName = (team: 0 | 1): string => TEAM_NAMES[team]

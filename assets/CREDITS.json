@@ -1469,5 +1469,131 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Cắt sát, căn vuông, thu về 128 px"
+  },
+  {
+    "file": "mobiles/cu-thien-van/body.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cu-thien-van.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Owl Mech Wagon\": xoá nền, tách kính thiên văn thành nòng xoay quanh khớp tròn, thu về 192 px (thân)"
+  },
+  {
+    "file": "mobiles/cu-thien-van/barrel.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ assets/source/prompts/xe-cu-thien-van.txt",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Steampunk Owl Mech Wagon\": kính thiên văn + khớp xoay, xoay 10° về nằm ngang, thu cùng tỉ lệ thân"
+  },
+  {
+    "file": "mobiles/cu-thien-van/rig.json",
+    "author": "Dự án gunb",
+    "source": "Đo trên ảnh gốc",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "mobiles/cu-thien-van/shot-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/15-prompt-cu-thien-van.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Teal Magical Orbs and Planet Ring\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cu-thien-van/shot-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/15-prompt-cu-thien-van.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Teal Magical Orbs and Planet Ring\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cu-thien-van/shot-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/15-prompt-cu-thien-van.md (mục 2)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Teal Magical Orbs and Planet Ring\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/cu-thien-van/shots.json",
+    "author": "Dự án gunb",
+    "source": "Tự viết",
+    "license": "Tự tạo",
+    "url": ""
+  },
+  {
+    "file": "fx/satellite.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/15-prompt-cu-thien-van.md (mục 3)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Ảnh \"Golden Owl Satellite Badge\": cắt sát, thu về 256 px"
+  },
+  {
+    "file": "mobiles/cu-thien-van/fire-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_fire-1 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.05–1.05 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/fire-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_fire-2 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–1.02 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/fire-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_fire-3 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.04–1.34 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/boom-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_boom-1 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.00–0.38 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/boom-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_boom-3 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.02–1.32 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/beam-1.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_beam-1 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.01–0.79 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/beam-2.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_beam-2 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.00–0.60 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "mobiles/cu-thien-van/beam-3.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt cu-thien-van_beam-3 trong plan/15-prompt-cu-thien-van.md",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Lấy đoạn 0.00–3.00 s của bản gốc 6.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
   }
 ]

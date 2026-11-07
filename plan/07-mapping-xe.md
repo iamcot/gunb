@@ -13,6 +13,7 @@ Chỉ để người làm game nhớ cơ chế lấy cảm hứng từ đâu. **
 | Nhím Chùm | `nhim-chum` | Bigfoot | Chùm gai tỏa 5 hướng |
 | Sứa Đèn | `sua-den` | Mage (ít chắc nhất) | Đạn chậm, xuyên đất mỏng |
 | Rùa Thành | `rua-thanh` | Turtle | Máu trâu, đắp đất dựng tường |
+| Cú Thiên Văn | `cu-thien-van` | A.Sate | Cầu sáng đánh dấu, vệ tinh bắn laser xuống |
 | Long Ngư Cơ (ẩn) | `long-ngu-co` | Dragon | Phun lửa |
 | Kỳ Lân Sắt (ẩn) | `ky-lan-sat` | Knight | Mạnh nhất, cực hiếm |
 

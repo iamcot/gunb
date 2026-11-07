@@ -14,6 +14,7 @@ Toàn bộ tên là thiết kế riêng, không trùng tên xe/nhân vật của
 | `nhim-chum` | Nhím Chùm | Tỏa 5 hướng |
 | `sua-den` | Sứa Đèn | Đạn chậm, xuyên đất mỏng |
 | `rua-thanh` | Rùa Thành | Máu trâu, đắp đất thành tường |
+| `cu-thien-van` | Cú Thiên Văn | Bắn cầu sáng, vệ tinh bắn laser xuống điểm chạm |
 | `long-ngu-co` | Long Ngư Cơ (ẩn) | Phun lửa, mở khoá ngẫu nhiên |
 | `ky-lan-sat` | Kỳ Lân Sắt (ẩn) | Mạnh nhất, cực hiếm |
 
@@ -31,6 +32,7 @@ Mỗi người có xe mặc định nhưng đổi được.
 | Gai Gai | robot nhỏ hay cáu | Nhím Chùm |
 | Thầy Đèn | nhà khoa học lập dị | Sứa Đèn |
 | Cụ Rùa | ông lão điềm đạm | Rùa Thành |
+| Sao Khuya | cô bé mê ngắm sao | Cú Thiên Văn |
 
 ## Cấp bậc (Phase 8)
 

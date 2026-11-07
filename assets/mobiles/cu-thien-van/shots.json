@@ -1,0 +1,28 @@
+{
+  "shots": [
+    {
+      "file": "shot-1.png",
+      "length": 14,
+      "upright": true,
+      "fire": "fire-1.ogg",
+      "boom": "boom-1.ogg",
+      "beam": "beam-1.ogg"
+    },
+    {
+      "file": "shot-2.png",
+      "length": 16,
+      "upright": true,
+      "fire": "fire-2.ogg",
+      "boom": "boom-1.ogg",
+      "beam": "beam-2.ogg"
+    },
+    {
+      "file": "shot-3.png",
+      "length": 30,
+      "upright": true,
+      "fire": "fire-3.ogg",
+      "boom": "boom-3.ogg",
+      "beam": "beam-3.ogg"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { Container, Graphics, Text } from 'pixi.js'
-import { aimDir, groundYBelow, slopeAt, type ShotVehicle, type TerrainMask } from '@gunb/shared'
+import { groundYBelow, slopeAt, type ShotVehicle, type TerrainMask } from '@gunb/shared'
 
 const SHOOTER_R = 18
 const TARGET_R = 20
@@ -7,25 +7,25 @@ const SHOOTER_HALF_W = 14
 
 interface TargetView { v: ShotVehicle; g: Graphics; label: Text }
 
-/** Chế độ tập bắn (Phase 1): một xe đứng yên ở bên trái và 3 bia cách 450 / 800 / 1200 px. Chưa có di chuyển/rơi (Phase 2). */
+/** Chế độ tập bắn: một xe đứng yên ở đầu trái phần đất liền và 3 bia cách 450 / 800 / 1200 px (bia rơi ra ngoài đất thì dời về cột có đất gần nhất).
+ *  Xe bắn được vẽ bằng VehicleViews ở PracticeMode (đúng ảnh xe đã chọn); lớp này chỉ giữ vị trí + vẽ bia. */
 export class Practice {
   readonly container = new Container()
   readonly shooter: ShotVehicle
   readonly vehicles: ShotVehicle[]
   facing: 1 | -1 = 1
-  private readonly shooterGfx = new Graphics()
-  private readonly barrelGfx = new Graphics()
   private readonly targets: TargetView[] = []
-  private readonly dirTmp = { x: 0, y: 0 }
-  private angle = 45
 
   constructor(private readonly mask: TerrainMask) {
-    const sx = this.flattestX(150, 600)
+    // bản đồ có thể là đảo nổi giữa trời: chỉ xét các cột có đất
+    let left = -1, right = -1
+    for (let x = 0; x < mask.width; x += 10) if (groundYBelow(mask, x, 0) >= 0) { if (left < 0) left = x; right = x }
+    if (left < 0) { left = 0; right = mask.width - 1 }
+    const sx = this.flattestX(Math.min(left + 60, right), Math.min(left + 450, right))
     this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 1000, armor: 0 }
     this.vehicles = [this.shooter]
-    this.container.addChild(this.shooterGfx, this.barrelGfx)
     ;[450, 800, 1200].forEach((dx, i) => {
-      const x = sx + dx
+      const x = this.nearestGroundX(Math.min(sx + dx, right - TARGET_R))
       const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 1000, armor: 0 }
       const g = new Graphics()
       const label = new Text({ text: '100', style: { fill: 0xffffff, fontSize: 14, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
@@ -42,10 +42,20 @@ export class Practice {
   private flattestX(x1: number, x2: number): number {
     let best = x1, bestSlope = Infinity
     for (let x = x1; x <= x2; x += 10) {
+      if (groundYBelow(this.mask, x, 0) < 0) continue
       const s = Math.abs(slopeAt(this.mask, x, 0, SHOOTER_HALF_W))
       if (s < bestSlope) { bestSlope = s; best = x }
     }
     return best
+  }
+
+  /** Cột có đất gần `x` nhất (quét ra hai bên mỗi 5 px). */
+  private nearestGroundX(x: number): number {
+    for (let d = 0; d < this.mask.width; d += 5) {
+      if (groundYBelow(this.mask, x - d, 0) >= 0) return x - d
+      if (groundYBelow(this.mask, x + d, 0) >= 0) return x + d
+    }
+    return x
   }
 
   private groundCenterY(x: number, r: number): number {
@@ -55,9 +65,11 @@ export class Practice {
 
   get tilt(): number { return slopeAt(this.mask, this.shooter.x, 0, SHOOTER_HALF_W) }
 
-  setAngle(angle: number): void { this.angle = angle }
-
-  setMobile(id: string): void { this.shooter.mobileId = id }
+  /** Đổi xe bắn: bán kính theo xe, đặt lại trên mặt đất. */
+  setMobile(id: string, radius: number): void {
+    const s = this.shooter
+    s.mobileId = id; s.radius = radius; s.y = this.groundCenterY(s.x, radius)
+  }
 
   applyDamage(id: number, hpAfter: number): void {
     const v = this.vehicles.find(t => t.id === id)
@@ -68,21 +80,6 @@ export class Practice {
   resetHp(): void {
     for (const v of this.vehicles) v.hp = 1000
     this.drawTargets()
-  }
-
-  /** Vẽ lại xe bắn: thân nghiêng theo dốc, nòng theo góc bắn. */
-  draw(): void {
-    const s = this.shooter, tilt = this.tilt
-    const body = this.shooterGfx, barrel = this.barrelGfx
-    body.clear()
-    body.position.set(s.x, s.y)
-    body.rotation = -tilt   // dốc lên bên phải = quay ngược chiều kim đồng hồ trên màn hình
-    body.roundRect(-SHOOTER_R, -SHOOTER_R * 0.6, SHOOTER_R * 2, SHOOTER_R * 1.2, 5).fill(s.hp > 0 ? 0x3b82f6 : 0x555555).stroke({ color: 0x0a2a5e, width: 2 })
-    barrel.clear()
-    barrel.position.set(s.x, s.y)
-    const d = aimDir(this.dirTmp, this.angle, this.facing)   // góc so với phương ngang
-    barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
-    barrel.circle(0, -4, 5).fill(0x1e293b)
   }
 
   private drawTargets(): void {

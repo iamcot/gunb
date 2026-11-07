@@ -99,6 +99,14 @@ function loadRig(mobileId: string): Promise<RigArt | null> {
   return p
 }
 
+/** Độ cao vệ tinh trên tâm xe (theo đạn `satellite` của xe), hoặc -1 nếu xe không có vệ tinh. */
+function satAltitude(mobileId: string): number {
+  const def = TUNING.mobiles[mobileId]
+  if (!def) return -1
+  for (const sh of def.shots) if (sh.behavior.kind === 'satellite') return sh.behavior.altitude
+  return -1
+}
+
 /** Vẽ xe (hình khối tạm) cho mọi người chơi: thân nghiêng theo dốc, nòng xoay theo góc, tên + thanh máu, mũi tên người đến lượt, hình quạt dải góc. */
 export class VehicleViews {
   readonly container = new Container()
@@ -187,6 +195,11 @@ export class VehicleViews {
       const isCur = p.id === match.turnPlayerId && match.phase === 'aiming'
       this.trackMove(v, p, dt)
       this.drawOne(v, p, hp, alive, isCur)
+      // xe có vệ tinh (Cú Thiên Văn): vệ tinh luôn bay theo trên đầu xe, đúng độ cao vệ tinh bắn tia trong shared/
+      if (alive && this.fx) {
+        const alt = satAltitude(p.mobileId)
+        if (alt > 0) this.fx.satHome(p.id, p.body.x, p.body.y - alt, p.body.facing)
+      }
       if (isCur) this.drawFan(p)
     }
   }

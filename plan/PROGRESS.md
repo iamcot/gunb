@@ -51,6 +51,13 @@
 - [ ] 6.2 Thêm bản đồ — chưa làm (cần ảnh; có thể làm bản sinh bằng code)
 - [x] 6.3 Thời tiết — shared/weather.ts: Cột lốc, Mây giông, Gương nước, Cổng đôi; suy ra từ seed+lượt (không cần đồng bộ thêm), chance trong `Tuning.weather`; client vẽ + chữ báo (weatherView.ts)
 - [x] 6.4 Cân bằng — `npm run balance` (bot đấu bot, mọi cặp pháo), kết quả `plan/balance-report.md`; đã chỉnh 3 vòng
+- [x] Xe mới Cú Thiên Văn (`cu-thien-van`, thứ 9): behavior `satellite` — cầu sáng nổ nhỏ, `delay` s sau vệ tinh bắn `count` tia laser thẳng đứng (lệch ±`spacing`), mỗi tia đốt xuyên `depth` px đất từ mặt đất đầu tiên trong cột (khoét rãnh dọc), trúng mọi xe trong cột phía trên đáy tia, sát thương giảm theo khoảng cách ngang. Thêm event `beam` (ShotEvent) cho hiệu ứng. Client: Fx.satCharge/beam (vệ tinh hiện trước 0.45 s, ngắm, bắn tia, bay đi; ảnh tuỳ chọn assets/fx/satellite.png), tiếng `beam` trong shots.json. 5 test trong shots2.test.ts. Ảnh + tiếng thật (ChatGPT, ElevenLabs): thân + kính thiên văn xoay quanh khớp tròn (rig.json), 3 viên đạn (`upright`), vệ tinh assets/fx/satellite.png, 8 file ogg (đạn 2 dùng chung boom-1 vì chưa có boom-2); tiếng `beam` gồm cả tiếng nổ đáy tia. Prompt: plan/15-prompt-cu-thien-van.md
+
+- [x] Sửa tập bắn: xe đặt trên phần có đất (bản đồ đảo nổi trước đây đặt xe ở x 150–600 là khoảng trời nên xe rơi xuống đáy), bia không có đất thì dời về cột có đất gần nhất; xe bắn vẽ bằng VehicleViews (đúng ảnh xe đã chọn, đổi bằng M), thay cho khối xanh cũ
+
+- [x] Cú Thiên Văn đạn 1, 2: vệ tinh hiện trên đầu xe bắn (`from: 'shooter'`, `altitude` 260) và bắn tia chéo mảnh tới điểm nhắm, đốt xuyên đất dọc theo tia; SS giữ tia thẳng đứng từ trời (`from: 'sky'`). Event `beam` thêm `sky`, `x0`, `y0`. Cân bằng chạy lại: Cú Thiên Văn 35% (trước 43%)
+
+- [x] Cú Thiên Văn: vệ tinh luôn bay theo xe (Fx.satHome, gọi từ VehicleViews theo `altitude` của đạn satellite = 400 px, trước là 170 nhưng thấp quá thì tia gần như quét ngang), lúc rảnh nghiêng chéo về phía trước; đạn 1, 2 xoay mắt kính theo tia chéo; SS bay tới trên điểm chạm, xoay ngang, bắn thẳng rồi bay về. Cầu sáng không gây sát thương, không khoét (damage/carve 0), sát thương dồn vào laser (42 / 26×3 / 90). Cân bằng: 41%
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.

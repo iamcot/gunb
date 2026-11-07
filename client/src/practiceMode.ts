@@ -1,11 +1,13 @@
-import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
+import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type MatchState, type PlayerState, type ShotSlot, type Wind } from '@gunb/shared'
 import { getShotArt, getShotSfx, preloadShotArt } from './shotArt'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
 import { Practice } from './practice'
 import { ShotBar } from './shotBar'
+import { VehicleViews } from './vehicleView'
 
+const NO_HP: ReadonlyMap<number, number> = new Map()
 const HELP = '↑↓ góc · ←→ quay hướng · 1/2/3 chọn đạn · giữ Space tích lực, nhả để bắn · M đổi pháo · G gió ngẫu nhiên · H gió 0 · R hồi bia + địa hình · Esc: menu'
 
 /** Chế độ tập bắn (Phase 1): một xe đứng yên + 3 bia. */
@@ -19,6 +21,9 @@ export class PracticeMode implements Mode {
   private playback: ShotPlayback | null = null
   private lastHash: boolean | null = null
   private lastExplode = ''
+  /** Xe bắn vẽ bằng VehicleViews (ảnh xe đã chọn); trận giả một người chỉ để VehicleViews đọc vị trí/góc. */
+  private readonly fakeMatch: MatchState
+  private views: VehicleViews | null = null
   private readonly onKey = (e: KeyboardEvent): void => {
     if (e.repeat || this.playback) return
     if (e.code === 'KeyG') { this.wind = makeWind(mulberry32(hashSeed(String(performance.now())))); this.ctx.hud.setWind(this.wind) }
@@ -31,6 +36,12 @@ export class PracticeMode implements Mode {
     ctx.view.reset()
     this.practice = new Practice(ctx.view.mask)
     ctx.world.addChildAt(this.practice.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
+    const s = this.practice.shooter
+    const player = {
+      id: s.id, name: 'Bạn', team: 0, mobileId: s.mobileId, hp: 100, maxHp: 100, aimAngle: 45,
+      body: { x: s.x, y: s.y, radius: s.radius, facing: 1, tilt: 0, alive: true },
+    } as unknown as PlayerState
+    this.fakeMatch = { players: [player], turnPlayerId: s.id, phase: 'aiming' } as unknown as MatchState
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     ctx.hud.setWind(this.wind)
@@ -46,7 +57,12 @@ export class PracticeMode implements Mode {
   private setMobile(i: number): void {
     this.mobileIdx = i
     const def = TUNING.mobiles[MOBILE_IDS[i]!]!
-    this.practice.setMobile(def.id)
+    this.practice.setMobile(def.id, def.radius)
+    const p = this.fakeMatch.players[0]!, s = this.practice.shooter
+    p.mobileId = def.id; p.body.radius = s.radius; p.body.y = s.y
+    if (this.views) { this.ctx.world.removeChild(this.views.container); this.views.destroy() }
+    this.views = new VehicleViews(this.fakeMatch, this.ctx.fx)
+    this.ctx.world.addChildAt(this.views.container, this.ctx.world.getChildIndex(this.practice.container) + 1)
     preloadShotArt(def.id)
     this.aim.setRange(def.angleMin, def.angleMax)
   }
@@ -61,6 +77,7 @@ export class PracticeMode implements Mode {
     const ex = result.events.find(e => e.kind === 'explode')
     this.lastExplode = ex && ex.kind === 'explode' ? `${ex.x.toFixed(0)}, ${ex.y.toFixed(0)}` : '— (ra ngoài)'
     aim.locked = true
+    this.views?.fireAnim(practice.shooter.id)
     this.playback = new ShotPlayback(result, ctx.view, ctx.fx, {
       onDamage: (id, amount, hpAfter) => {
         practice.applyDamage(id, hpAfter)
@@ -77,8 +94,10 @@ export class PracticeMode implements Mode {
     aim.setRange(r.min, r.max)   // dải góc đổi theo dốc (xe slopeAim)
     aim.update(dt)
     practice.facing = aim.facing
-    practice.setAngle(aim.angle)
-    practice.draw()
+    const pb = this.fakeMatch.players[0]!
+    pb.aimAngle = aim.angle; pb.body.facing = aim.facing; pb.body.tilt = practice.tilt
+    pb.hp = practice.shooter.hp
+    this.views?.update(dt, this.fakeMatch, NO_HP)
     ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     this.shotBar.update(TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!, aim.slot, 100, 100)
     ctx.hud.setWind(this.wind, TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!.shots[aim.slot].windFactor)
@@ -109,6 +128,7 @@ export class PracticeMode implements Mode {
     this.aim.dispose()
     this.shotBar.destroy()
     this.ctx.world.removeChild(this.practice.container)
+    if (this.views) { this.ctx.world.removeChild(this.views.container); this.views.destroy() }
     this.practice.container.destroy({ children: true })
     this.ctx.fx.hideProjectiles()
   }

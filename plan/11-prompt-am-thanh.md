@@ -74,14 +74,16 @@ Mỗi viên đạn có 2 tiếng: **fire** (lúc bắn ra khỏi nòng) và **bo
 
 ### 2. Chũi Khoan – Mũi khoan / Đào rãnh / Khoan thẳng xuống
 
+(Trong game mũi khoan chỉ đào chưa tới nửa giây rồi nổ, nhìn gần như một phát nổ thường, nên tiếng boom là **tiếng nổ chính**, chỉ có một chút tiếng khoan/cào đất ở đầu.)
+
 | Tên file | Độ dài | Prompt |
 |---|---|---|
 | `chui-khoan_fire-1` | 0.8 s | `A pneumatic launcher shoots a spinning drill bit: compressed air thunk followed by a short rising whirring drill spin. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
-| `chui-khoan_boom-1` | 1.6 s | `A spinning drill bit bores into rock: grinding drill screech digging through stone and dirt, ending in a muffled underground blast. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
+| `chui-khoan_boom-1` | 1.2 s | `A drill shell hits the ground and explodes: a very quick drill grind for a split second, then a punchy dirt explosion with small rocks scattering. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
 | `chui-khoan_fire-2` | 0.8 s | `A pneumatic launcher shoots a wide flat digging drill: heavy air thunk and a low whirring spin. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
-| `chui-khoan_boom-2` | 1.8 s | `A wide drill digs a long horizontal trench through earth: steady scraping and crunching soil, rattling stones, ending in a small dull explosion. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
+| `chui-khoan_boom-2` | 1.2 s | `A digging shell hits the ground and explodes: a very short crunchy scrape of soil, then a medium punchy explosion with dirt spray and a short tail. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
 | `chui-khoan_fire-3` | 1.0 s | `A big heavy drill is launched: powerful air cannon blast and a deep motor revving up to high speed. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
-| `chui-khoan_boom-3` | 2.0 s | `A giant drill plunges straight down into the ground: loud grinding and rock cracking going deeper, then a big muffled underground explosion with collapsing earth. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
+| `chui-khoan_boom-3` | 1.8 s | `A giant drill punches into the ground and detonates: half a second of loud grinding rock, then a big heavy explosion with collapsing earth and falling rubble. Stylized fantasy cartoon game sound effect, crisp, punchy, clean studio quality, dry mix, no music, no voice, no ambience.` |
 
 ### 3. Bọ Lôi – Điện giật / Chùm ba / Sét giáng
 

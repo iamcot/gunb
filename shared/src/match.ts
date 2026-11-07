@@ -213,6 +213,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       }
       p.aimAngle = fire.angle
       p.delay += (shotDef ?? def.shots[fire.slot]).delay
+      p.delay += Math.max(0, t.turn.timeS - s.turnTimeLeft) * t.turn.delayPerSecond * (def.delayPerSecondMul ?? 1)   // càng suy nghĩ lâu càng bị cộng delay
       s.phase = 'resolving'
       return { ok: true, shot }
     }

@@ -122,3 +122,5 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Nhím Chùm SS: bỏ ảnh hiệu ứng lửa SS (streak), về lửa + khói đuôi như đạn 1, 2. Ảnh nhim-chum/ss-fx.png còn trong assets (chưa dùng).
 - Cua Lăn SS: ảnh đạn = con cua (cắt từ body.png), có hiệu ứng nhún/lắc khi bò (shots.json `wobble`).
 - Cua Lăn đ2: ảnh đạn thành con cua nhỏ (dùng chung ảnh cua với SS), nhún lắc khi lăn; cơ chế vẫn là bi lăn, mìn thật ở C3.
+- A1: delay đạn theo tỉ lệ 1 : 1,6 : 3,2 cho mọi xe (giữ đ1; đ2 = 1,6×, SS = 3,2×).
+- A2: `Tuning.turn.delayPerSecond` = 10, `MobileDef.delayPerSecondMul` (Rùa Thành 1,2): khi bắn cộng delay theo số giây đã suy nghĩ trong lượt.

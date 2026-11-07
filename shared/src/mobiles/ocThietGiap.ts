@@ -7,6 +7,6 @@ export const OC_THIET_GIAP: MobileDef = {
   shots: [
     { name: 'Đạn nổ', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 70, carveRadius: 45, damage: 370, delay: 250, behavior: { kind: 'basic' } },
     { name: 'Đạn hai đầu', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 60, carveRadius: 38, damage: 300, delay: 400, behavior: { kind: 'tandem', gapS: 0.07, secondDamage: 360 } },
-    { name: 'Đạn khổng lồ', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 70, carveRadius: 45, damage: 370, delay: 550, behavior: { kind: 'airGrow', afterS: 1.8, blastMul: 1.7, carveMul: 2, damageMul: 2.43 } },
+    { name: 'Đạn khổng lồ', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 70, carveRadius: 45, damage: 370, delay: 800, behavior: { kind: 'airGrow', afterS: 1.8, blastMul: 1.7, carveMul: 2, damageMul: 2.43 } },
   ],
 }

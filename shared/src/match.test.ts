@@ -255,3 +255,22 @@ describe('3 pháo + thanh SS', () => {
     expect(s.players[0]!.aimAngle).toBe(85)
   })
 })
+
+describe('A2: delay theo giây suy nghĩ', () => {
+  it('bắn muộn thì bị cộng thêm delay; Rùa Thành nhân 1,2', () => {
+    const t = createDefaultTuning()
+    const delayAfter = (mobileId: string, waitS: number): number => {
+      const mask = flat()
+      const players = [0, 1].map(i => ({ name: `P${i}`, team: i as 0 | 1, mobileId }))
+      const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+      s.turnTimeLeft = t.turn.timeS - waitS
+      const p = currentPlayer(s)
+      const before = p.delay
+      expect(applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 50, slot: 0 }, { mask, tuning: t }).ok).toBe(true)
+      return p.delay - before - t.mobiles[mobileId]!.shots[0].delay
+    }
+    expect(delayAfter('oc-thiet-giap', 0)).toBeCloseTo(0, 5)
+    expect(delayAfter('oc-thiet-giap', 10)).toBeCloseTo(10 * t.turn.delayPerSecond, 5)
+    expect(delayAfter('rua-thanh', 10)).toBeCloseTo(10 * t.turn.delayPerSecond * 1.2, 5)
+  })
+})

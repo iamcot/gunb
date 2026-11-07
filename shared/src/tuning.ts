@@ -29,6 +29,7 @@ export interface MoveTuning {
 export interface TurnTuning {
   timeS: number
   timeoutPenalty: number  // delay cộng khi hết giờ hoặc bỏ lượt
+  delayPerSecond: number  // delay cộng cho mỗi giây đã suy nghĩ trong lượt khi bắn (xe có `delayPerSecondMul` thì nhân thêm)
 }
 
 /** Thanh SS: đầy thì dùng được đạn SS (một lần), dùng xong về 0. */
@@ -46,7 +47,7 @@ export function createDefaultTuning(): Tuning {
     powerChargeS: POWER_CHARGE_S,
     mobiles: createDefaultMobiles(),
     move: { speed: 90, maxSlopeDeg: MAX_SLOPE_DEG, stepUp: 14, snapDown: 8, fallDamagePerPx: FALL_DAMAGE_PER_PX, fallSafePx: 24, delayPerPx: 0.5 },
-    turn: { timeS: TURN_TIME_S, timeoutPenalty: 375 },
+    turn: { timeS: TURN_TIME_S, timeoutPenalty: 375, delayPerSecond: 10 },
     ss: { max: 100, perDamageDealt: 0.06, perDamageTaken: 0.04, perTurn: 8 },
     weather: defaultWeatherTuning(),
     items: defaultItemsTuning(),

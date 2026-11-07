@@ -142,8 +142,8 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 
 **Đợt A – Nền số**
 - A0 (xong). Nhân HP/sát thương ×10, delay ×2,5; chỉnh item, rơi, thanh máu; chạy lại test + balance. (Không đổi kiểu.)
-- A1. Delay đạn theo tỉ lệ gốc (đ1 : đ2 : SS ≈ 1 : 1,6 : 3,2).
-- A2. ⚠️ Delay theo giây suy nghĩ (`Tuning.turn.delayPerSecond`, xe riêng `delayPerSecondMul`; Rùa Thành ×1,2).
+- A1 (xong). Delay đạn theo tỉ lệ gốc (đ1 : đ2 : SS ≈ 1 : 1,6 : 3,2).
+- A2 (xong). ⚠️ Delay theo giây suy nghĩ (`Tuning.turn.delayPerSecond`, xe riêng `delayPerSecondMul`; Rùa Thành ×1,2).
 
 **Đợt B – Cơ chế đạn mới (mỗi cơ chế một PR nhỏ, có test + ảnh quỹ đạo)**
 - B1. ⚠️ `airGrow` → Ốc SS phình, Diều SS hoá vàng. **Xong** (afterS: Ốc 1,8 s, Diều 2,4 s; thời gian bay thật của ta 1–4 s nên không dùng 2,5 s của bản gốc; chỉnh bằng F6). Kèm: khói + lửa đuôi cho 3 đạn Ốc, số sát thương nhảy lên cho mỗi phát trúng.

@@ -6,7 +6,7 @@ export const CUA_LAN: MobileDef = {
   hp: 1050, armor: 0.1, radius: 18, speedMul: 0.95, fuel: 110, angleMin: 0, angleMax: 65, muzzle: { px: 31, py: -13, ox: 49, oy: 0 },
   shots: [
     { name: 'Ba đĩa', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 55, carveRadius: 42, damage: 150, delay: 300, behavior: { kind: 'twin', count: 3, radius: 26, convergeS: 2, turns: 1.5 } },
-    { name: 'Bi lăn xa', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 28, damage: 300, delay: 412, behavior: { kind: 'roller', distance: 460, speed: 320 } },
-    { name: 'Cua khổng lồ', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 110, carveRadius: 80, damage: 850, delay: 575, behavior: { kind: 'roller', distance: 0, speed: 90, crawl: { fuseS: 6 } } },
+    { name: 'Bi lăn xa', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 28, damage: 300, delay: 480, behavior: { kind: 'roller', distance: 460, speed: 320 } },
+    { name: 'Cua khổng lồ', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 110, carveRadius: 80, damage: 850, delay: 960, behavior: { kind: 'roller', distance: 0, speed: 90, crawl: { fuseS: 6 } } },
   ],
 }

@@ -92,6 +92,7 @@
   padding: 5px 10px 8px 10px; font: var(--h-font); font-size: 13px; text-align: left; color: var(--h-ink); cursor: pointer;
   background: var(--h-cream-l); border: 3px solid var(--h-cream-d); border-radius: 12px; box-shadow: 0 3px 0 var(--h-cream-d); transition: transform .06s; }
 #shotbar button:hover { border-color: var(--h-sky); }
+#shotbar button .sb-icon { display: block; height: 30px; width: 100%; object-fit: contain; object-position: left center; margin: 2px 0 1px; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.35)); }
 #shotbar button .sb-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 #shotbar button small { display: block; font-size: 10px; font-weight: 600; color: var(--h-earth); opacity: .85; }
 #shotbar button.sel { background: linear-gradient(var(--h-sky), var(--h-sky-d)); border-color: var(--h-sky-dd); box-shadow: 0 3px 0 var(--h-sky-dd); color: #fff; transform: translateY(-2px); }

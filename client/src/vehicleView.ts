@@ -6,6 +6,8 @@ import { preloadShotArt } from './shotArt'
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const FAN_RADIUS = 80
+const FAN_TICK = 5, FAN_TICK_LONG = 10   // px: vạch thước mỗi 5° / 15°
+const NEEDLE_COLOR = 0xff5a1f, NEEDLE_BASE = 3.5, NEEDLE_OVER = 10   // kim ngắm đỏ cam: nửa bề rộng gốc, phần thò ra ngoài vòng cung
 
 interface View {
   root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null
@@ -145,7 +147,7 @@ export class VehicleViews {
       const pilot = new Sprite(ra.pilot.sit)
       pilot.anchor.set(pi.hip[0], pi.hip[1])
       const pk = pi.sitHeight / ra.pilot.sit.height
-      pilot.scale.set(pk * flip, pk)
+      pilot.scale.set(pk, pk)   // phi công quay cùng hướng với ảnh thân (đầu xe), kể cả xe bắn bằng đuôi
       pilot.position.set((rig.pilot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pilot[1] - rig.ground[1]) * ra.body.height * k)
       frame.addChildAt(pilot, frame.getChildIndex(body) + 1)
     }
@@ -298,19 +300,33 @@ export class VehicleViews {
     v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch góc hiện tại của người đến lượt. */
+  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch thước trên vòng cung + kim ngắm đỏ cam chỉ góc hiện tại. */
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan
+    const cx = b.x, cy = b.y - 4
     const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
-    g.moveTo(b.x, b.y - 4)
+    g.moveTo(cx, cy)
     for (let a = r.min; ; a = Math.min(a + 5, r.max)) {
       const d = aimDir(this.tmp, a, b.facing)
-      g.lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS)
+      g.lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
       if (a >= r.max) break
     }
-    g.closePath().fill({ color: 0xffffff, alpha: 0.14 })
+    g.closePath().fill({ color: 0xffffff, alpha: 0.2 }).stroke({ color: 0x3a2412, width: 1.5, alpha: 0.55 })
+    // vạch thước: mỗi 5° một vạch ngắn, mỗi 15° vạch dài hơn (tính theo góc so với phương ngang)
+    for (let a = Math.ceil(r.min / 5) * 5; a <= r.max; a += 5) {
+      const d = aimDir(this.tmp, a, b.facing)
+      const len = a % 15 === 0 ? FAN_TICK_LONG : FAN_TICK
+      g.moveTo(cx + d.x * (FAN_RADIUS - len), cy + d.y * (FAN_RADIUS - len)).lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
+    }
+    g.stroke({ color: 0x3a2412, width: 1.5, alpha: 0.8 })
+    // kim ngắm: tam giác thon từ tâm tới quá vòng cung một chút
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    g.moveTo(b.x, b.y - 4).lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS).stroke({ color: 0xffffff, width: 2, alpha: 0.8 })
+    const nx = -d.y, ny = d.x, tip = FAN_RADIUS + NEEDLE_OVER
+    g.moveTo(cx + nx * NEEDLE_BASE, cy + ny * NEEDLE_BASE)
+      .lineTo(cx + d.x * tip, cy + d.y * tip)
+      .lineTo(cx - nx * NEEDLE_BASE, cy - ny * NEEDLE_BASE)
+      .closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
+    g.circle(cx, cy, NEEDLE_BASE + 1).fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
   }
 
   destroy(): void { this.container.destroy({ children: true }) }

@@ -1618,6 +1618,6 @@
     "source": "Ảnh AI tạo từ prompt mũi tên kim ngắm (hội thoại với Claude)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Cắt sát phần có ảnh, thu bề rộng về 96 px"
+    "modified": "Bản con trỏ xanh viền nâu (ChatGPT): xoá nền trắng, xoay để mũi chỉ sang phải, cắt sát, thu bề rộng về 96 px"
   }
 ]

@@ -28,6 +28,8 @@ interface Shell {
 
 interface Pending { tStart: number; angleDeg: number }
 interface Bolt { t: number; x: number; y: number; def: { damage: number; blastRadius: number; carveRadius: number } }
+type SatelliteBeh = Extract<ShotDef['behavior'], { kind: 'satellite' }>
+interface Beam { t: number; x: number; def: SatelliteBeh }
 
 const sanRange: AimRange = { min: 0, max: 90 }
 
@@ -65,6 +67,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const shells: Shell[] = []
   const pending: Pending[] = []
   const bolts: Bolt[] = []
+  const beams: Beam[] = []
 
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
@@ -102,6 +105,45 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     blast(x, y, t, def.blastRadius, beh.kind === 'build' ? 0 : def.carveRadius, def.damage, true)
     if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
     if (beh.kind === 'build') build(x, y, t, beh)
+    if (beh.kind === 'satellite') {
+      for (let k = 0; k < beh.count; k++) {
+        const off = k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
+        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off, def: beh })
+      }
+      beams.sort((a, b) => a.t - b.t)
+    }
+  }
+
+  /** Tia laser vệ tinh (Cú Thiên Văn) tại cột x: đốt xuyên `depth` px đất tính từ mặt đất đầu tiên, khoét rãnh dọc, trúng mọi xe trong cột phía trên đáy tia. */
+  const beamDown = (bx: number, t: number, b: SatelliteBeh): void => {
+    let top = -1, endY = mask.height, solid = 0
+    for (let y = 0; y < mask.height; y++) {
+      if (!mask.isSolid(bx, y)) continue
+      if (top < 0) top = y
+      if (++solid >= b.depth) { endY = y; break }
+    }
+    events.push({ t, kind: 'beam', x: bx, y: endY, w: b.halfWidth })
+    if (top >= 0) {
+      const step = Math.max(3, b.halfWidth / 2)
+      for (let y = top; ; y += step) {
+        const cy = Math.min(y, endY)
+        mask.carveCircle(bx, cy, b.halfWidth)
+        events.push({ t, kind: 'carve', x: bx, y: cy, r: b.halfWidth })
+        if (cy >= endY) break
+      }
+    }
+    if (endY < mask.height) events.push({ t, kind: 'explode', x: bx, y: endY, r: b.halfWidth * 1.6 })
+    for (const v of input.vehicles) {
+      const cur = hp.get(v.id) ?? 0
+      if (cur <= 0 || v.y - v.radius > endY) continue
+      const d = Math.max(0, Math.abs(v.x - bx) - v.radius)
+      if (d >= b.halfWidth) continue
+      const amount = Math.round(b.damage * (1 - d / b.halfWidth) * (1 - v.armor))
+      if (amount <= 0) continue
+      const after = Math.max(0, cur - amount)
+      hp.set(v.id, after)
+      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+    }
   }
 
   /** Đắp tường đất: bỏ qua nếu chạm bất kỳ xe nào (tránh chôn xe), để server và client ra cùng mask. */
@@ -277,6 +319,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       events.push({ t, kind: 'bolt', x: b.x, y: b.y })
       blast(b.x, b.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
     }
+    while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamDown(b.x, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp
       const s = shells[k]!
       if (!s.alive) continue
@@ -284,7 +327,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       else if (s.mode === 'roll') stepRoll(s, t, beh as Extract<ShotDef['behavior'], { kind: 'roller' }>)
       else stepFly(s, t)
     }
-    if (!pending.length && !bolts.length && shells.every(s => !s.alive)) break
+    if (!pending.length && !bolts.length && !beams.length && shells.every(s => !s.alive)) break
   }
   // hết giờ mô phỏng: đạn còn bay coi như ra ngoài
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }

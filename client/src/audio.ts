@@ -14,7 +14,7 @@ const MANIFEST_URL = '/audio/sounds.json'
 /** `assets/audio/sounds.json`: tên file (trong `assets/audio/`), mục nào không có thì dùng tiếng tạo bằng code. */
 interface SoundsFile { music?: { lobby?: string; battle?: string }; sfx?: { turn?: string; hit?: string } }
 /** URL tiếng của một loại đạn (từ shots.json của xe). */
-export interface ShotSfx { fire?: string; boom?: string; bolt?: string }
+export interface ShotSfx { fire?: string; boom?: string; bolt?: string; beam?: string }
 /** Nhạc đang cần: sảnh (menu, phòng chờ) hoặc trận (`mapUrl` = nhạc riêng của bản đồ nếu có). */
 export type MusicScene = { kind: 'lobby' } | { kind: 'battle'; mapUrl: string | null }
 // Giai điệu: 4 hợp âm (Am F C G) × 8 nốt gam ngũ cung, tốc độ 96 bpm
@@ -205,6 +205,11 @@ class AudioEngine {
   bolt(url?: string): void {
     if (this.play(url, SFX_FILE_VOL)) return
     this.noise(0.35, 0.7 * SFX_VOL, 9000, 400); this.tone(1400, 0.25, 'sawtooth', 0.2 * SFX_VOL, 120)
+  }
+  /** Tia laser vệ tinh (Cú Thiên Văn). */
+  beam(url?: string): void {
+    if (this.play(url, SFX_FILE_VOL)) return
+    this.tone(1800, 0.45, 'sine', 0.25 * SFX_VOL, 300); this.tone(900, 0.45, 'sawtooth', 0.12 * SFX_VOL, 150); this.noise(0.3, 0.4 * SFX_VOL, 6000, 800)
   }
   turn(): void {
     const f = this.manifest.sfx?.turn

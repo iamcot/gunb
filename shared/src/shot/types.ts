@@ -41,6 +41,7 @@ export type ShotEvent =
   | { t: number; kind: 'out'; x: number; y: number }
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)
   | { t: number; kind: 'bolt'; x: number; y: number }      // tia sét giáng xuống (hiệu ứng; vụ nổ đi kèm có event explode riêng)
+  | { t: number; kind: 'beam'; x: number; y: number; w: number }  // tia laser vệ tinh từ trời xuống tới (x, y), nửa bề rộng w (hiệu ứng; khoét + sát thương có event riêng)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }
 
 export interface ShotResult {

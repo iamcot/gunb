@@ -51,6 +51,7 @@
 - [ ] 6.2 Thêm bản đồ — chưa làm (cần ảnh; có thể làm bản sinh bằng code)
 - [x] 6.3 Thời tiết — shared/weather.ts: Cột lốc, Mây giông, Gương nước, Cổng đôi; suy ra từ seed+lượt (không cần đồng bộ thêm), chance trong `Tuning.weather`; client vẽ + chữ báo (weatherView.ts)
 - [x] 6.4 Cân bằng — `npm run balance` (bot đấu bot, mọi cặp pháo), kết quả `plan/balance-report.md`; đã chỉnh 3 vòng
+- [x] Xe mới Cú Thiên Văn (`cu-thien-van`, thứ 9): behavior `satellite` — cầu sáng nổ nhỏ, `delay` s sau vệ tinh bắn `count` tia laser thẳng đứng (lệch ±`spacing`), mỗi tia đốt xuyên `depth` px đất từ mặt đất đầu tiên trong cột (khoét rãnh dọc), trúng mọi xe trong cột phía trên đáy tia, sát thương giảm theo khoảng cách ngang. Thêm event `beam` (ShotEvent) cho hiệu ứng. Client: Fx.satCharge/beam (vệ tinh hiện trước 0.45 s, ngắm, bắn tia, bay đi; ảnh tuỳ chọn assets/fx/satellite.png), tiếng `beam` trong shots.json. 5 test trong shots2.test.ts. Chưa có ảnh/tiếng thật: prompt ở plan/15-prompt-cu-thien-van.md
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.

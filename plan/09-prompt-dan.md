@@ -64,6 +64,9 @@ Same art style, line weight and palette as the vehicle images in this chat. A ga
 Same art style, line weight and palette as the vehicle images in this chat. A game projectile sprite sheet: three separate projectiles in one row from left to right with lots of empty space between them, each drawn flat 2D in pure side view, small chunky readable shapes. 1) a rough grey boulder like the one in the catapult bucket. 2) a chunk of earth and castle bricks clumped together with grass on top. 3) a big rocky mountain chunk with moss, a tiny castle tower and a little blue flag on top. No motion trails, no smoke, no explosion, no launcher, no vehicle. Hand-painted anime game art, two-tone cel shading, thick dark brown outlines. Plain white background, no shadow, no text, no labels, no numbers.
 ```
 
+## Cú Thiên Văn – Đốm sáng / Ba tia / Cột sáng
+Xem `plan/15-prompt-cu-thien-van.md` mục 2.
+
 ## 9. Long Ngư Cơ (xe ẩn, chưa có thông số – tên đạn dự kiến: Cầu lửa / Lửa ba / Rồng lửa)
 ```
 Same art style, line weight and palette as the vehicle images in this chat. A game projectile sprite sheet: three separate projectiles in one row from left to right with lots of empty space between them, each drawn flat 2D in pure side view, horizontal, pointing to the right (flight direction), small chunky readable shapes. 1) a round fireball with a golden-yellow core and coral flame petals around it. 2) three small fireballs grouped together. 3) a big fire spirit shaped like a small golden dragon-carp head made of flames, flying to the right. No motion trails, no smoke, no explosion, no launcher, no vehicle. Hand-painted anime game art, two-tone cel shading, thick dark brown outlines. Plain white background, no shadow, no text, no labels, no numbers.

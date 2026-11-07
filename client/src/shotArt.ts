@@ -3,8 +3,8 @@ import { audio, type ShotSfx } from './audio'
 
 /** `assets/mobiles/<id>/shots.json`: ảnh 3 loại đạn (vẽ nằm ngang, đầu chĩa sang phải), `length` = chiều dài khi vẽ (px bản đồ),
  *  `upright` = không xoay theo đường bay, chỉ lật trái/phải theo hướng bay (đạn có "đầu trên" như cục đất có lâu đài).
- *  `fire` / `boom` / `bolt` (tuỳ chọn) = file âm thanh lúc bắn / lúc nổ / lúc sét giáng; thiếu thì dùng tiếng tạo bằng code. */
-interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string }[] }
+ *  `fire` / `boom` / `bolt` / `beam` (tuỳ chọn) = file âm thanh lúc bắn / lúc nổ / lúc sét giáng / lúc vệ tinh bắn laser; thiếu thì dùng tiếng tạo bằng code. */
+interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string; beam?: string }[] }
 export interface ShotArt { tex: Texture; length: number; upright: boolean }
 
 /** Phóng to ảnh đạn khi vẽ (chỉ là hình, va chạm vẫn theo shared/). */
@@ -28,6 +28,7 @@ export function preloadShotArt(mobileId: string): void {
       if (s.fire) audio.load(sfx.fire = base + s.fire)
       if (s.boom) audio.load(sfx.boom = base + s.boom)
       if (s.bolt) audio.load(sfx.bolt = base + s.bolt)
+      if (s.beam) audio.load(sfx.beam = base + s.beam)
       return sfx
     }))
     const arts = await Promise.all(f.shots.map(async s => {

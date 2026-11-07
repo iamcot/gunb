@@ -22,6 +22,10 @@ export type Behavior =
   | { kind: 'pierce'; maxThickness: number; maxPierce: number; holeRadius: number }
   /** Nổ không khoét mà ĐẮP đất: `count` hình tròn bán kính `radius` xếp chồng thẳng đứng từ điểm nổ lên trên (bỏ qua nếu chạm xe). */
   | { kind: 'build'; radius: number; count: number }
+  /** Nổ như đạn thường, rồi `delay` s sau vệ tinh bắn `count` tia laser thẳng đứng từ trời xuống: tia giữa đúng cột điểm nổ, các tia sau
+   *  lần lượt lệch ±`spacing` px (phải, trái, phải xa...), cách nhau `interval` s. Mỗi tia rộng 2×`halfWidth` px, đốt xuyên `depth` px đất
+   *  tính từ mặt đất đầu tiên trong cột (khoét rãnh dọc), gây `damage` lên mọi xe trong cột phía trên đáy tia (giảm theo khoảng cách ngang). */
+  | { kind: 'satellite'; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number }
 
 export interface ShotDef {
   name: string

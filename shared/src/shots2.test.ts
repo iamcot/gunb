@@ -93,6 +93,51 @@ describe('Rùa Thành (build)', () => {
   })
 })
 
+describe('Cú Thiên Văn (satellite)', () => {
+  it('cầu sáng nổ rồi sau delay vệ tinh bắn laser thẳng xuống cột điểm nổ', () => {
+    const r = shoot('cu-thien-van', 0, 45, 60)
+    const ex = firstExplode(r) as { t: number; x: number; y: number }
+    const beams = r.events.filter(e => e.kind === 'beam')
+    expect(beams).toHaveLength(1)
+    const b = beams[0] as Extract<ShotResult['events'][number], { kind: 'beam' }>
+    expect(b.x).toBe(ex.x)
+    expect(b.t - ex.t).toBeCloseTo(0.5, 1)
+    expect(b.y).toBeGreaterThan(G)          // đốt xuyên vào đất
+    expect(b.y).toBeLessThanOrEqual(G + 20 + 30)   // đáy hố cầu sáng (carve 20) + depth 30
+  })
+  it('laser trúng xe trong cột; lệch ngang quá bề rộng thì trượt', () => {
+    const r0 = shoot('cu-thien-van', 0, 45, 60)
+    const x = firstExplode(r0).x
+    const hit = shoot('cu-thien-van', 0, 45, 60, { others: [veh(1, 'oc-thiet-giap', x + 20)] })
+    const beamT = hit.events.find(e => e.kind === 'beam')!.t
+    expect(hit.events.some(e => e.kind === 'damage' && e.id === 1 && e.t === beamT)).toBe(true)
+    const miss = shoot('cu-thien-van', 0, 45, 60, { others: [veh(1, 'oc-thiet-giap', x + 18 + 12 + 60)] })
+    expect(miss.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(false)
+  })
+  it('laser xuyên qua mái đất phía trên để trúng xe bên dưới (nếu mái mỏng hơn depth của SS)', () => {
+    const m = flat()
+    for (let y = 500; y < 520; y++) for (let x = 600; x < 2000; x++) m.data[y * W + x] = 1   // mái dày 20 px
+    const x0 = firstExplode(shoot('cu-thien-van', 2, 60, 70, { mask: m })).x
+    const target = veh(1, 'oc-thiet-giap', x0)                // xe đứng dưới mái, ngay dưới điểm cầu sáng nổ
+    const found = shoot('cu-thien-van', 2, 60, 70, { mask: m, others: [target] })
+    expect(firstExplode(found).y).toBeLessThan(530)
+    expect(found.events.some(e => e.kind === 'damage' && e.id === 1 && e.amount > 40)).toBe(true)
+  })
+  it('Ba tia: 3 tia lệch ±spacing, cách nhau interval', () => {
+    const r = shoot('cu-thien-van', 1, 45, 60)
+    const ex = firstExplode(r)
+    const beams = r.events.filter(e => e.kind === 'beam') as Extract<ShotResult['events'][number], { kind: 'beam' }>[]
+    expect(beams.map(b => Math.round(b.x - ex.x))).toEqual([0, 30, -30])
+    expect(beams[1]!.t - beams[0]!.t).toBeCloseTo(0.15, 1)
+  })
+  it('client phát lại carve của laser ra cùng mask như server', () => {
+    const r = shoot('cu-thien-van', 2, 50, 55)
+    const replay = flat()
+    for (const e of r.events) if (e.kind === 'carve') replay.carveCircle(e.x, e.y, e.r)
+    expect(replay.hash()).toBe(r.terrainHashAfter)
+  })
+})
+
 describe('Diều Hâu Giấy (gió ngược)', () => {
   it('gió ngược chiều bắn thì bay xa hơn gió thuận chiều', () => {
     const head = firstExplode(shoot('dieu-hau-giay', 0, 45, 60, { wind: { x: -12, y: 0 } })).x

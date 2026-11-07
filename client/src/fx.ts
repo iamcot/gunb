@@ -67,7 +67,7 @@ const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
 const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
 /** Khói đuôi đạn (Ốc Thiết Giáp...): nhả một đám khói + một đốm lửa mỗi TRAIL_STEP px bay được. */
-const RIBBON_N = 26, RIBBON_STEP = 7   // số điểm / khoảng cách giữa các điểm của dòng ánh sáng (px)
+const RIBBON_N = 420, RIBBON_STEP = 7, RIBBON_CHUNK = 8   // số điểm / khoảng cách giữa các điểm của dòng ánh sáng (px)
 const TRAIL_STEP = 6, TRAIL_MAX_PER_CALL = 6, TRAIL_SMOKE = 0x8a7b6c
 /** Số sát thương nhảy lên khi trúng: mỗi phát một số (không cộng dồn), bay lên POP_RISE px trong POP_S s. */
 const POP_POOL = 16, POP_S = 1.1, POP_RISE = 56, POP_STACK = 28
@@ -183,7 +183,7 @@ export class Fx {
       const s = this.shellSprites[i]!
       this.shellGrown[i] = false
       s.tint = 0xffffff
-      if (art) { s.texture = art.tex; s.scale.set(art.length / art.tex.width) }
+      if (art) { s.texture = i % 2 === 1 && art.alt ? art.alt : art.tex; s.scale.set(art.length / art.tex.width) }
     }
   }
 
@@ -197,7 +197,7 @@ export class Fx {
       const s = new Sprite()
       s.anchor.set(0.5)
       s.visible = false
-      if (this.shellArt) { s.texture = this.shellArt.tex; s.scale.set(this.shellArt.length / this.shellArt.tex.width) }
+      if (this.shellArt) { s.texture = i % 2 === 1 && this.shellArt.alt ? this.shellArt.alt : this.shellArt.tex; s.scale.set(this.shellArt.length / this.shellArt.tex.width) }
       this.container.addChild(s)
       this.shellSprites.push(s)
       this.shellPos.push({ x: 0, y: 0, visible: false })
@@ -269,22 +269,26 @@ export class Fx {
     this.ribbonN[i] = n + 1
   }
 
-  /** Vẽ dòng ánh sáng: dải thon dần về đuôi, lớp ngoài rộng mờ + lõi sáng mảnh; đầu dải bám đúng vị trí đạn. */
+  /** Vẽ dòng ánh sáng từ nòng tới tận viên đạn (mất khi đạn nổ): dải thon dần về đuôi, vẽ theo từng đoạn RIBBON_CHUNK điểm (mỗi đoạn một nét liền) cho nhẹ; lớp ngoài rộng mờ + lõi sáng mảnh. Viên lẻ dùng màu `ribbonAlt`. */
   private drawRibbons(g: Graphics): void {
     const a = this.shellArt
     if (!a || a.ribbon < 0) return
-    const core = ((((a.ribbon >> 16) & 255) + 255) >> 1) << 16 | ((((a.ribbon >> 8) & 255) + 255) >> 1) << 8 | (((a.ribbon & 255) + 255) >> 1)
     for (let i = 0; i < this.shellPos.length; i++) {
       const p = this.shellPos[i]!, n = this.ribbonN[i]!
       if (!p.visible || n === 0) continue
+      const col = i % 2 === 1 && a.ribbonAlt >= 0 ? a.ribbonAlt : a.ribbon
+      const core = ((((col >> 16) & 255) + 255) >> 1) << 16 | ((((col >> 8) & 255) + 255) >> 1) << 8 | (((col & 255) + 255) >> 1)
       const pts = this.ribbonPts[i]!
-      let px = pts[0]!, py = pts[1]!
-      for (let j = 1; j <= n; j++) {
-        const x = j === n ? p.x : pts[j * 2]!, y = j === n ? p.y : pts[j * 2 + 1]!
-        const k = j / n
-        g.moveTo(px, py).lineTo(x, y).stroke({ color: a.ribbon, width: a.ribbonW * k, alpha: 0.4 * k, cap: 'round' })
-        g.moveTo(px, py).lineTo(x, y).stroke({ color: core, width: a.ribbonW * 0.4 * k, alpha: 0.85 * k, cap: 'round' })
-        px = x; py = y
+      for (let j0 = 0; j0 < n; j0 += RIBBON_CHUNK) {
+        const j1 = Math.min(n, j0 + RIBBON_CHUNK)
+        const k = Math.min(1, (j0 + RIBBON_CHUNK / 2) / Math.min(n, 30))   // đuôi 30 điểm cuối thon dần, còn lại đều
+        const kk = Math.min(1, k)
+        g.moveTo(pts[j0 * 2]!, pts[j0 * 2 + 1]!)
+        for (let j = j0 + 1; j <= j1; j++) g.lineTo(j === n ? p.x : pts[j * 2]!, j === n ? p.y : pts[j * 2 + 1]!)
+        g.stroke({ color: col, width: a.ribbonW * kk, alpha: 0.4 * kk, cap: 'round', join: 'round' })
+        g.moveTo(pts[j0 * 2]!, pts[j0 * 2 + 1]!)
+        for (let j = j0 + 1; j <= j1; j++) g.lineTo(j === n ? p.x : pts[j * 2]!, j === n ? p.y : pts[j * 2 + 1]!)
+        g.stroke({ color: core, width: a.ribbonW * 0.4 * kk, alpha: 0.85 * kk, cap: 'round', join: 'round' })
       }
     }
   }

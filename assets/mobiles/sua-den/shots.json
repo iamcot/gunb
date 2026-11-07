@@ -13,8 +13,10 @@
       "length": 17,
       "fire": "fire-2.ogg",
       "boom": "boom-2.ogg",
-      "ribbon": "#2fd6b4",
-      "ribbonW": 14
+      "ribbon": "#ffd23f",
+      "ribbonW": 14,
+      "alt": "shot-2b.png",
+      "ribbonAlt": "#2fd6b4"
     },
     {
       "file": "shot-3.png",

@@ -28,7 +28,7 @@ interface Rig {
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture; pilot: PilotArt | null }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number; radius: number; barrelX: number; barrelY: number }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number; radius: number; barrelX: number; barrelY: number; barrelSX: number; barrelSY: number }
 
 /** Cú vung của máy bắn đá (chỉ là hình): góc vung (độ), thời gian vung lên / giữ / hạ về (giây). */
 const SWING_DEG = 125, SWING_UP = 0.18, SWING_HOLD = 0.12, SWING_BACK = 0.6
@@ -38,6 +38,8 @@ const RECOIL_ATTACK = 0.05, RECOIL_DAMP = 7, RECOIL_FREQ = 19, RECOIL_S = 0.9
 const RECOIL_SQUASH = 0.14    // thân dẹt xuống tối đa 14%
 const RECOIL_PUSH = 5         // px: cả xe lùi về sau
 const RECOIL_KICK = 7         // px: nòng giật lùi dọc trục nòng
+/** Nòng phình ra khi xe bật lên sau cú nhún (phần âm của u): to ngang thêm tối đa 45%, dài thêm 12%. */
+const BULGE_FAT = 0.45, BULGE_LONG = 0.12, BULGE_FULL = 0.3   // |u| âm đạt BULGE_FULL thì phình hết cỡ
 /** Lúc lắc khi đi: pha tăng theo quãng đường (đi nhanh lắc nhanh). */
 const WOBBLE_PER_PX = 0.14    // rad pha / px
 const WOBBLE_ROT = 0.045      // rad nghiêng qua lại
@@ -152,7 +154,7 @@ export class VehicleViews {
     v.barrel.visible = false
     // xoay/co giãn quanh điểm chạm đất (để nhún không làm xe nhấc khỏi mặt đất); vị trí khung đặt lại mỗi frame
     frame.pivot.set(0, radius)
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1, radius, barrelX: barrel.x, barrelY: barrel.y }
+    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1, radius, barrelX: barrel.x, barrelY: barrel.y, barrelSX: barrel.scale.x, barrelSY: barrel.scale.y }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -209,6 +211,8 @@ export class VehicleViews {
       // nòng giật lùi dọc trục (hướng đầu nòng trong khung = flip·(cos, sin) của góc quay)
       const kick = RECOIL_KICK * Math.max(0, u) * a.flip
       a.barrel.position.set(a.barrelX - Math.cos(a.barrel.rotation) * kick, a.barrelY - Math.sin(a.barrel.rotation) * kick)
+      const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+      a.barrel.scale.set(a.barrelSX * (1 + BULGE_LONG * bl), a.barrelSY * (1 + BULGE_FAT * bl))
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
     }
@@ -222,7 +226,8 @@ export class VehicleViews {
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
+    const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+    v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6 * (1 + BULGE_FAT * bl), cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)
   }

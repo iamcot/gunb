@@ -780,7 +780,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 3.7–5.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 3.7–5.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/boom-2.ogg",
@@ -788,7 +788,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.01–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.01–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/boom-3.ogg",
@@ -796,7 +796,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.46–2.46 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.46–2.46 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-1.ogg",
@@ -804,7 +804,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.02–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.02–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-2.ogg",
@@ -812,7 +812,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.03–0.93 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.03–0.93 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-3.ogg",
@@ -820,7 +820,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/cua-lan/boom-1.ogg",
@@ -876,7 +876,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.13–1.56 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.13–1.56 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/boom-2.ogg",
@@ -884,7 +884,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.07–0.43 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.07–0.43 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/boom-3.ogg",
@@ -892,7 +892,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.17–2.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.17–2.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-1.ogg",
@@ -900,7 +900,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.77–1.42 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.77–1.42 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-2.ogg",
@@ -908,7 +908,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-3.ogg",
@@ -916,7 +916,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 1.16–2.3 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 1.16–2.3 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/nhim-chum/boom-1.ogg",

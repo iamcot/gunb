@@ -4,7 +4,8 @@
 const STORE_KEY = 'gunb.mute'
 const MUSIC_VOL = 0.05        // nhạc tạo bằng code
 const SFX_VOL = 0.5           // tiếng tạo bằng code
-const MUSIC_FILE_VOL = 0.3    // nhạc từ file (file đã chuẩn hoá khá to)
+const MUSIC_FILE_VOL = 0.3    // nhạc từ file ở sảnh (file đã chuẩn hoá khá to)
+const BATTLE_MUSIC_VOL = 0.18 // nhạc trong trận nhỏ hơn để nghe rõ tiếng đạn
 const SFX_FILE_VOL = 0.7      // tiếng từ file
 const MUSIC_FADE = 0.8        // s, chuyển bài
 const SAME_SFX_GAP = 0.05     // s, cùng một tiếng không phát chồng sát nhau (vd. 7 gai nổ gần như cùng lúc)
@@ -144,7 +145,7 @@ class AudioEngine {
     src.buffer = buf
     src.loop = true
     gain.gain.setValueAtTime(0, c.currentTime)
-    gain.gain.linearRampToValueAtTime(MUSIC_FILE_VOL, c.currentTime + MUSIC_FADE)
+    gain.gain.linearRampToValueAtTime(this.scene.kind === 'battle' ? BATTLE_MUSIC_VOL : MUSIC_FILE_VOL, c.currentTime + MUSIC_FADE)
     src.connect(gain).connect(this.master)
     src.start()
     this.track = { url, src, gain }

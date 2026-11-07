@@ -1,4 +1,4 @@
 {
   "music": { "lobby": "lobby.ogg", "battle": "battle.ogg" },
-  "sfx": { "turn": "turn.ogg", "hit": "hit.ogg" }
+  "sfx": { "turn": "turn.ogg", "hit": "hit.ogg", "aim": "aim.ogg", "aimLoop": "aim_loop.ogg" }
 }

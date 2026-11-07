@@ -1,3 +1,4 @@
+import { audio } from './audio'
 import { ANGLE_MAX, ANGLE_MIN, TUNING, clamp, type ShotSlot } from '@gunb/shared'
 
 const REPEAT_DELAY = 0.3      // s giữ phím trước khi lặp
@@ -34,7 +35,7 @@ export class AimInput {
   private readonly onMouseDown = (e: MouseEvent): void => {
     // chỉ bấm lên khung game (canvas): bấm vào ô đạn, nút HUD... không tụ lực; chuột phải dành cho kéo camera
     if (e.button !== 0 || this.locked || this.charging || !(e.target instanceof HTMLCanvasElement)) return
-    this.charging = true; this.mouseCharge = true; this.dragX = 0; this.power = 0
+    this.startCharge(); this.mouseCharge = true; this.dragX = 0
   }
   private dragX = 0   // tổng px chuột kéo ngang từ lần update trước (chỉ cộng dồn khi đang tụ bằng chuột)
   private mouseCharge = false
@@ -76,7 +77,7 @@ export class AimInput {
       case 'ArrowDown': this.down = 1e-6; this.angle = clamp(this.angle - 1, this.angleMin, this.angleMax); break
       case 'ArrowLeft': if (!this.moveMode) this.facing = -1; break
       case 'ArrowRight': if (!this.moveMode) this.facing = 1; break
-      case 'Space': this.charging = true; this.power = 0; break
+      case 'Space': this.startCharge(); break
       case 'Digit1': this.slot = 0; break
       case 'Digit2': this.slot = 1; break
       case 'Digit3': if (this.ssReady) this.slot = 2; break
@@ -91,11 +92,17 @@ export class AimInput {
     else if (e.code === 'Space' && this.charging) this.release()
   }
 
+  private startCharge(): void {
+    this.charging = true; this.power = 0
+    audio.chargeStart()
+  }
+
   /** Thả lực: bắn với lực hiện tại (nhả phím/chuột, hoặc hết giờ lượt khi đang tụ). */
   release(): void {
     if (!this.charging) return
     this.charging = false
     this.mouseCharge = false
+    audio.chargeStop()
     if (!this.locked) {
       this.lastPower = this.power
       this.onFire(this.angle, this.power, this.slot)
@@ -110,6 +117,7 @@ export class AimInput {
     this.charging = false
     this.mouseCharge = false
     this.power = 0
+    audio.chargeStop()
   }
 
   update(dt: number): void {

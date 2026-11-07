@@ -1079,6 +1079,22 @@
     "modified": "Lấy đoạn 0.06–1.2 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
   },
   {
+    "file": "audio/aim.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs theo prompt tụ lực (hội thoại với Claude): tiếng tụ lực tăng dần ~2 s",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Chuyển MP3 sang OGG Vorbis (q4)"
+  },
+  {
+    "file": "audio/aim_loop.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs theo prompt tụ lực (hội thoại với Claude): tiếng tụ lực lặp (giữ ở mức đầy) ~1 s",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Chuyển MP3 sang OGG Vorbis (q4)"
+  },
+  {
     "file": "mobiles/sua-den/boom-1.ogg",
     "author": "IamCoT (tạo bằng ElevenLabs)",
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_boom-1 trong plan/11-prompt-am-thanh.md",

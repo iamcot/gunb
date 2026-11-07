@@ -22,6 +22,11 @@ export type Behavior =
   | { kind: 'pierce'; maxThickness: number; maxPierce: number; holeRadius: number }
   /** Nổ không khoét mà ĐẮP đất: `count` hình tròn bán kính `radius` xếp chồng thẳng đứng từ điểm nổ lên trên (bỏ qua nếu chạm xe). */
   | { kind: 'build'; radius: number; count: number }
+  /** Nổ như đạn thường, rồi `delay` s sau vệ tinh bắn `count` tia laser nhắm vào điểm nổ: tia giữa đúng điểm nổ, các tia sau lần lượt nhắm lệch
+   *  ±`spacing` px theo phương ngang (phải, trái, phải xa...), cách nhau `interval` s. `from: 'sky'` = vệ tinh ở tận trời, tia thẳng đứng xuống;
+   *  `from: 'shooter'` = vệ tinh ở trên đầu xe bắn `altitude` px (chỗ vệ tinh luôn bay theo xe), tia chéo từ đó tới điểm nhắm. Mỗi tia rộng 2×`halfWidth` px, đi thẳng qua điểm nhắm
+   *  và đốt xuyên `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), gây `damage` lên mọi xe nằm trên tia (giảm theo khoảng cách tới tia). */
+  | { kind: 'satellite'; from: 'sky' | 'shooter'; altitude: number; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number }
   /** Item Dịch chuyển: chạm đất/xe thì không nổ, chỉ báo event `teleport` (chỗ đứng mới của người bắn). */
   | { kind: 'teleport' }
 

@@ -28,6 +28,8 @@ interface Shell {
 
 interface Pending { tStart: number; angleDeg: number }
 interface Bolt { t: number; x: number; y: number; def: { damage: number; blastRadius: number; carveRadius: number } }
+type SatelliteBeh = Extract<ShotDef['behavior'], { kind: 'satellite' }>
+interface Beam { t: number; x: number; y: number; def: SatelliteBeh }
 
 const sanRange: AimRange = { min: 0, max: 90 }
 
@@ -65,6 +67,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const shells: Shell[] = []
   const pending: Pending[] = []
   const bolts: Bolt[] = []
+  const beams: Beam[] = []
 
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
@@ -103,6 +106,65 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     blast(x, y, t, def.blastRadius, beh.kind === 'build' ? 0 : def.carveRadius, def.damage, true)
     if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
     if (beh.kind === 'build') build(x, y, t, beh)
+    if (beh.kind === 'satellite') {
+      for (let k = 0; k < beh.count; k++) {
+        const off = k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
+        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off, y, def: beh })
+      }
+      beams.sort((a, b) => a.t - b.t)
+    }
+  }
+
+  /** Tia laser vệ tinh (Cú Thiên Văn) nhắm (ax, ay): từ tận trời thẳng xuống, hoặc từ trên đầu xe bắn chéo tới. Tia đi thẳng qua điểm nhắm, đốt xuyên
+   *  `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), trúng mọi xe nằm trên đoạn tia. */
+  const beamRay = (ax: number, ay: number, t: number, b: SatelliteBeh): void => {
+    const sky = b.from === 'sky'
+    const hx = shooter.x, hy = shooter.y - b.altitude      // chỗ vệ tinh bay theo trên đầu xe (báo cho client trong event)
+    let x0 = ax, y0 = 0, dx = 0, dy = 1
+    if (!sky) {
+      x0 = hx; y0 = hy
+      const n = Math.hypot(ax - x0, ay - y0) || 1
+      dx = (ax - x0) / n; dy = (ay - y0) / n
+    }
+    // đi từng px dọc tia (từ trời thì bắt đầu ở mép trên bản đồ) tới khi đủ `depth` px đất hoặc ra khỏi bản đồ
+    let px = x0, py = y0, topX = -1, topY = -1, solid = 0
+    const maxSteps = mask.width + mask.height * 2
+    for (let i = 0; i < maxSteps; i++) {
+      if (px < 0 || px >= mask.width || py >= mask.height || (py < 0 && dy <= 0)) break
+      if (mask.isSolid(px, py)) {
+        if (topX < 0) { topX = px; topY = py }
+        if (++solid >= b.depth) break
+      }
+      px += dx; py += dy
+    }
+    const hitGround = solid >= b.depth
+    events.push({ t, kind: 'beam', x: px, y: py, w: b.halfWidth, sky, x0: hx, y0: hy })
+    if (topX >= 0) {
+      const len = Math.hypot(px - topX, py - topY), step = Math.max(3, b.halfWidth / 2)
+      for (let d = 0; ; d += step) {
+        const k = Math.min(d, len)
+        const cx = topX + dx * k, cy = topY + dy * k
+        mask.carveCircle(cx, cy, b.halfWidth)
+        events.push({ t, kind: 'carve', x: cx, y: cy, r: b.halfWidth })
+        if (k >= len) break
+      }
+    }
+    if (hitGround) events.push({ t, kind: 'explode', x: px, y: py, r: b.halfWidth * 1.6 })
+    // trúng xe nằm trên đoạn tia (từ trời thì đoạn bắt đầu từ rất cao)
+    const ox = x0, oy = sky ? -1e6 : y0
+    const segX = px - ox, segY = py - oy, seg2 = segX * segX + segY * segY || 1
+    for (const v of input.vehicles) {
+      const cur = hp.get(v.id) ?? 0
+      if (cur <= 0) continue
+      const u = Math.max(0, Math.min(1, ((v.x - ox) * segX + (v.y - oy) * segY) / seg2))
+      const d = Math.max(0, Math.hypot(v.x - (ox + segX * u), v.y - (oy + segY * u)) - v.radius)
+      if (d >= b.halfWidth) continue
+      const amount = Math.round(b.damage * (1 - d / b.halfWidth) * (1 - v.armor))
+      if (amount <= 0) continue
+      const after = Math.max(0, cur - amount)
+      hp.set(v.id, after)
+      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+    }
   }
 
   /** Đắp tường đất: bỏ qua nếu chạm bất kỳ xe nào (tránh chôn xe), để server và client ra cùng mask. */
@@ -278,6 +340,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       events.push({ t, kind: 'bolt', x: b.x, y: b.y })
       blast(b.x, b.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
     }
+    while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamRay(b.x, b.y, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp
       const s = shells[k]!
       if (!s.alive) continue
@@ -285,7 +348,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       else if (s.mode === 'roll') stepRoll(s, t, beh as Extract<ShotDef['behavior'], { kind: 'roller' }>)
       else stepFly(s, t)
     }
-    if (!pending.length && !bolts.length && shells.every(s => !s.alive)) break
+    if (!pending.length && !bolts.length && !beams.length && shells.every(s => !s.alive)) break
   }
   // hết giờ mô phỏng: đạn còn bay coi như ra ngoài
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }

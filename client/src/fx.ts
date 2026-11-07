@@ -3,6 +3,10 @@ import type { ShotArt } from './shotArt'
 
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
 interface Bolt { g: Graphics; age: number }
+/** Vệ tinh Cú Thiên Văn. `home` = vệ tinh của một xe (luôn bay theo trên đầu xe, `hx`/`hy`), không thì vệ tinh tạm (hiện ra rồi bay mất).
+ *  `busy`: đang ngắm/bắn (bay tới `tx`/`ty`, xoay mắt kính về `ax`/`ay`); `beam` < 0 = đang ngắm; `idle` = thời gian từ lúc tia cuối tắt. */
+interface Sat { x: number; y: number; tx: number; ty: number; ax: number; ay: number; rot: number; w: number; age: number; charge: number; beam: number; idle: number; spr: Sprite | null
+  home: boolean; hx: number; hy: number; facing: 1 | -1; busy: boolean; seen: number; sky: boolean }
 
 /** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
 interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean
@@ -20,11 +24,19 @@ const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
 const SMOKE_RISE = 40       // px/s khói bay lên
 const DIRT_FALLBACK = 0x8a5a36
+/** Vệ tinh: tia từ trời thì bay ở độ cao SAT_ALT px trên điểm laser chạm (tia chéo thì ở chỗ shared/ báo), hiện ra SAT_LEAD_S s trước tia, tia sáng BEAM_S s, tắt tia SAT_OUT_S s sau thì bay mất. */
+const SAT_ALT = 300, BEAM_S = 0.45, SAT_OUT_S = 0.35, SAT_SIZE = 96
+/** Lúc rảnh vệ tinh nghiêng mắt kính chéo xuống phía trước xe SAT_IDLE_TILT rad; bay theo xe với tốc độ bám SAT_FOLLOW (1/s). */
+const SAT_IDLE_TILT = Math.PI / 6, SAT_FOLLOW = 6
+/** Mắt kính trên ảnh vệ tinh nằm dưới tâm ảnh SAT_LENS × chiều cao ảnh (tia laser bắt đầu từ đó). */
+const SAT_LENS = 0.33
+export const SAT_LEAD_S = 0.45
+const BEAM_OUTER = 0x6fe3ff, BEAM_CORE = 0xf4fdff
 
 /** Ảnh hiệu ứng vẽ tay (plan/14-prompt-no-khoi.md, assets/fx/). Thiếu ảnh nào thì phần đó vẽ bằng code. */
 const ART = {
   fireball: null as Texture | null, shockwave: null as Texture | null, impact: null as Texture | null,
-  muzzle: null as Texture | null, spark: null as Texture | null,
+  muzzle: null as Texture | null, spark: null as Texture | null, satellite: null as Texture | null,
   smoke: [] as Texture[], dirt: [] as Texture[], bits: [] as Texture[],
 }
 function loadArt(file: string, done: (t: Texture) => void): void {
@@ -37,6 +49,7 @@ loadArt('shockwave.png', t => { ART.shockwave = t })
 loadArt('hit-impact.png', t => { ART.impact = t })
 loadArt('muzzle-flash.png', t => { ART.muzzle = t })
 loadArt('spark.png', t => { ART.spark = t })
+loadArt('satellite.png', t => { ART.satellite = t })
 for (let i = 0; i < 4; i++) loadArt(`smoke-${i}.png`, t => { ART.smoke.push(t) })
 for (let i = 0; i < 8; i++) loadArt(`dirt-${i}.png`, t => { ART.dirt.push(t) })
 for (let i = 0; i < 8; i++) loadArt(`bits-${i}.png`, t => { ART.bits.push(t) })
@@ -84,6 +97,9 @@ export class Fx {
   private readonly parts: Particle[] = []
   private nextPart = 0
   private bolts: Bolt[] = []
+  private sats: Sat[] = []
+  /** Vệ tinh bay theo từng xe Cú Thiên Văn (theo id người chơi). */
+  private readonly homeSats = new Map<number, Sat>()
   private shake = 0
   private readonly shells: Graphics[] = []
   private readonly shellSprites: Sprite[] = []
@@ -261,6 +277,111 @@ export class Fx {
     this.shake = Math.max(this.shake, 6)
   }
 
+  /** Vệ tinh của xe `id` luôn bay theo ở (x, y) (gọi mỗi frame khi xe còn sống; ngừng gọi thì vệ tinh biến mất). */
+  satHome(id: number, x: number, y: number, facing: 1 | -1): void {
+    let s = this.homeSats.get(id)
+    if (!s) {
+      s = this.newSat(x, y, x, y + SAT_ALT, 0)
+      s.home = true; s.age = 1
+      this.homeSats.set(id, s)
+    }
+    s.hx = x; s.hy = y; s.facing = facing; s.seen = 0
+  }
+
+  private newSat(sx: number, sy: number, x: number, y: number, w: number): Sat {
+    const s: Sat = { x: sx, y: sy, tx: sx, ty: sy, ax: x, ay: y, rot: 0, w, age: 0, charge: 0, beam: -1, idle: 0, spr: null,
+      home: false, hx: sx, hy: sy, facing: 1, busy: false, seen: 0, sky: false }
+    if (ART.satellite) { s.spr = new Sprite(ART.satellite); s.spr.anchor.set(0.5); s.spr.scale.set(SAT_SIZE / ART.satellite.width); this.topArt.addChild(s.spr) }
+    this.sats.push(s)
+    return s
+  }
+
+  /** Vệ tinh nào bắn tia này: vệ tinh bay theo xe gần (x0, y0) nhất (chỗ vệ tinh trên đầu xe bắn), không có thì vệ tinh tạm đang bận gần đó. */
+  private pickSat(x: number, y: number, x0: number, y0: number): Sat | undefined {
+    let s: Sat | undefined, best = 200
+    for (const q of this.homeSats.values()) { const d = Math.hypot(q.hx - x0, q.hy - y0); if (d < best) { best = d; s = q } }
+    if (!s) for (const q of this.sats) if (!q.home && q.idle < SAT_OUT_S && Math.hypot(q.ax - x, q.ay - y) < 200) s = q
+    return s
+  }
+
+  /** Vệ tinh chuẩn bị bắn laser tới (x, y): tia chéo (đạn 1, 2) thì ở yên trên đầu xe (x0, y0) và xoay mắt kính về điểm nhắm;
+   *  tia từ trời (SS) thì bay tới SAT_ALT px phía trên điểm nhắm và xoay ngang. Gọi trước tia SAT_LEAD_S s. */
+  satCharge(x: number, y: number, w: number, sky: boolean, x0: number, y0: number): void {
+    const sx = sky ? x : x0, sy = sky ? y - SAT_ALT : y0
+    const s = this.pickSat(x, y, x0, y0) ?? this.newSat(sx, sy, x, y, w)
+    s.tx = sx; s.ty = sy; s.ax = x; s.ay = y; s.w = w; s.sky = sky; s.charge = 0; s.beam = -1; s.idle = 0; s.busy = true
+  }
+
+  /** Tia laser vệ tinh bắn tới (x, y), nửa bề rộng `w` (tham số như satCharge). */
+  beam(x: number, y: number, w: number, sky: boolean, x0: number, y0: number): void {
+    let s = this.pickSat(x, y, x0, y0)
+    if (!s) { this.satCharge(x, y, w, sky, x0, y0); s = this.pickSat(x, y, x0, y0)! }
+    s.ax = x; s.ay = y; s.w = w; s.sky = sky; s.beam = 0; s.idle = 0; s.busy = true
+    this.shake = Math.max(this.shake, 4 + w / 5)
+    for (let i = 0; i < 10 + w; i++) {
+      const a = -Math.PI * rnd(0.05, 0.95), sp = rnd(160, 420)
+      this.spawn(P_SPARK, x + rnd(-w, w) * 0.5, y, Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.25, 0.5), rnd(1.2, 2.2), Math.random() < 0.5 ? BEAM_OUTER : BEAM_CORE)
+    }
+  }
+
+  /** Dải sáng thẳng từ (x0, y0) tới (x1, y1), rộng `ww` (vẽ đường kín, không cấp phát mảng). */
+  private beamQuad(x0: number, y0: number, x1: number, y1: number, ww: number, color: number, alpha: number): void {
+    const n = Math.hypot(x1 - x0, y1 - y0) || 1, nx = -(y1 - y0) / n * ww / 2, ny = (x1 - x0) / n * ww / 2
+    this.glow.moveTo(x0 + nx, y0 + ny).lineTo(x1 + nx, y1 + ny).lineTo(x1 - nx, y1 - ny).lineTo(x0 - nx, y0 - ny).closePath().fill({ color, alpha })
+  }
+
+  /** Vẽ vệ tinh + tia laser (gọi trong update, vẽ lên lớp đã clear đầu frame). */
+  private drawSats(dt: number): void {
+    const fire = this.fire, glow = this.glow
+    for (let i = this.sats.length - 1; i >= 0; i--) {
+      const s = this.sats[i]!
+      s.age += dt
+      s.charge += dt
+      if (s.beam >= 0) {
+        s.beam += dt
+        if (s.beam >= BEAM_S) s.idle += dt
+      }
+      if (s.busy && s.idle >= SAT_OUT_S) { s.busy = false; s.beam = -1 }
+      if (s.home) {
+        s.seen += dt
+        if (s.seen > 0.3) { s.spr?.destroy(); this.sats.splice(i, 1); for (const [id, q] of this.homeSats) if (q === s) this.homeSats.delete(id); continue }
+        if (!s.busy) { s.tx = s.hx; s.ty = s.hy }
+      } else if (!s.busy) { s.spr?.destroy(); this.sats.splice(i, 1); continue }
+      const k = Math.min(1, dt * (s.busy ? 10 : SAT_FOLLOW))
+      s.x += (s.tx - s.x) * k
+      s.y += (s.ty - s.y) * k
+      const alpha = s.home ? 1 : Math.min(1, s.age / 0.2) * (1 - s.idle / SAT_OUT_S)
+      const by = s.y + Math.sin(s.age * 4) * 3 - (s.home ? 0 : s.idle * 220)    // nhấp nhô; vệ tinh tạm xong thì bay vút lên
+      // hướng mắt kính (phía dưới ảnh): rảnh thì chéo xuống phía trước xe, tia từ trời thì nằm ngang (mắt kính chĩa thẳng xuống), tia chéo thì theo tia
+      const want = !s.busy ? -s.facing * SAT_IDLE_TILT : s.sky ? 0 : Math.atan2(s.ay - by, s.ax - s.x) - Math.PI / 2
+      s.rot += (want - s.rot) * Math.min(1, dt * 12)
+      // thân vệ tinh (ảnh assets/fx/satellite.png nếu có, không thì vẽ khối)
+      if (s.spr) { s.spr.position.set(s.x, by); s.spr.rotation = s.rot; s.spr.alpha = alpha }
+      else {
+        fire.rect(s.x - 34, by - 5, 22, 10).fill({ color: 0x3f6fb5, alpha }).stroke({ color: 0x2a2a3a, width: 1.5, alpha })
+        fire.rect(s.x + 12, by - 5, 22, 10).fill({ color: 0x3f6fb5, alpha }).stroke({ color: 0x2a2a3a, width: 1.5, alpha })
+        fire.circle(s.x, by, 12).fill({ color: 0xf6e7c8, alpha }).stroke({ color: 0x5a3d22, width: 2, alpha })
+      }
+      const lens = s.spr ? s.spr.texture.height * s.spr.scale.y * SAT_LENS : 8
+      const lx = s.x - Math.sin(s.rot) * lens, ly = by + Math.cos(s.rot) * lens
+      if (!s.busy) continue
+      // mắt kính sáng dần khi ngắm + vạch ngắm mờ tới điểm nhắm
+      const ch = Math.min(1, s.charge / SAT_LEAD_S)
+      glow.circle(lx, ly, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
+      if (s.beam < 0) this.beamQuad(lx, ly, s.ax, s.ay, 2, BEAM_OUTER, 0.25 * ch * alpha)
+      // tia laser: bùng to nhanh rồi thu nhỏ dần
+      if (s.beam >= 0 && s.beam < BEAM_S) {
+        const kb = s.beam / BEAM_S
+        const wk = kb < 0.15 ? kb / 0.15 : 1 - ((kb - 0.15) / 0.85) * 0.8
+        const ww = 2 * s.w * wk * (0.92 + 0.08 * Math.sin(s.beam * 80))
+        this.beamQuad(lx, ly, s.ax, s.ay, ww * 1.6, BEAM_OUTER, 0.25 * (1 - kb))
+        this.beamQuad(lx, ly, s.ax, s.ay, ww, BEAM_OUTER, 0.6 * (1 - kb * 0.5))
+        this.beamQuad(lx, ly, s.ax, s.ay, ww * 0.36, BEAM_CORE, 0.95)
+        glow.circle(s.ax, s.ay, s.w * 1.4 * wk).fill({ color: BEAM_CORE, alpha: 0.7 * (1 - kb) })
+      }
+    }
+  }
+
   update(dt: number): void {
     const back = this.back, fire = this.fire, glow = this.glow
     back.clear()
@@ -334,6 +455,7 @@ export class Fx {
         default: break
       }
     }
+    this.drawSats(dt)
     for (let i = this.bolts.length - 1; i >= 0; i--) {
       const b = this.bolts[i]!
       b.age += dt
@@ -408,6 +530,7 @@ export class Fx {
   /** Còn phần chính của vụ nổ / tia sét đang chạy (khói, mảnh đất bay tiếp không tính, để không làm chậm lượt). */
   get busy(): boolean {
     for (const b of this.booms) if (b.age < BOOM_S) return true
+    for (const s of this.sats) if (s.beam >= 0 && s.beam < BEAM_S) return true
     return this.bolts.length > 0
   }
 }

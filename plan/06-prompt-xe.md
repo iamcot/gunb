@@ -81,6 +81,10 @@ Tính cách: ông lão điềm đạm, vững như núi.
 
 > Tranh minh hoạ game 2D phong cách anime vẽ tay như phim hoạt hình Nhật, màu nước mềm và trong trẻo, đổ bóng cel hai tầng, nét viền nâu sẫm rõ ràng và đủ dày để vẫn nhìn rõ khi thu nhỏ, ánh nắng ấm từ góc trên bên trái, bảng màu xanh trời #6FB2E8, xanh cỏ #46A843, nâu đất #7A5233, kem #F6E7C8, san hô #FF7A59. Xe là một linh vật đáng yêu tỉ lệ chibi, dáng khối lớn rõ ràng dễ nhận từ xa. Một chiếc xe pháo nhỏ hình **con rùa già cõng toà lâu đài**: mai rùa là một thành đá nhỏ có tường răng cưa, cửa sổ vòm, rêu và cỏ xanh mọc trên đỉnh, vài bông hoa nhỏ; đầu rùa già hiền từ có râu bạc dài và lông mày rậm, bốn chân to chắc như cột. Ở cổng lâu đài phía trước là buồng lái hở với ghế đá nhỏ **để trống**. **Vũ khí là tháp canh của lâu đài**: tháp tròn trên đỉnh mai là một máy bắn đá, cánh tay gỗ to có gầu đựng tảng đá, gắn trên khớp xoay tròn, chĩa chéo lên trời về phía trước, không đè lên thân. Phi công điều khiển bằng cần gạt có xích nối lên tháp. Dáng to bè vững chãi nhưng vẫn dễ thương như đồ chơi, vừa khung 4:3. Tỉ lệ: bộ phận vũ khí to, hầm hố, là điểm nhấn số một của hình, dài gần bằng thân xe; chĩa chéo lên về phía trước bên phải. Hình 2D phẳng, nhìn ngang đúng một bên, quay mặt sang phải, không phối cảnh, không 3D, không pixel art, không ô vuông pixel, nền trắng trơn, không bóng đổ, không chữ, không logo.
 
+## Cú Thiên Văn (`cu-thien-van`) – gọi vệ tinh bắn laser
+
+Prompt xe, đạn, vệ tinh và âm thanh gom riêng ở `plan/15-prompt-cu-thien-van.md`.
+
 ## 9. Long Ngư Cơ (`long-ngu-co`, ẩn) – phun lửa
 
 Tính cách: kiêu hãnh, bốc lửa, hiếm gặp.

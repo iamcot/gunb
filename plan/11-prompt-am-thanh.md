@@ -160,6 +160,11 @@ Mỗi viên đạn có 2 tiếng: **fire** (lúc bắn ra khỏi nòng) và **bo
 
 ---
 
+### Cú Thiên Văn
+Xem `plan/15-prompt-cu-thien-van.md` mục 4 (có thêm tiếng `beam` cho tia laser vệ tinh).
+
+---
+
 ## D. Ráp vào game (Claude làm)
 
 - Nhạc sảnh/trận chung: `assets/audio/lobby.ogg`, `assets/audio/battle.ogg`; khai báo trong `assets/audio/sounds.json`. Nhạc riêng bản đồ vẫn lấy từ `music` của `map.json` (ưu tiên hơn nhạc trận chung).

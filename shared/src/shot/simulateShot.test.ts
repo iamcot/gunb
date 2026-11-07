@@ -143,13 +143,13 @@ describe('simulateShot: behavior', () => {
       expect(d[0]!.amount).toBeGreaterThan(beh.damage * 0.8)
     })
 
-    it('đạn 2: hai tia chéo đi từ hai phía, rơi hai bên chỗ đạn chạm; mỗi xe chỉ bị dư chấn một lần', () => {
+    it('đạn 2: hai tia chéo đi từ hai phía, cùng rơi vào chỗ đạn chạm; mỗi xe chỉ bị dư chấn một lần', () => {
       const ex = landing(1)
       const r = fireBo(1, [veh(2, ex.x, { hp: 5000 })])
       const bs = bolts(r)
       expect(bs).toHaveLength(2)
       expect(bs.some(b => b.x0! < b.x - 50) && bs.some(b => b.x0! > b.x + 50)).toBe(true)
-      expect(Math.abs(bs[0]!.x - bs[1]!.x)).toBeGreaterThan(100)
+      expect(Math.abs(bs[0]!.x - bs[1]!.x)).toBeLessThan(20)   // hai tia chụm vào một điểm
       const beh = t.mobiles['bo-loi']!.shots[1].behavior
       if (beh.kind !== 'lightning' || !beh.aftershock) throw new Error()
       const d = damages(r, 2)

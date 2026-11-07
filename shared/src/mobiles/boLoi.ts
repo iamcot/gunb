@@ -9,7 +9,7 @@ export const BO_LOI: MobileDef = {
     { name: 'Sét giáng', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 30, carveRadius: 0, damage: 0, delay: 275,
       behavior: { kind: 'lightning', delay: 0.35, damage: 340, blastRadius: 80, carveRadius: 40, aftershock: { delay: 0.7, damage: 80 } } },
     { name: 'Sét chéo', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 30, carveRadius: 0, damage: 0, delay: 330,
-      behavior: { kind: 'lightning', delay: 0.35, damage: 240, blastRadius: 70, carveRadius: 32, angles: [-40, 40], spread: 70, aftershock: { delay: 0.7, damage: 80 } } },
+      behavior: { kind: 'lightning', delay: 0.35, damage: 170, blastRadius: 80, carveRadius: 40, angles: [-40, 40], aftershock: { delay: 0.7, damage: 80 } } },
     { name: 'Sét vùng', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 140, carveRadius: 50, damage: 100, delay: 880,
       behavior: { kind: 'lightning', delay: 0.4, damage: 0, blastRadius: 0, carveRadius: 0, angles: [], area: { radius: 500, damage: 420, blastRadius: 60, carveRadius: 30, stagger: 0.2 } } },
   ],

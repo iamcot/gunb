@@ -57,7 +57,7 @@
 
 - [x] Cú Thiên Văn đạn 1, 2: vệ tinh hiện trên đầu xe bắn (`from: 'shooter'`, `altitude` 260) và bắn tia chéo mảnh tới điểm nhắm, đốt xuyên đất dọc theo tia; SS giữ tia thẳng đứng từ trời (`from: 'sky'`). Event `beam` thêm `sky`, `x0`, `y0`. Cân bằng chạy lại: Cú Thiên Văn 35% (trước 43%)
 
-- [x] Cú Thiên Văn: vệ tinh luôn bay theo xe (Fx.satHome, gọi từ VehicleViews theo `altitude` của đạn satellite = 170 px), lúc rảnh nghiêng chéo về phía trước; đạn 1, 2 xoay mắt kính theo tia chéo; SS bay tới trên điểm chạm, xoay ngang, bắn thẳng rồi bay về. Cầu sáng không gây sát thương, không khoét (damage/carve 0), sát thương dồn vào laser (42 / 26×3 / 90). Cân bằng: 41%
+- [x] Cú Thiên Văn: vệ tinh luôn bay theo xe (Fx.satHome, gọi từ VehicleViews theo `altitude` của đạn satellite = 400 px, trước là 170 nhưng thấp quá thì tia gần như quét ngang), lúc rảnh nghiêng chéo về phía trước; đạn 1, 2 xoay mắt kính theo tia chéo; SS bay tới trên điểm chạm, xoay ngang, bắn thẳng rồi bay về. Cầu sáng không gây sát thương, không khoét (damage/carve 0), sát thương dồn vào laser (42 / 26×3 / 90). Cân bằng: 41%
 
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.

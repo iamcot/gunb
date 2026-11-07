@@ -104,7 +104,7 @@ describe('Cú Thiên Văn (satellite)', () => {
     const e = b[0]!
     expect(e.sky).toBe(false)
     expect(e.x0).toBe(400)                     // ngay trên đầu xe bắn
-    expect(e.y0).toBe(G - 18 - 170)           // vệ tinh bay theo cao 170 px trên tâm xe
+    expect(e.y0).toBe(G - 18 - 400)           // vệ tinh bay theo cao 400 px trên tâm xe
     expect(e.t - ex.t).toBeCloseTo(0.5, 1)
     // điểm cuối nằm trên đường thẳng (x0, y0) → điểm nổ, phía sau điểm nổ
     const cross = (ex.x - e.x0) * (e.y - e.y0) - (ex.y - e.y0) * (e.x - e.x0)

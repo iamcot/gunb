@@ -7,7 +7,7 @@ Gameplay đã chạy được khi chưa có ảnh: xe vẽ bằng hình khối, 
 
 ## Thông số (shared/src/mobiles/cuThienVan.ts)
 
-Vệ tinh **luôn bay theo** trên đầu xe (cao 170 px, nghiêng chéo về phía trước). Cầu sáng **không gây sát thương, không khoét đất**, chỉ đánh dấu; sát thương đến hoàn toàn từ laser.
+Vệ tinh **luôn bay theo** trên đầu xe (cao 400 px, nghiêng chéo về phía trước). Cầu sáng **không gây sát thương, không khoét đất**, chỉ đánh dấu; sát thương đến hoàn toàn từ laser.
 
 | | Đạn 1 – Đốm sáng | Đạn 2 – Ba tia | SS – Cột sáng |
 |---|---|---|---|

@@ -214,7 +214,7 @@ export class Fx {
     const ga = grown ? a!.grow! : null
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
     this.shellRot[i] = rot
-    this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, a?.length ?? 0)
+    this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, (a?.length ?? 0) * (a?.streakScale ?? 1))
     if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail)
     // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
     const under = visible && this.shellDig[i] === true

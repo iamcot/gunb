@@ -103,3 +103,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Đạn SS dùng ảnh assets/fx/ss-flame.png (quầng lửa + cung gió) sau đạn, 2 lớp co giãn/lắc lệch pha cho động đậy; bỏ quầng/cung vẽ bằng code.
 - Quầng lửa SS chỉ còn cho Ốc và Chũi (bỏ streak ở xe khác); xe có quầng lửa bỏ lửa đuôi, giữ khói. Nhím Chùm: cả 3 đạn có khói + lửa đuôi như đạn Ốc.
 - Hiệu ứng SS riêng cho 6 xe: Ốc (xoắn ốc), Cú Thiên Văn (sao tím), Nhím (gai xanh), Diều (lông vàng), Bọ Lôi (sét xanh), Chũi (lửa cam): assets/mobiles/<id>/ss-fx.png, khai báo streak trong shots.json; khói đuôi chỉ khi trail:smoke. Cua Lăn, Sứa Đèn, Rùa Thành chưa có ảnh.
+- Nhím SS: thu ảnh hiệu ứng 0,5 (streakScale) và bỏ khói đuôi (nhiều quả chồng dày).

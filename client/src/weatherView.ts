@@ -1,4 +1,4 @@
-import { Container, Graphics } from 'pixi.js'
+import { Container, Graphics, Texture, TilingSprite } from 'pixi.js'
 import { WEATHER_KINDS, WEATHER_NAMES, type Weather, type WeatherKind } from '@gunb/shared'
 
 const DESC: Record<WeatherKind, string> = {
@@ -29,6 +29,19 @@ export function weatherIconHtml(kind: WeatherKind): string {
   return art ? `<img src="${art}" alt="">` : ICON_SVG[kind]
 }
 
+/** Ảnh hiệu ứng trong bản đồ (plan/13-prompt-thoi-tiet.md): dải lặp dọc cho cột lốc / gương nước; chưa có/chưa tải xong thì vẽ bằng code.
+ *  `width` = bề ngang ảnh so với vùng ảnh hưởng, `speed` = px/s (âm = trôi lên). */
+interface StripDef { url: string; width: number; speed: number; alpha: number; tex: Texture | null }
+const STRIPS: Partial<Record<WeatherKind, StripDef>> = {
+  whirl: { url: '/ui/weather/whirl-strip.png', width: 1.5, speed: -220, alpha: 0.85, tex: null },
+  mirror: { url: '/ui/weather/mirror-strip.png', width: 1.15, speed: 90, alpha: 0.7, tex: null },
+}
+for (const d of Object.values(STRIPS)) {
+  const img = new Image()
+  img.onload = () => { d.tex = Texture.from(img) }
+  img.src = d.url
+}
+
 const ORANGE = 0xfb923c, PURPLE = 0xa78bfa
 const LIGHTNING_EVERY = 2.4   // s giữa hai tia sét trang trí của Mây giông
 const LIGHTNING_LEN = 0.28    // s mỗi lần loé
@@ -47,6 +60,7 @@ export class WeatherView {
   readonly container = new Container()
   private readonly g = new Graphics()
   private readonly label: HTMLElement
+  private stripArt: TilingSprite | null = null
   private w: Weather | null = null
   private t = 0
   private lastKey = ''
@@ -77,13 +91,34 @@ export class WeatherView {
     this.t += dt
     const g = this.g, w = this.w
     g.clear()
+    if (this.stripArt) this.stripArt.visible = false
     if (!w) return
+    const strip = STRIPS[w.kind]
+    if (strip?.tex) { this.drawStripArt(w, strip, strip.tex); return }
     switch (w.kind) {
       case 'whirl': this.drawWhirl(g, w); break
       case 'storm': this.drawStorm(g, w); break
       case 'mirror': this.drawMirror(g, w); break
       case 'portal': this.drawPortal(g, w.x, w.y, w.hw, ORANGE, 1); this.drawPortal(g, w.x2, w.y2, w.hw, PURPLE, -1); this.drawLink(g, w); break
     }
+  }
+
+  /** Cột lốc / gương nước bằng ảnh: dải lặp dọc phủ từ trên mép bản đồ tới đáy, trôi theo `speed`. */
+  private drawStripArt(w: Weather, d: StripDef, tex: Texture): void {
+    if (!this.stripArt) {
+      this.stripArt = new TilingSprite({ texture: tex, width: 1, height: 1 })
+      this.container.addChildAt(this.stripArt, 0)
+    }
+    const a = this.stripArt, H = this.mapH * (1 + SKY_ABOVE), top = -this.mapH * SKY_ABOVE
+    const width = w.hw * 2 * d.width, k = width / tex.width, tileH = tex.height * k
+    if (a.texture !== tex) a.texture = tex
+    a.visible = true
+    a.alpha = d.alpha
+    a.position.set(w.x - width / 2, top)
+    a.width = width; a.height = H
+    a.tileScale.set(k, k)
+    a.tilePosition.set(0, ((this.t * d.speed) % tileH + tileH) % tileH)
+    this.g.rect(w.x - w.hw, top, w.hw * 2, H).fill({ color: 0xffffff, alpha: 0.06 })   // vùng ảnh hưởng thật
   }
 
   /** Cột lốc: cột sáng + phễu xoắn (vòng elip trôi lên, rộng dần lên trên) + mũi tên đi lên + lá cuốn quanh. */

@@ -1165,5 +1165,21 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/weather/whirl-strip.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/13-prompt-thoi-tiet.md (weather-whirl-strip.png, 724×2172)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi màu viền mờ bị hắt đỏ/vàng thành sáng bạc hà, trộn 160 px đầu–cuối để lặp dọc liền mạch, thu về rộng 256 px"
+  },
+  {
+    "file": "ui/weather/mirror-strip.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/13-prompt-thoi-tiet.md (weather-mirror-strip.png, 724×2172)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi màu viền mờ bị hắt đỏ thành xanh nhạt, trộn 160 px đầu–cuối để lặp dọc liền mạch, thu về rộng 256 px"
   }
 ]

@@ -22,6 +22,8 @@ export type Behavior =
   | { kind: 'pierce'; maxThickness: number; maxPierce: number; holeRadius: number }
   /** Nổ không khoét mà ĐẮP đất: `count` hình tròn bán kính `radius` xếp chồng thẳng đứng từ điểm nổ lên trên (bỏ qua nếu chạm xe). */
   | { kind: 'build'; radius: number; count: number }
+  /** Như `basic`, nhưng bay đủ `afterS` s thì "lớn lên": khi nổ nhân bán kính nổ / hố / sát thương (chưa đủ giờ thì nổ như thông số gốc của đạn). */
+  | { kind: 'airGrow'; afterS: number; blastMul: number; carveMul: number; damageMul: number }
   /** Item Dịch chuyển: chạm đất/xe thì không nổ, chỉ báo event `teleport` (chỗ đứng mới của người bắn). */
   | { kind: 'teleport' }
 

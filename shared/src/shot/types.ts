@@ -43,6 +43,7 @@ export type ShotEvent =
   | { t: number; kind: 'out'; x: number; y: number }
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)
   | { t: number; kind: 'bolt'; x: number; y: number }      // tia sét giáng xuống (hiệu ứng; vụ nổ đi kèm có event explode riêng)
+  | { t: number; kind: 'grow'; shell: number; x: number; y: number }    // đạn airGrow bay đủ lâu và lớn lên (hiệu ứng; `shell` = chỉ số trong `paths`)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }
   | { t: number; kind: 'teleport'; x: number; y: number }   // quả dịch chuyển chạm: người bắn chuyển tới đây
 

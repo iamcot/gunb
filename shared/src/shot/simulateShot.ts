@@ -22,6 +22,7 @@ interface Shell {
   sinceCarve: number
   samples: number
   alive: boolean
+  grown: boolean          // airGrow: đã bay đủ lâu
   pierced: number         // số lần đã xuyên đất (pierce)
   tp: number              // lần cuối qua cổng (portal)
 }
@@ -69,7 +70,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, pierced: 0, tp: -1,
+      dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1,
     }
     shells.push(s)
     return s
@@ -100,7 +101,8 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     s.alive = false
     s.path.push(t, x, y)
     if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
-    blast(x, y, t, def.blastRadius, beh.kind === 'build' ? 0 : def.carveRadius, def.damage, true)
+    const g = beh.kind === 'airGrow' && s.grown ? beh : null
+    blast(x, y, t, def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : def.carveRadius * (g?.carveMul ?? 1), def.damage * (g?.damageMul ?? 1), true)
     if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
     if (beh.kind === 'build') build(x, y, t, beh)
   }
@@ -215,6 +217,10 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     }
     const r = stepProjectile(s.p, sax, say, DT_SIM, mask)
     s.p.t = t
+    if (beh.kind === 'airGrow' && !s.grown && t - s.tStart >= beh.afterS) {
+      s.grown = true
+      events.push({ t, kind: 'grow', shell: shells.indexOf(s), x: s.p.x, y: s.p.y })
+    }
     if (r === FLYING && W) {
       if (W.kind === 'storm' && !stormUsed && Math.abs(s.p.x - W.x) <= W.hw && Math.abs(s.p.y - W.y) <= W.hh) {
         const gy = groundBelow(s.p.x, s.p.y, mask.height)

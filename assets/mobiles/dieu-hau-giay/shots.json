@@ -16,7 +16,11 @@
       "file": "shot-3.png",
       "length": 34,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg"
+      "boom": "boom-3.ogg",
+      "grow": {
+        "scale": 1.3,
+        "tint": "#ffd24a"
+      }
     }
   ]
 }

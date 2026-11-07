@@ -62,7 +62,11 @@ export class PracticeMode implements Mode {
     this.lastExplode = ex && ex.kind === 'explode' ? `${ex.x.toFixed(0)}, ${ex.y.toFixed(0)}` : '— (ra ngoài)'
     aim.locked = true
     this.playback = new ShotPlayback(result, ctx.view, ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => practice.applyDamage(id, hpAfter),
+      onDamage: (id, amount, hpAfter) => {
+        practice.applyDamage(id, hpAfter)
+        const v = practice.vehicles.find(t => t.id === id)
+        if (v) ctx.fx.damageText(v.x, v.y - v.radius - 36, amount)
+      },
     }, getShotArt(MOBILE_IDS[this.mobileIdx]!, slot), getShotSfx(MOBILE_IDS[this.mobileIdx]!, slot))
   }
 

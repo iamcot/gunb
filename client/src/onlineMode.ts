@@ -110,7 +110,7 @@ export class OnlineMode implements Mode {
     const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
+      onDamage: (id, amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id); this.damagePop(id, amount) },
     }, item === 'teleport' ? null : getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 
@@ -149,6 +149,12 @@ export class OnlineMode implements Mode {
     this.lastPower.set(this.start.youId, power)
     this.aim.locked = true
     this.net.send({ t: MsgType.Fire, angle, power, slot })
+  }
+
+  /** Số sát thương nhảy lên trên đầu xe `id` (mỗi phát trúng một số). */
+  private damagePop(id: number, amount: number): void {
+    const p = this.match.players[id]
+    if (p) this.ctx.fx.damageText(p.body.x, p.body.y - p.body.radius - 36, amount)
   }
 
   update(dt: number): void {

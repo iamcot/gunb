@@ -154,3 +154,33 @@ describe('hướng gió', () => {
     }
   })
 })
+
+describe('airGrow (Ốc SS, Diều SS)', () => {
+  const grownBlast = (r: ShotResult): number => (r.events.find(e => e.kind === 'explode') as { r: number }).r
+  it('bay đủ lâu thì lớn lên: phát ra event grow, vụ nổ và sát thương lớn hơn', () => {
+    const b = tuning.mobiles['oc-thiet-giap']!.shots[2].behavior
+    if (b.kind !== 'airGrow') throw new Error('Ốc SS phải là airGrow')
+    const long = shoot('oc-thiet-giap', 2, 45, 100)   // ~2,7 s
+    const short = shoot('oc-thiet-giap', 2, 30, 40)   // ~0,9 s
+    expect(long.events.some(e => e.kind === 'grow' && e.shell === 0)).toBe(true)
+    expect(short.events.some(e => e.kind === 'grow')).toBe(false)
+    expect(grownBlast(long)).toBeCloseTo(grownBlast(short) * b.blastMul, 5)
+  })
+  it('sát thương nhân damageMul khi trúng xe sau khi lớn lên', () => {
+    const b = tuning.mobiles['dieu-hau-giay']!.shots[2].behavior
+    if (b.kind !== 'airGrow') throw new Error('Diều SS phải là airGrow')
+    const base = tuning.mobiles['dieu-hau-giay']!.shots[2].damage
+    // đặt xe đúng chỗ rơi để trúng sát tâm
+    const probe = shoot('dieu-hau-giay', 2, 60, 100)
+    const ex = firstExplode(probe)
+    const hit = shoot('dieu-hau-giay', 2, 60, 100, { others: [{ ...veh(1, 'oc-thiet-giap', ex.x), hp: 5000 }] })
+    const dmg = hit.events.find(e => e.kind === 'damage' && e.id === 1) as { amount: number } | undefined
+    expect(dmg).toBeDefined()
+    expect(dmg!.amount).toBeGreaterThan(base * 1.5)
+    expect(dmg!.amount).toBeLessThanOrEqual(Math.round(base * b.damageMul))
+  })
+  it('chưa đủ giờ thì sát thương và bán kính bằng thông số gốc', () => {
+    const base = tuning.mobiles['oc-thiet-giap']!.shots[2]
+    expect(grownBlast(shoot('oc-thiet-giap', 2, 30, 40))).toBe(base.blastRadius)
+  })
+})

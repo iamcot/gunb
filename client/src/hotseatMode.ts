@@ -110,8 +110,14 @@ export class HotseatMode implements Mode {
     this.aim.locked = true
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
+      onDamage: (id, amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id); this.damagePop(id, amount) },
     }, m.turnItem === 'teleport' ? null : getShotArt(p.mobileId, slot), getShotSfx(p.mobileId, slot))
+  }
+
+  /** Số sát thương nhảy lên trên đầu xe `id` (mỗi phát trúng một số). */
+  private damagePop(id: number, amount: number): void {
+    const p = this.match.players[id]
+    if (p) this.ctx.fx.damageText(p.body.x, p.body.y - p.body.radius - 36, amount)
   }
 
   update(dt: number): void {

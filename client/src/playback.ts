@@ -42,6 +42,7 @@ export class ShotPlayback {
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
         case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
+        case 'grow': this.fx.growShell(e.shell, e.x, e.y); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         case 'teleport': this.fx.soulBurst(e.x, e.y); this.hooks.onTeleport?.(e.x, e.y); break
         default: break

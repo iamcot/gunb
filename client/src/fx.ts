@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture } from 'pixi.js'
+import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import type { ShotArt } from './shotArt'
 
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
@@ -49,6 +49,11 @@ const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
 /** Lửa đầu nòng: dài MUZZLE_LEN px, sống MUZZLE_S s. */
 const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
+/** Khói đuôi đạn (Ốc Thiết Giáp...): nhả một đám khói + một đốm lửa mỗi TRAIL_STEP px bay được. */
+const TRAIL_STEP = 6, TRAIL_MAX_PER_CALL = 6, TRAIL_SMOKE = 0x8a7b6c
+/** Số sát thương nhảy lên khi trúng: mỗi phát một số (không cộng dồn), bay lên POP_RISE px trong POP_S s. */
+const POP_POOL = 16, POP_S = 1.1, POP_RISE = 56, POP_STACK = 28
+
 const FIRE_HOT = 0xfff3b0, FIRE_MID = 0xff8a20, FIRE_COOL = 0xa8280e
 
 function lerpColor(a: number, b: number, k: number): number {
@@ -89,10 +94,22 @@ export class Fx {
   private readonly shellSprites: Sprite[] = []
   private shellArt: ShotArt | null = null
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
+  private readonly shellGrown: boolean[] = []
+  private readonly trailD: number[] = []
+  private readonly popArt = new Container()
+  private readonly pops: { text: Text; age: number; alive: boolean; baseY: number; k: number }[] = []
+  private nextPop = 0
 
   constructor() {
     this.glow.blendMode = 'add'
-    this.container.addChild(this.back, this.backArt, this.fire, this.fireArt, this.glow, this.glowArt, this.topArt)
+    this.container.addChild(this.back, this.backArt, this.fire, this.fireArt, this.glow, this.glowArt, this.topArt, this.popArt)
+    for (let i = 0; i < POP_POOL; i++) {
+      const text = new Text({ text: '', style: { fontFamily: 'Nunito, Trebuchet MS, sans-serif', fontSize: 30, fontWeight: '900', fill: 0xffb52e, stroke: { color: 0x3a1200, width: 6, join: 'round' } } })
+      text.anchor.set(0.5)
+      text.visible = false
+      this.popArt.addChild(text)
+      this.pops.push({ text, age: 0, alive: false, baseY: 0, k: 1 })
+    }
     for (let i = 0; i < MAX_PARTICLES; i++) {
       this.parts.push({ kind: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 1, size: 1, color: 0, alive: false, rot: 0, vr: 0, spr: false })
       this.psprites.push(null)
@@ -133,7 +150,12 @@ export class Fx {
   /** Ảnh đạn cho phát bắn sắp phát lại (null = đạn tròn mặc định). */
   setShellArt(art: ShotArt | null): void {
     this.shellArt = art
-    for (const s of this.shellSprites) if (art) { s.texture = art.tex; s.scale.set(art.length / art.tex.width) }
+    for (let i = 0; i < this.shellSprites.length; i++) {
+      const s = this.shellSprites[i]!
+      this.shellGrown[i] = false
+      s.tint = 0xffffff
+      if (art) { s.texture = art.tex; s.scale.set(art.length / art.tex.width) }
+    }
   }
 
   /** Đặt vị trí/hiện-ẩn viên đạn thứ `i` (tạo mới nếu chưa có); `rot` = hướng bay (radian, theo trục màn hình). */
@@ -150,6 +172,8 @@ export class Fx {
       this.container.addChild(s)
       this.shellSprites.push(s)
       this.shellPos.push({ x: 0, y: 0, visible: false })
+      this.shellGrown.push(false)
+      this.trailD.push(0)
     }
     const g = this.shells[i]!, s = this.shellSprites[i]!, p = this.shellPos[i]!
     const art = this.shellArt !== null
@@ -158,17 +182,58 @@ export class Fx {
     g.position.set(x, y)
     s.position.set(x, y)
     const a = this.shellArt
+    const grown = this.shellGrown[i] === true && a?.grow != null
+    const ga = grown ? a!.grow! : null
+    if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
+    if (a && a.trail && visible) this.trail(i, p, x, y, rot, a.length)
     if (a && a.upright) {
-      const k = a.length / a.tex.width
+      const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = 0
       s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
     } else if (a) {
       // xoay theo hướng bay; bay sang trái thì lật dọc để ảnh không bị lộn ngược
-      const k = a.length / a.tex.width
+      const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = rot
       s.scale.set(k, Math.cos(rot) < 0 ? -k : k)
     } else s.rotation = rot
+    if (!visible) this.trailD[i] = 0
     p.x = x; p.y = y; p.visible = visible
+  }
+
+  /** Nhả khói + lửa ở đuôi viên đạn `i` theo quãng đã bay kể từ lần trước (p = vị trí cũ, chưa cập nhật). */
+  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number): void {
+    if (!p.visible) { this.trailD[i] = 0; return }
+    let d = this.trailD[i]! + Math.hypot(x - p.x, y - p.y)
+    const cx = Math.cos(rot), cy = Math.sin(rot)
+    for (let n = 0; d >= TRAIL_STEP && n < TRAIL_MAX_PER_CALL; n++, d -= TRAIL_STEP) {
+      const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
+      this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
+      this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)
+    }
+    this.trailD[i] = d >= TRAIL_STEP ? 0 : d
+  }
+
+  /** Viên đạn `i` (airGrow) bay đủ lâu: đổi sang dạng lớn (ảnh `grow` trong shots.json) + chớp sáng nhỏ. */
+  growShell(i: number, x: number, y: number): void {
+    this.shellGrown[i] = true
+    this.explosion(x, y, 22, false, null)
+  }
+
+  /** Số sát thương nhảy lên trên đầu xe tại (x, y). Mỗi phát một số; số tới gần nhau thì xếp chồng lên để không đè. */
+  damageText(x: number, y: number, amount: number): void {
+    const pop = this.pops[this.nextPop]!
+    this.nextPop = (this.nextPop + 1) % POP_POOL
+    let stack = 0
+    for (const o of this.pops) if (o !== pop && o.alive && o.age < 0.6 && Math.abs(o.text.x - x) < 70 && Math.abs(o.baseY - y) < POP_STACK * 4) stack++
+    const t = pop.text
+    t.text = String(amount)
+    pop.k = 0.8 + 0.8 * Math.min(1, amount / 600)
+    pop.baseY = y - stack * POP_STACK
+    pop.age = 0
+    pop.alive = true
+    t.position.set(x, pop.baseY)
+    t.alpha = 1
+    t.visible = true
   }
 
   hideProjectiles(): void {
@@ -339,6 +404,16 @@ export class Fx {
       b.age += dt
       if (b.age >= BOLT_S) { b.g.destroy(); this.bolts.splice(i, 1); continue }
       b.g.alpha = 1 - b.age / BOLT_S
+    }
+    for (const o of this.pops) {
+      if (!o.alive) continue
+      o.age += dt
+      if (o.age >= POP_S) { o.alive = false; o.text.visible = false; continue }
+      const k = o.age / POP_S, t = o.text
+      t.y = o.baseY - POP_RISE * (1 - (1 - k) * (1 - k))
+      t.alpha = k < 0.65 ? 1 : (1 - k) / 0.35
+      const pop = o.age < 0.12 ? 1.35 - 0.35 * (o.age / 0.12) : 1       // nảy to lúc mới hiện
+      t.scale.set(o.k * pop)
     }
     this.shake = Math.max(0, this.shake - dt * 30)
     this.shakeX = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0

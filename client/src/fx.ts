@@ -23,7 +23,9 @@ const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
 const SMOKE_RISE = 40       // px/s khói bay lên
 const DIRT_FALLBACK = 0x8a5a36
 /** Vệ tinh: bay ở độ cao SAT_ALT px trên điểm laser chạm, hiện ra SAT_LEAD_S s trước tia, tia sáng BEAM_S s, tắt tia SAT_OUT_S s sau thì bay mất. */
-const SAT_ALT = 300, BEAM_S = 0.45, SAT_OUT_S = 0.35, SAT_SIZE = 64
+const SAT_ALT = 300, BEAM_S = 0.45, SAT_OUT_S = 0.35, SAT_SIZE = 96
+/** Mắt kính trên ảnh vệ tinh nằm dưới tâm ảnh SAT_LENS × chiều cao ảnh (tia laser bắt đầu từ đó). */
+const SAT_LENS = 0.33
 export const SAT_LEAD_S = 0.45
 const BEAM_OUTER = 0x6fe3ff, BEAM_CORE = 0xf4fdff
 
@@ -318,14 +320,15 @@ export class Fx {
       }
       // mắt kính sáng dần khi ngắm + vạch ngắm mờ xuống đất
       const ch = Math.min(1, s.charge / SAT_LEAD_S)
-      glow.circle(s.x, by + 8, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
-      if (s.beam < 0) glow.rect(s.x - 1, by + 10, 2, s.ty - by - 10).fill({ color: BEAM_OUTER, alpha: 0.25 * ch * alpha })
+      const ly = by + (s.spr ? s.spr.height * SAT_LENS : 8)
+      glow.circle(s.x, ly, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
+      if (s.beam < 0) glow.rect(s.x - 1, ly + 2, 2, s.ty - ly - 2).fill({ color: BEAM_OUTER, alpha: 0.25 * ch * alpha })
       // tia laser: bùng to nhanh rồi thu nhỏ dần
       if (s.beam >= 0 && s.beam < BEAM_S) {
         const k = s.beam / BEAM_S
         const wk = k < 0.15 ? k / 0.15 : 1 - ((k - 0.15) / 0.85) * 0.8
         const ww = 2 * s.w * wk * (0.92 + 0.08 * Math.sin(s.beam * 80))
-        const top = by + 8, h = s.beamY - top
+        const top = ly, h = s.beamY - top
         glow.rect(s.x - ww * 0.8, top, ww * 1.6, h).fill({ color: BEAM_OUTER, alpha: 0.25 * (1 - k) })
         glow.rect(s.x - ww / 2, top, ww, h).fill({ color: BEAM_OUTER, alpha: 0.6 * (1 - k * 0.5) })
         glow.rect(s.x - ww * 0.18, top, ww * 0.36, h).fill({ color: BEAM_CORE, alpha: 0.95 })

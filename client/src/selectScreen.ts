@@ -8,8 +8,9 @@ const bar = (v: number): string => `<div class="bar"><i style="width:${Math.roun
 export class SelectScreen {
   private readonly el: HTMLElement
 
-  constructor(perTeam: number, h: SelectHandlers) {
-    const total = perTeam * 2
+  /** `single`: chỉ chọn một xe (tập bắn). */
+  constructor(perTeam: number, h: SelectHandlers, single = false) {
+    const total = single ? 1 : perTeam * 2
     const picks: number[] = Array.from({ length: total }, (_, i) => Math.floor(i / 2) % MOBILE_IDS.length)
     this.el = document.createElement('div')
     this.el.className = 'overlay'
@@ -22,7 +23,7 @@ export class SelectScreen {
             <div>Máu ${d.hp}</div>${bar(d.hp / 120)}<div>Giáp ${Math.round(d.armor * 100)}%</div>${bar(d.armor / 0.2)}<div>Cơ động</div>${bar((d.fuel * d.speedMul) / 160)}
             <span style="opacity:.7">Góc ${d.angleMin}–${d.angleMax}°${d.slopeAim ? ' (theo thân, đứng dốc để nâng cao hơn)' : ''} · ${d.shots.map(s => s.name).join(' / ')}</span></div>`
         }).join('')
-        return `<div class="selrow"><div class="who" style="color:${team === 0 ? '#60a5fa' : '#f87171'}">${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}</div><div class="cards">${cards}</div></div>`
+        return `<div class="selrow"><div class="who" style="color:${team === 0 ? '#60a5fa' : '#f87171'}">${single ? 'Bạn' : `${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}`}</div><div class="cards">${cards}</div></div>`
       }).join('')
       this.el.innerHTML = `<div class="panel" style="max-width:92vw"><h2>Chọn pháo</h2><div class="scroll">${rows}</div>
         <div class="row" style="margin-top:12px"><button id="back">Quay lại</button><button id="rand">Ngẫu nhiên</button><button id="go">Bắt đầu</button></div></div>`

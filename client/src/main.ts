@@ -27,7 +27,10 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 
 async function main(): Promise<void> {
   document.getElementById('title')!.textContent = GAME_NAME
-  const mapId = new URLSearchParams(location.search).get('map') ?? 'dao-noi-ve'
+  const params = new URLSearchParams(location.search)
+  const mapId = params.get('map') ?? 'dao-noi-ve'
+  // Mặc định vào thẳng trang login (chơi online); ?debug=1 mới hiện menu cũ (hotseat, chơi với máy, tập bắn)
+  const debugHome = params.get('debug') === '1'
   const base = `/maps/${mapId}/`
   const map = parseMap(await (await fetch(base + 'map.json')).json())
   const img = await loadImage(base + map.terrain)
@@ -66,7 +69,7 @@ async function main(): Promise<void> {
   const menu = new Menu({
     onHotseat: n => chooseMobiles(n),
     onVsBot: (n, level) => chooseMobiles(n, level),
-    onPractice: () => { setMode(new PracticeMode(ctx)) },
+    onPractice: () => choosePractice(),
     onOnline: () => startOnline(),
   })
   function setMode(m: Mode | null): void {
@@ -85,8 +88,16 @@ async function main(): Promise<void> {
       onBack: () => { select?.destroy(); select = null; menu.show() },
     })
   }
+  function choosePractice(): void {
+    menu.hide()
+    select = new SelectScreen(1, {
+      onStart: ids => { select?.destroy(); select = null; setMode(new PracticeMode(ctx, ids[0])) },
+      onBack: () => { select?.destroy(); select = null; menu.show() },
+    }, true)
+  }
   function startHotseat(n: number, ids: string[], botLevel?: BotLevel): void {
-    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids, botLevel }, () => startHotseat(n, ids, botLevel), () => setMode(null)))
+    const allSkills = menu.allSkills
+    setMode(new HotseatMode(ctx, { perTeam: n, mobileIds: ids, botLevel, allSkills }, () => startHotseat(n, ids, botLevel), () => setMode(null)))
   }
   let online: OnlineFlow | null = null
   function startOnline(): void {
@@ -96,15 +107,17 @@ async function main(): Promise<void> {
       startMode: m => setMode(m),
       stopMode: () => { mode?.destroy(); mode = null; fx.hideProjectiles(); ctx.focus.t = 0; view.reset(); hud.setVisible(false); menuBtn.style.display = 'block' },
       exit: () => toMenu(),
-    }, () => toMenu())
-    menuBtn.style.display = 'block'
+    }, debugHome ? () => toMenu() : null)
+    menuBtn.style.display = debugHome ? 'block' : 'none'
   }
-  /** Về menu chính từ bất cứ đâu (đóng luôn phiên online nếu có). */
+  /** Về trang đầu từ bất cứ đâu (đóng luôn phiên online nếu có): menu cũ khi ?debug=1, không thì trang login. */
   function toMenu(): void {
     online?.dispose()
     online = null
     setMode(null)
+    if (!debugHome) startOnline()
   }
+  if (!debugHome) startOnline()
   menuBtn.addEventListener('click', () => toMenu())
 
   let dragging = false

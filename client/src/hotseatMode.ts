@@ -18,7 +18,7 @@ const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đ
 const SETTLE_PAUSE = 0.3
 
 /** `botLevel`: có thì đội Đỏ do máy chơi, đội Xanh là người (chung một bàn phím). */
-export interface HotseatSetup { perTeam: number; mobileIds: string[]; botLevel?: BotLevel }   // mobileIds[i] là pháo của người chơi id i
+export interface HotseatSetup { perTeam: number; mobileIds: string[]; botLevel?: BotLevel; allSkills?: boolean }   // allSkills: trang debug, SS luôn đầy   // mobileIds[i] là pháo của người chơi id i
 
 /** Hotseat: 1v1..4v4 chung một bàn phím. */
 export class HotseatMode implements Mode {
@@ -52,7 +52,7 @@ export class HotseatMode implements Mode {
     this.match = createMatch({ seed: (Date.now() & 0x7fffffff) >>> 0, mask: this.mask, spawnZones: ctx.map.spawnZones, players })
     this.stats = newStats(this.match.players.length)
     this.bot = setup.botLevel ? new BotDriver(setup.botLevel) : null
-    this.vehicles = new VehicleViews(this.match)
+    this.vehicles = new VehicleViews(this.match, ctx.fx)
     this.weather = new WeatherView(ctx.map.height)
     ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
@@ -90,7 +90,7 @@ export class HotseatMode implements Mode {
     this.aim.locked = true
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
+      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
     }, getShotArt(p.mobileId, slot))
   }
 
@@ -101,6 +101,7 @@ export class HotseatMode implements Mode {
       const p = currentPlayer(m)
       const isBot = this.bot !== null && p.team === 1
       aim.locked = isBot
+      if (this.setup.allSkills) p.ss = TUNING.ss.max   // debug: bật hết skill
       aim.ssReady = p.ss >= TUNING.ss.max
       const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)

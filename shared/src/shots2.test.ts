@@ -45,11 +45,11 @@ describe('Cua Lăn (roller)', () => {
 })
 
 describe('Nhím Chùm (spread)', () => {
-  it('bắn cùng lúc 5 quả tỏa quạt', () => {
+  it('bắn cùng lúc 4 quả tỏa quạt', () => {
     const r = shoot('nhim-chum', 0, 45, 60)
-    expect(r.paths).toHaveLength(5)
+    expect(r.paths).toHaveLength(4)
     const ends = r.paths.map(p => p[p.length - 2]!)
-    expect(new Set(ends.map(Math.round)).size).toBe(5)
+    expect(new Set(ends.map(Math.round)).size).toBe(4)
   })
 })
 
@@ -320,5 +320,25 @@ describe('splitAfter (Rùa Thành SS)', () => {
     const dmg = r.events.filter(e => e.kind === 'damage' && e.id === 1) as { amount: number }[]
     expect(sp.x).toBeGreaterThan(400)
     expect(dmg.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe('tandem (Ốc Thiết Giáp đ2)', () => {
+  it('hai đầu nối đuôi: 2 quả, 2 vụ nổ, đầu 2 nổ sau đầu 1', () => {
+    const r = shoot('oc-thiet-giap', 1, 45, 60)
+    expect(r.paths).toHaveLength(2)
+    const ex = r.events.filter(e => e.kind === 'explode')
+    expect(ex).toHaveLength(2)
+    expect(ex[1]!.t).toBeGreaterThan(ex[0]!.t)
+  })
+  it('đầu 2 bỏ qua giáp của xe đã trúng đầu 1', () => {
+    const probe = shoot('oc-thiet-giap', 1, 45, 60)
+    const ex = firstExplode(probe)
+    const armored = { ...veh(1, 'rua-thanh', ex.x, 5000), armor: 0.5 }
+    const r = shoot('oc-thiet-giap', 1, 45, 60, { others: [armored] })
+    const hits = r.events.filter(e => e.kind === 'damage' && e.id === 1) as { amount: number }[]
+    expect(hits).toHaveLength(2)
+    // đầu 1: 300 × (1 − d/R) × 0,5; đầu 2 bỏ giáp nên mỗi điểm sát thương gấp đôi
+    expect(hits[1]!.amount).toBeGreaterThan(hits[0]!.amount)
   })
 })

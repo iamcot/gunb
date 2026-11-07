@@ -26,11 +26,12 @@ interface Shell {
   grown: boolean          // airGrow: đã bay đủ lâu
   pierced: number         // số lần đã xuyên đất (pierce)
   tp: number              // lần cuối qua cổng (portal)
+  head: number            // tandem: 1 = đầu 1, 2 = đầu 2 (0 = không phải tandem)
   twinK: number           // twin: số thứ tự viên (-1 = không xoắn)
   off: number             // twin: độ lệch hiện tại khỏi trục bay (px, theo phương vuông góc vận tốc)
 }
 
-interface Pending { tStart: number; angleDeg: number }
+interface Pending { tStart: number; angleDeg: number; head: number }
 type LightningBeh = Extract<ShotDef['behavior'], { kind: 'lightning' }>
 /** Tia sét chờ giáng: `ang` = lệch khỏi phương thẳng đứng (rad); `march` = tia đi từ trời xuống và dừng ở vật rắn đầu tiên (không thì nổ thẳng tại (x, y), như sét của thời tiết). */
 interface Bolt { t: number; x: number; y: number; ang: number; march: boolean; after: { delay: number; damage: number } | null; def: { damage: number; blastRadius: number; carveRadius: number } }
@@ -77,6 +78,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const bolts: Bolt[] = []
   const afters: After[] = []
   const aftered = new Set<number>()
+  const tandemHit = new Set<number>()   // tandem: xe đã trúng đầu 1 (đầu 2 bỏ qua giáp của chúng)
   const hitNow: number[] = []
   const strike = { x: 0, y: 0, x0: 0, y0: 0 }
   const beams: Beam[] = []
@@ -84,14 +86,14 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0,
+      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0, head: 0,
     }
     shells.push(s)
     return s
   }
 
   /** Nổ: khoét hố + sát thương lên mọi xe trong bán kính + (nếu có) giảm giáp. */
-  const blast = (x: number, y: number, t: number, blastR: number, carveR: number, damage: number, breakArmor: boolean): void => {
+  const blast = (x: number, y: number, t: number, blastR: number, carveR: number, damage: number, breakArmor: boolean, bypass: Set<number> | null = null): void => {
     events.push({ t, kind: 'explode', x, y, r: blastR })
     if (carveR > 0) {
       mask.carveCircle(x, y, carveR)
@@ -102,7 +104,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (cur <= 0) continue
       const d = Math.max(0, Math.hypot(v.x - x, v.y - y) - v.radius)
       if (d >= blastR) continue
-      const amount = Math.round(damage * (1 - d / blastR) * (1 - v.armor))
+      const amount = Math.round(damage * (1 - d / blastR) * (1 - (bypass?.has(v.id) ? 0 : v.armor)))
       if (amount <= 0) continue
       const after = Math.max(0, cur - amount)
       hp.set(v.id, after)
@@ -150,7 +152,10 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
     const g = beh.kind === 'airGrow' && s.grown ? beh : null
     const c = beh.kind === 'splitAfter' && s.child ? beh.child : null
-    blast(x, y, t, c?.blastRadius ?? def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : c?.carveRadius ?? def.carveRadius * (g?.carveMul ?? 1), c?.damage ?? def.damage * (g?.damageMul ?? 1), true)
+    const dmg = c?.damage ?? (beh.kind === 'tandem' && s.head === 2 ? beh.secondDamage : def.damage * (g?.damageMul ?? 1))
+    hitNow.length = 0
+    blast(x, y, t, c?.blastRadius ?? def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : c?.carveRadius ?? def.carveRadius * (g?.carveMul ?? 1), dmg, true, s.head === 2 ? tandemHit : null)
+    if (s.head === 1) for (const id of hitNow) tandemHit.add(id)
     if (beh.kind === 'lightning') scheduleLightning(beh, x, y, t)
     if (beh.kind === 'build') build(x, y, t, beh)
     if (beh.kind === 'satellite') {
@@ -238,7 +243,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return undefined
   }
 
-  const spawn = (t: number, angleDeg: number, twinK = -1): void => {
+  const spawn = (t: number, angleDeg: number, twinK = -1, head = 0): void => {
     aimDir(dir, angleDeg, input.facing)   // góc so với phương ngang, không cộng độ dốc
     let x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
     const mz = mobile.muzzle
@@ -251,6 +256,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     }
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
     if (twinK >= 0) s.twinK = twinK
+    s.head = head
     if (beh.kind !== 'ghost' && mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất (đạn xuyên địa hình thì cứ bay)
   }
 
@@ -422,16 +428,19 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   // Lịch bắn: đạn đầu ở t = 0; chùm liền thì các quả sau theo `interval`.
   if (beh.kind === 'spread') {
     for (let k = 0; k < beh.count; k++) spawn(0, fire.angle + (k - (beh.count - 1) / 2) * beh.spreadDeg)
+  } else if (beh.kind === 'tandem') {
+    spawn(0, fire.angle, -1, 1)
+    pending.push({ tStart: beh.gapS, angleDeg: fire.angle, head: 2 })
   } else if (beh.kind === 'twin') {
     for (let k = 0; k < beh.count; k++) spawn(0, fire.angle, k)
   } else spawn(0, fire.angle)
-  if (beh.kind === 'burst') for (let k = 1; k < beh.count; k++) pending.push({ tStart: k * beh.interval, angleDeg: fire.angle + k * beh.angleStepDeg })
+  if (beh.kind === 'burst') for (let k = 1; k < beh.count; k++) pending.push({ tStart: k * beh.interval, angleDeg: fire.angle + k * beh.angleStepDeg, head: 0 })
 
   let t = 0
   const maxSteps = Math.round(SHOT_MAX_TIME_S / DT_SIM)
   for (let i = 1; i <= maxSteps; i++) {
     t = i * DT_SIM
-    while (pending.length && pending[0]!.tStart <= t + 1e-9) { const q = pending.shift()!; spawn(t, q.angleDeg) }
+    while (pending.length && pending[0]!.tStart <= t + 1e-9) { const q = pending.shift()!; spawn(t, q.angleDeg, -1, q.head) }
     while (bolts.length && bolts[0]!.t <= t + 1e-9) {
       const b = bolts.shift()!
       boltTarget(b)

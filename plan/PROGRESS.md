@@ -115,3 +115,5 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Sứa Đèn đ2: chụm sau 2,2 s (3 s dài hơn thời gian bay thường nên chưa kịp chụm); icon đạn twin hiện N viên (shotBar).
 - Sứa Đèn đ2 mỗi tia 200→234, Rùa Thành đ2 mỗi tia 190→205: trúng cả hai ≈ 1,2× đạn 1 (như Bọ Lôi).
 - B7: Behavior `splitAfter` (tách sau afterS s, quả con nổ nhỏ theo `child`). Rùa Thành SS 'Sóng vỡ': bay 1,5 s rồi tách 6 quả (95 dmg/quả, blast 50); chạm trước khi tách thì nổ cả quả (560, blast 90). Quả con tạm dùng chung ảnh với quả mẹ (chưa có water-small). Test build chuyển sang shotDef riêng.
+- B2: Behavior `tandem` (Ốc đ2 'Đạn hai đầu': 2 quả cách 0,07 s, đầu 2 bỏ giáp xe đã trúng đầu 1, dmg 300 + 360). Test burst chuyển sang Diều Hâu.
+- B9: Nhím Chùm 4/6/9 quả (dmg/quả 260/140/310). Chưa làm `spreadGrowth` (tỏa tăng theo quãng bay).

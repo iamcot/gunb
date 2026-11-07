@@ -147,14 +147,14 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 
 **Đợt B – Cơ chế đạn mới (mỗi cơ chế một PR nhỏ, có test + ảnh quỹ đạo)**
 - B1. ⚠️ `airGrow` → Ốc SS phình, Diều SS hoá vàng. **Xong** (afterS: Ốc 1,8 s, Diều 2,4 s; thời gian bay thật của ta 1–4 s nên không dùng 2,5 s của bản gốc; chỉnh bằng F6). Kèm: khói + lửa đuôi cho 3 đạn Ốc, số sát thương nhảy lên cho mỗi phát trúng.
-- B2. ⚠️ `tandem` → Ốc đ2.
+- B2 (xong). ⚠️ `tandem` → Ốc đ2.
 - B3 (xong phần cơ chế). ⚠️ `beam` + `twin`/`orbit` → Sứa Đèn đ1, đ2; Rùa Thành đ1, đ2 (đạn nước); Cua Lăn đ1 (3 đĩa).
 - B4 (xong). ⚠️ `drill.resurface` + `ghost` → Chũi Khoan đ2, SS. Đ1 thành đạn nổ thường.
 - B5 (xong). ⚠️ Sét giáng từ trời + dư chấn + sét vùng → Bọ Lôi; bỏ `reverse`/`slopeAim` khỏi Bọ Lôi, đổi rig. Kiểm tra ảnh xe.
 - B6. ⚠️ `boomerang` → Diều Hâu Giấy (prototype quỹ đạo trước, chỉnh bằng overlay).
 - B7 (xong). ⚠️ `splitAfter` → Rùa Thành SS.
 - B8. ⚠️ `roller` mở rộng → Cua Lăn SS.
-- B9. Nhím Chùm 4 / 6 / 9 quả (chỉ đổi số).
+- B9 (xong, chưa có spreadGrowth). Nhím Chùm 4 / 6 / 9 quả (chỉ đổi số).
 
 **Đợt C – Hệ thống**
 - C1. ⚠️ Khiên (`MobileDef.shield`, `PlayerState.shield`, hồi mỗi vòng; Snapshot thêm trường; thanh máu có phần xanh) + SS Sứa Đèn xoá khiên.

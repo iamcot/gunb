@@ -6,7 +6,7 @@ const REPEAT_FAST = 40        // độ/s sau khi giữ lâu
 const REPEAT_RAMP = 1.2       // s để tăng từ chậm lên nhanh
 
 /**
- * Điều khiển ngắm: ↑↓ góc, giữ Space tích lực, nhả để bắn.
+ * Điều khiển ngắm: ↑↓ góc, giữ Space hoặc chuột trái (bấm trên khung game) tích lực, nhả để bắn; hết giờ lượt khi đang tụ thì mode gọi `release()` để bắn luôn.
  * ←→: ở chế độ `moveMode` là đi (đọc `moveDir`), không thì đổi hướng (`facing`).
  */
 export class AimInput {
@@ -30,11 +30,19 @@ export class AimInput {
   private readonly onKeyDown = (e: KeyboardEvent): void => this.keyDown(e)
   private readonly onKeyUp = (e: KeyboardEvent): void => this.keyUp(e)
   private readonly onBlur = (): void => this.cancel()
+  private readonly onMouseDown = (e: MouseEvent): void => {
+    // chỉ bấm lên khung game (canvas): bấm vào ô đạn, nút HUD... không tụ lực; chuột phải dành cho kéo camera
+    if (e.button !== 0 || this.locked || this.charging || !(e.target instanceof HTMLCanvasElement)) return
+    this.charging = true; this.power = 0
+  }
+  private readonly onMouseUp = (e: MouseEvent): void => { if (e.button === 0 && this.charging) this.release() }
 
   constructor(private readonly moveMode = false) {
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
     window.addEventListener('blur', this.onBlur)
+    window.addEventListener('mousedown', this.onMouseDown)
+    window.addEventListener('mouseup', this.onMouseUp)
   }
 
   /** Đặt dải góc hợp lệ của pháo (kẹp lại góc hiện tại). */
@@ -48,6 +56,8 @@ export class AimInput {
     window.removeEventListener('keydown', this.onKeyDown)
     window.removeEventListener('keyup', this.onKeyUp)
     window.removeEventListener('blur', this.onBlur)
+    window.removeEventListener('mousedown', this.onMouseDown)
+    window.removeEventListener('mouseup', this.onMouseUp)
   }
 
   private keyDown(e: KeyboardEvent): void {
@@ -72,12 +82,16 @@ export class AimInput {
     else if (e.code === 'ArrowRight') this.right = false
     if (e.code === 'ArrowUp') this.up = 0
     else if (e.code === 'ArrowDown') this.down = 0
-    else if (e.code === 'Space' && this.charging) {
-      this.charging = false
-      if (!this.locked) {
-        this.lastPower = this.power
-        this.onFire(this.angle, this.power, this.slot)
-      }
+    else if (e.code === 'Space' && this.charging) this.release()
+  }
+
+  /** Thả lực: bắn với lực hiện tại (nhả phím/chuột, hoặc hết giờ lượt khi đang tụ). */
+  release(): void {
+    if (!this.charging) return
+    this.charging = false
+    if (!this.locked) {
+      this.lastPower = this.power
+      this.onFire(this.angle, this.power, this.slot)
     }
   }
 

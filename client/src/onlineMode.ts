@@ -26,6 +26,9 @@ const RESULTS_AUTO_BACK_S = 15 // bảng kết quả: tự về phòng chờ sau
  * Chế độ online: server giữ trận thật; client giữ một bản sao (MatchState) cập nhật bằng Snapshot, phát lại Shot,
  * và chỉ gửi ý định (Input/Fire). Không dự đoán phía client: vị trí xe người khác và của mình đều đến từ snapshot (làm mượt khi vẽ).
  */
+/** Còn chừng này giây mà vẫn đang tụ lực thì bắn luôn (bù độ trễ mạng). */
+const END_FIRE_S = 0.25
+
 export class OnlineMode implements Mode {
   readonly match: MatchState
   private readonly aim = new AimInput(true)
@@ -178,6 +181,7 @@ export class OnlineMode implements Mode {
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
       p.aimAngle = aim.angle
+      if (aim.charging && m.turnTimeLeft <= END_FIRE_S) aim.release()   // sắp hết giờ khi đang tụ lực: bắn luôn (server tính giờ nên bắn sớm một chút)
       this.sendInput(dt)
       ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     } else {

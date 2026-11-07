@@ -143,6 +143,7 @@ export class HotseatMode implements Mode {
       }
       if (aim.moveDir !== 0) applyAction(m, { t: 'move', id: p.id, dir: aim.moveDir, dt }, { mask: this.mask })
       applyAction(m, { t: 'aim', id: p.id, angle: aim.angle }, { mask: this.mask })
+      if (aim.charging && m.turnTimeLeft - dt <= 0) { aim.release(); return }   // hết giờ khi đang tụ lực: bắn luôn
       const r = applyAction(m, { t: 'tick', dt }, { mask: this.mask })
       if (r.timedOut) aim.cancel()
       ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)

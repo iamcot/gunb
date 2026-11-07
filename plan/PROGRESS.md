@@ -109,3 +109,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Nhím Chùm: tăng carveRadius (25/32/38 → 42/46/52) cho hố to hơn đạn thường (Ốc 45); blast/damage giữ nguyên. Chờ chỉnh khi làm B9.
 - Sứa Đèn: dòng ánh sáng sau đạn (shots.json `ribbon`, `ribbonW`; vẽ bằng code, thon dần về đuôi): đ1 vàng, đ2 xanh ngọc, quả đèn đ2 đổi sang xanh ngọc.
 - Sứa Đèn: dòng ánh sáng dài từ nòng tới khi đạn nổ; đạn 2 = 1 quả vàng + 1 quả xanh ngọc (shots.json: alt, ribbonAlt; ảnh shot-2b.png).
+- Sứa Đèn: dòng sáng vẽ một nét liền (hết đứt nét), kiểu neon (quầng + lõi trắng) + quầng neon quanh đạn.

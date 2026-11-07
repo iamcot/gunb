@@ -67,6 +67,7 @@ const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
 const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
 /** Khói đuôi đạn (Ốc Thiết Giáp...): nhả một đám khói + một đốm lửa mỗi TRAIL_STEP px bay được. */
+const RIBBON_LAYERS = 4, RIBBON_W = [1.6, 0.9, 0.45, 0.16], RIBBON_A = [0.16, 0.35, 0.9, 1]
 const RIBBON_N = 420, RIBBON_STEP = 7, RIBBON_CHUNK = 8   // số điểm / khoảng cách giữa các điểm của dòng ánh sáng (px)
 const TRAIL_STEP = 6, TRAIL_MAX_PER_CALL = 6, TRAIL_SMOKE = 0x8a7b6c
 /** Số sát thương nhảy lên khi trúng: mỗi phát một số (không cộng dồn), bay lên POP_RISE px trong POP_S s. */
@@ -269,27 +270,23 @@ export class Fx {
     this.ribbonN[i] = n + 1
   }
 
-  /** Vẽ dòng ánh sáng từ nòng tới tận viên đạn (mất khi đạn nổ): dải thon dần về đuôi, vẽ theo từng đoạn RIBBON_CHUNK điểm (mỗi đoạn một nét liền) cho nhẹ; lớp ngoài rộng mờ + lõi sáng mảnh. Viên lẻ dùng màu `ribbonAlt`. */
+  /** Vẽ dòng ánh sáng neon từ nòng tới tận viên đạn (mất khi đạn nổ): mỗi lớp là MỘT nét liền (không chia đoạn nên không bị đứt nét ở chỗ nối), từ quầng rộng mờ tới lõi trắng mảnh, cộng quầng sáng quanh viên đạn. Viên lẻ dùng màu `ribbonAlt`. */
   private drawRibbons(g: Graphics): void {
     const a = this.shellArt
     if (!a || a.ribbon < 0) return
+    const w = a.ribbonW
     for (let i = 0; i < this.shellPos.length; i++) {
       const p = this.shellPos[i]!, n = this.ribbonN[i]!
       if (!p.visible || n === 0) continue
       const col = i % 2 === 1 && a.ribbonAlt >= 0 ? a.ribbonAlt : a.ribbon
-      const core = ((((col >> 16) & 255) + 255) >> 1) << 16 | ((((col >> 8) & 255) + 255) >> 1) << 8 | (((col & 255) + 255) >> 1)
       const pts = this.ribbonPts[i]!
-      for (let j0 = 0; j0 < n; j0 += RIBBON_CHUNK) {
-        const j1 = Math.min(n, j0 + RIBBON_CHUNK)
-        const k = Math.min(1, (j0 + RIBBON_CHUNK / 2) / Math.min(n, 30))   // đuôi 30 điểm cuối thon dần, còn lại đều
-        const kk = Math.min(1, k)
-        g.moveTo(pts[j0 * 2]!, pts[j0 * 2 + 1]!)
-        for (let j = j0 + 1; j <= j1; j++) g.lineTo(j === n ? p.x : pts[j * 2]!, j === n ? p.y : pts[j * 2 + 1]!)
-        g.stroke({ color: col, width: a.ribbonW * kk, alpha: 0.4 * kk, cap: 'round', join: 'round' })
-        g.moveTo(pts[j0 * 2]!, pts[j0 * 2 + 1]!)
-        for (let j = j0 + 1; j <= j1; j++) g.lineTo(j === n ? p.x : pts[j * 2]!, j === n ? p.y : pts[j * 2 + 1]!)
-        g.stroke({ color: core, width: a.ribbonW * 0.4 * kk, alpha: 0.85 * kk, cap: 'round', join: 'round' })
+      for (let l = 0; l < RIBBON_LAYERS; l++) {
+        g.moveTo(pts[0]!, pts[1]!)
+        for (let j = 1; j < n; j++) g.lineTo(pts[j * 2]!, pts[j * 2 + 1]!)
+        g.lineTo(p.x, p.y)
+        g.stroke({ color: l === RIBBON_LAYERS - 1 ? 0xffffff : col, width: w * RIBBON_W[l]!, alpha: RIBBON_A[l]!, cap: 'round', join: 'round' })
       }
+      for (let l = 0; l < 3; l++) g.circle(p.x, p.y, w * (1.9 - l * 0.55)).fill({ color: l === 2 ? 0xffffff : col, alpha: l === 2 ? 0.5 : 0.16 + l * 0.12 })   // quầng neon quanh viên đạn
     }
   }
 

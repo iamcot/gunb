@@ -10,6 +10,7 @@ export interface ShotVehicle {
   y: number
   radius: number
   hp: number
+  shield?: number     // khiên còn lại (hấp thụ sát thương trước máu); không có = 0
   armor: number       // tỉ lệ sát thương được giảm (đã tính giảm giáp; âm = nhận thêm sát thương)
 }
 
@@ -39,7 +40,8 @@ export type ShotEvent =
   | { t: number; kind: 'explode'; x: number; y: number; r: number }
   | { t: number; kind: 'carve'; x: number; y: number; r: number }
   | { t: number; kind: 'fill'; x: number; y: number; r: number }      // đắp đất (Rùa Thành)
-  | { t: number; kind: 'damage'; id: number; amount: number; hpAfter: number }
+  | { t: number; kind: 'damage'; id: number; amount: number; hpAfter: number; shieldAfter?: number }   // amount = tổng (cả phần khiên hấp thụ); shieldAfter = khiên còn lại
+  | { t: number; kind: 'shield'; id: number; shieldAfter: number }   // khiên bị đổi không kèm sát thương (SS Sứa Đèn xoá khiên)
   | { t: number; kind: 'out'; x: number; y: number }
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)
   | { t: number; kind: 'bolt'; x: number; y: number; x0?: number; y0?: number }      // tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao) (hiệu ứng; vụ nổ đi kèm có event explode riêng)

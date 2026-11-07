@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
+import { snapshotOf, applySnapshot } from './netState'
 import { applyAction, createMatch, windForRound, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
 import { TUNING, createDefaultTuning } from './tuning'
 
@@ -272,5 +273,26 @@ describe('A2: delay theo giây suy nghĩ', () => {
     expect(delayAfter('oc-thiet-giap', 0)).toBeCloseTo(0, 5)
     expect(delayAfter('oc-thiet-giap', 10)).toBeCloseTo(10 * t.turn.delayPerSecond, 5)
     expect(delayAfter('rua-thanh', 10)).toBeCloseTo(10 * t.turn.delayPerSecond * 1.2, 5)
+  })
+})
+
+describe('C1: khiên', () => {
+  it('Sứa Đèn bắt đầu với khiên đầy, hồi mỗi khi sang vòng mới (không vượt tối đa), snapshot mang theo', () => {
+    const t = createDefaultTuning()
+    const mask = flat()
+    const players = [0, 1].map(i => ({ name: `P${i}`, team: i as 0 | 1, mobileId: i === 0 ? 'sua-den' : 'oc-thiet-giap' }))
+    const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+    const sh = t.mobiles['sua-den']!.shield!
+    expect(s.players[0]!.shield).toBe(sh.max)
+    expect(s.players[1]!.shield).toBe(0)
+    s.players[0]!.shield = 10
+    // kết thúc 2 lượt = sang vòng mới
+    for (let k = 0; k < 2; k++) { applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask, tuning: t }); applyAction(s, { t: 'endTurn' }, { mask, tuning: t }) }
+    expect(s.roundNo).toBe(2)
+    expect(s.players[0]!.shield).toBe(Math.min(sh.max, 10 + sh.regen))
+    const snap = snapshotOf(s)
+    s.players[0]!.shield = 0
+    applySnapshot(s, snap)
+    expect(s.players[0]!.shield).toBe(Math.min(sh.max, 10 + sh.regen))
   })
 })

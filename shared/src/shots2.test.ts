@@ -53,15 +53,16 @@ describe('Nhím Chùm (spread)', () => {
   })
 })
 
-describe('Sứa Đèn (pierce)', () => {
+const pierceDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 100, carveRadius: 70, damage: 700, delay: 0, behavior: { kind: 'pierce', maxThickness: 120, maxPierce: 3, holeRadius: 22 } }
+describe('pierce (code còn giữ)', () => {
   const wall = (thick: number): TerrainMask => {
     const m = flat()
     for (let y = 300; y < G; y++) for (let x = 900; x < 900 + thick; x++) m.data[y * W + x] = 1
     return m
   }
   it('xuyên vách mỏng, bị chặn bởi vách dày; đạn thường bị chặn cả hai', () => {
-    const thin = shoot('sua-den', 2, 30, 80, { mask: wall(20) })
-    const thick = shoot('sua-den', 2, 30, 80, { mask: wall(200) })
+    const thin = shoot('sua-den', 2, 30, 80, { mask: wall(20), shotDef: pierceDef })
+    const thick = shoot('sua-den', 2, 30, 80, { mask: wall(200), shotDef: pierceDef })
     const basic = shoot('oc-thiet-giap', 0, 30, 75, { mask: wall(20) })
     expect(firstExplode(thin).x).toBeGreaterThan(930)
     expect(firstExplode(thick).x).toBeLessThan(1100)
@@ -384,5 +385,33 @@ describe('roller.crawl (Cua Lăn SS)', () => {
     const r = shoot('cua-lan', 2, 20, 40, { others: [veh(1, 'oc-thiet-giap', 800)] })
     expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
     expect(r.events.find(e => e.kind === 'explode')!.t).toBeLessThan(5)
+  })
+})
+
+describe('khiên (Sứa Đèn)', () => {
+  const target = (shield: number): ShotVehicle => ({ ...veh(1, 'sua-den', 1000, 5000), shield })
+  it('sát thương trừ khiên trước, hết khiên mới trừ máu; tổng amount giữ nguyên', () => {
+    const probe = shoot('oc-thiet-giap', 0, 45, 70)
+    const ex = firstExplode(probe)
+    const noShield = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000) }] })
+    const dmg = (noShield.events.find(e => e.kind === 'damage') as { amount: number }).amount
+    const withShield = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000), shield: dmg + 50 }] })
+    const e = withShield.events.find(e => e.kind === 'damage') as { amount: number; hpAfter: number; shieldAfter: number }
+    expect(e.amount).toBe(dmg)
+    expect(e.hpAfter).toBe(5000)
+    expect(e.shieldAfter).toBe(50)
+    const part = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000), shield: 10 }] })
+    const p = part.events.find(e => e.kind === 'damage') as { hpAfter: number; shieldAfter: number }
+    expect(p.shieldAfter).toBe(0)
+    expect(p.hpAfter).toBe(5000 - (dmg - 10))
+  })
+  it('SS Sứa Đèn xoá khiên mọi xe trong vùng nổ, rồi sát thương trừ thẳng máu', () => {
+    const probe = shoot('sua-den', 2, 45, 70)
+    const ex = firstExplode(probe)
+    const r = shoot('sua-den', 2, 45, 70, { others: [{ ...veh(1, 'oc-thiet-giap', ex.x, 5000), shield: 400 }] })
+    const dmg = r.events.find(e => e.kind === 'damage' && e.id === 1) as { hpAfter: number; shieldAfter: number }
+    expect(dmg.shieldAfter).toBe(0)
+    expect(dmg.hpAfter).toBeLessThan(5000)
+    expect(target(0).shield).toBe(0)
   })
 })

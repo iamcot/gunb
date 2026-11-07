@@ -64,6 +64,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const beh = def.behavior
   const mask = input.mask.clone()
   const hp = new Map<number, number>(input.vehicles.map(v => [v.id, v.hp]))
+  const shield = new Map<number, number>(input.vehicles.map(v => [v.id, v.shield ?? 0]))
   const ax = input.wind.x * tuning.windScale * def.windFactor
   const ay = tuning.gravity * def.gravityFactor + input.wind.y * tuning.windScale * def.windFactor
   const speed = (fire.power / 100) * def.maxSpeed
@@ -93,6 +94,16 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return s
   }
 
+  /** Trừ `amount` sát thương (đã tính giáp) của xe `id`: khiên hấp thụ trước, phần dư trừ máu. Báo event damage (amount = tổng, kèm máu và khiên còn lại). */
+  const hurt = (id: number, amount: number, t: number): void => {
+    const sh = shield.get(id) ?? 0
+    const absorbed = Math.min(sh, amount)
+    shield.set(id, sh - absorbed)
+    const after = Math.max(0, (hp.get(id) ?? 0) - (amount - absorbed))
+    hp.set(id, after)
+    events.push({ t, kind: 'damage', id, amount, hpAfter: after, shieldAfter: sh - absorbed })
+  }
+
   /** Nổ: khoét hố + sát thương lên mọi xe trong bán kính + (nếu có) giảm giáp. */
   const blast = (x: number, y: number, t: number, blastR: number, carveR: number, damage: number, breakArmor: boolean, bypass: Set<number> | null = null): void => {
     events.push({ t, kind: 'explode', x, y, r: blastR })
@@ -105,12 +116,11 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (cur <= 0) continue
       const d = Math.max(0, Math.hypot(v.x - x, v.y - y) - v.radius)
       if (d >= blastR) continue
+      if (def.shieldBreak && (shield.get(v.id) ?? 0) > 0) { shield.set(v.id, 0); events.push({ t, kind: 'shield', id: v.id, shieldAfter: 0 }) }   // xoá khiên của mọi xe trong vùng nổ trước khi tính sát thương
       const amount = Math.round(damage * (1 - d / blastR) * (1 - (bypass?.has(v.id) ? 0 : v.armor)))
       if (amount <= 0) continue
-      const after = Math.max(0, cur - amount)
-      hp.set(v.id, after)
       hitNow.push(v.id)
-      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+      hurt(v.id, amount, t)
       if (breakArmor && def.armorBreak) events.push({ t, kind: 'armorBreak', id: v.id, turns: def.armorBreak.turns, amount: def.armorBreak.amount })
     }
   }
@@ -214,9 +224,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (d >= b.halfWidth) continue
       const amount = Math.round(b.damage * (1 - d / b.halfWidth) * (1 - v.armor))
       if (amount <= 0) continue
-      const after = Math.max(0, cur - amount)
-      hp.set(v.id, after)
-      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+      hurt(v.id, amount, t)
     }
   }
 
@@ -466,9 +474,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (!v || cur <= 0) continue
       const amount = Math.round(a.damage * (1 - v.armor))
       if (amount <= 0) continue
-      const after = Math.max(0, cur - amount)
-      hp.set(a.id, after)
-      events.push({ t, kind: 'damage', id: a.id, amount, hpAfter: after })
+      hurt(a.id, amount, t)
     }
     while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamRay(b.x, b.y, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp

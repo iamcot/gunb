@@ -124,3 +124,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Cua Lăn đ2: ảnh đạn thành con cua nhỏ (dùng chung ảnh cua với SS), nhún lắc khi lăn; cơ chế vẫn là bi lăn, mìn thật ở C3.
 - A1: delay đạn theo tỉ lệ 1 : 1,6 : 3,2 cho mọi xe (giữ đ1; đ2 = 1,6×, SS = 3,2×).
 - A2: `Tuning.turn.delayPerSecond` = 10, `MobileDef.delayPerSecondMul` (Rùa Thành 1,2): khi bắn cộng delay theo số giây đã suy nghĩ trong lượt.
+- C1: khiên. `MobileDef.shield {max, regen}`, `PlayerState.shield/maxShield`, `ShotVehicle.shield`, event damage thêm `shieldAfter` + event `shield`, `ShotDef.shieldBreak`; Snapshot thêm khiên (cuối mảng); khiên hồi mỗi vòng; thanh khiên xanh trên thanh máu. Sứa Đèn: khiên 230, hồi 80/vòng; SS 'Đèn khổng lồ' = đạn thường nổ rộng 140, xoá khiên mọi xe trong vùng. Practice mode chưa có khiên.

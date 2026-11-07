@@ -12,6 +12,8 @@ export interface MobileDef {
   angleMin: number
   angleMax: number
   /** Đầu nòng (px, so với tâm xe, xe quay mặt sang phải, trục Y hướng xuống): gốc xoay nòng (px, py) và đầu nòng so với gốc đó trong hệ trục của nòng (ox dọc nòng, oy vuông góc). Đạn xuất phát từ đây; không có thì dùng MUZZLE_DIST từ tâm xe. Số lấy từ rig.json của xe (tính bằng script, xem plan/PROGRESS.md). */
+  /** Khiên (máu xanh): hấp thụ sát thương trước máu, hồi `regen` mỗi khi sang vòng mới (tối đa `max`). Bắt đầu đầy. */
+  shield?: { max: number; regen: number }
   /** Hệ số nhân `Tuning.turn.delayPerSecond` cho xe này (Rùa Thành 1,2: nghĩ lâu bị phạt nặng hơn). Mặc định 1. */
   delayPerSecondMul?: number
   muzzle?: { px: number; py: number; ox: number; oy: number }

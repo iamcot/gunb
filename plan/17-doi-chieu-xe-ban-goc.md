@@ -157,7 +157,7 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - B9 (xong, chưa có spreadGrowth). Nhím Chùm 4 / 6 / 9 quả (chỉ đổi số).
 
 **Đợt C – Hệ thống**
-- C1. ⚠️ Khiên (`MobileDef.shield`, `PlayerState.shield`, hồi mỗi vòng; Snapshot thêm trường; thanh máu có phần xanh) + SS Sứa Đèn xoá khiên.
+- C1 (xong). ⚠️ Khiên (`MobileDef.shield`, `PlayerState.shield`, hồi mỗi vòng; Snapshot thêm trường; thanh máu có phần xanh) + SS Sứa Đèn xoá khiên.
 - C2. Hai xe ẩn (sau #11 merge, vì Kỳ Lân Sắt dùng `satellite`).
 - C3. ⚠️ Mìn nằm chờ (`MatchState.mines`, giao thức, client) → Cua Lăn đ2.
 - C4. Cú Thiên Văn: sửa theo mục 3 (sau #11 merge).

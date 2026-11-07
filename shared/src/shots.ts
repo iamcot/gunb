@@ -66,6 +66,8 @@ export interface ShotDef {
   behavior: Behavior
   /** Mục tiêu trúng đạn bị giảm giáp `amount` (tuyệt đối) trong `turns` lượt của chính nó. */
   armorBreak?: { turns: number; amount: number }
+  /** Vụ nổ xoá sạch khiên của mọi xe trong vùng nổ (kể cả khi sát thương ở rìa làm tròn về 0) trước khi tính sát thương (Sứa Đèn SS). */
+  shieldBreak?: boolean
   /** Đường bay cong quay lại (boomerang, Diều Hâu Giấy): thêm gia tốc ngang `returnAccel` px/s² hướng NGƯỢC chiều bắn (về phía người bắn), tăng tuyến tính từ 0 tới đủ sau `rampS` s kể từ lúc quả đạn rời nòng. Dùng được cùng mọi `behavior` bay (basic, spread, airGrow...). */
   curve?: { returnAccel: number; rampS: number }
 }

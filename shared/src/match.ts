@@ -25,6 +25,8 @@ export interface PlayerState {
   body: MobileBody
   hp: number
   maxHp: number
+  shield: number                              // khiên còn lại (0 nếu xe không có khiên)
+  maxShield: number
   armor: number
   delay: number
   lastActed: number
@@ -125,7 +127,7 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     const facing: 1 | -1 = p.team === 0 ? 1 : -1
     const body = createBody(x, (gy < 0 ? opts.mask.height : gy) - r, r, facing, def.speedMul)
     body.tilt = slopeAt(opts.mask, x, body.y + r - 2 * t.move.stepUp, r * 0.8)
-    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 },
+    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, shield: def.shield?.max ?? 0, maxShield: def.shield?.max ?? 0, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 },
       items: Array.from({ length: ITEM_SLOTS }, (_, k) => p.items?.[k] ?? null) }
   })
   const state: MatchState = { seed: opts.seed, players, wind: windForRound(opts.seed, 1), turnPlayerId: 0, turnNo: 1, roundNo: 1, roundStart: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null, turnItem: null, pendingTeleport: null }
@@ -150,7 +152,7 @@ function kill(p: PlayerState): void {
 }
 
 export function vehicles(s: MatchState): ShotVehicle[] {
-  return s.players.map(p => ({ id: p.id, mobileId: p.mobileId, x: p.body.x, y: p.body.y, radius: p.body.radius, hp: p.hp, armor: effectiveArmor(p) }))
+  return s.players.map(p => ({ id: p.id, mobileId: p.mobileId, x: p.body.x, y: p.body.y, radius: p.body.radius, hp: p.hp, shield: p.shield, armor: effectiveArmor(p) }))
 }
 
 function winnerOf(s: MatchState): Team | -1 | null {
@@ -286,6 +288,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
         s.roundNo++
         s.roundStart = s.turnNo
         s.wind = windForRound(s.seed, s.roundNo)
+        for (const q of s.players) { const sh = t.mobiles[q.mobileId]?.shield; if (sh && q.hp > 0) q.shield = Math.min(q.maxShield, q.shield + sh.regen) }   // sang vòng mới: khiên hồi
       }
       s.turnTimeLeft = t.turn.timeS
       s.phase = 'aiming'
@@ -309,11 +312,14 @@ function applyShotEvents(s: MatchState, p: PlayerState, shot: ShotResult, t: Tun
     if (e.kind === 'damage') {
       const target = s.players[e.id]!
       target.hp = e.hpAfter
+      if (e.shieldAfter !== undefined) target.shield = e.shieldAfter
       if (target.hp <= 0) target.body.alive = false
       if (target.team !== p.team) {
         p.ss = Math.min(t.ss.max, p.ss + e.amount * t.ss.perDamageDealt)
         target.ss = Math.min(t.ss.max, target.ss + e.amount * t.ss.perDamageTaken)
       }
+    } else if (e.kind === 'shield') {
+      s.players[e.id]!.shield = e.shieldAfter
     } else if (e.kind === 'armorBreak') {
       s.players[e.id]!.armorDebuff = { turns: e.turns, amount: e.amount }
     } else if (e.kind === 'teleport') {

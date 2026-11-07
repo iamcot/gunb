@@ -365,6 +365,14 @@ export class VehicleViews {
         v.bar.roundRect(x0 + 1, y0 + 1, Math.max(0, BAR_W * k - 2), BAR_H * 0.35, BAR_H * 0.17).fill({ color: light, alpha: 0.55 })   // vệt sáng trên
       }
       for (let i = 1; i < BAR_SEGS; i++) v.bar.rect(x0 + (BAR_W * i) / BAR_SEGS - 0.75, y0, 1.5, BAR_H).fill(0x1b2130)   // vạch chia 4 phần
+      if (p.maxShield > 0) {   // khiên (máu xanh) là thanh mảnh ngay trên thanh máu
+        const sk = Math.max(0, Math.min(1, p.shield / p.maxShield)), sy = y0 - 6
+        v.bar.roundRect(x0, sy, BAR_W, 4, 2).fill(0x1b2130)
+        if (sk > 0) {
+          v.bar.roundRect(x0, sy, BAR_W * sk, 4, 2).fill(0x4fd8ff)
+          v.bar.roundRect(x0 + 1, sy + 0.5, Math.max(0, BAR_W * sk - 2), 1.5, 1).fill({ color: 0xffffff, alpha: 0.6 })
+        }
+      }
     }
     v.name.position.set(0, y0 + BAR_H + 4)
     v.marker.visible = isCur

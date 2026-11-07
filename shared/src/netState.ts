@@ -25,7 +25,7 @@ export function snapshotOf(s: MatchState): Snapshot {
     wind: [s.wind.x, s.wind.y],
     p: s.players.map(p => [
       p.body.x, p.body.y, p.body.facing, p.body.tilt, p.hp, p.body.fuel, p.body.onGround ? 1 : 0, p.body.alive ? 1 : 0,
-      p.aimAngle, p.delay, p.ss, p.armorDebuff.turns, p.armorDebuff.amount, p.lastActed,
+      p.aimAngle, p.delay, p.ss, p.armorDebuff.turns, p.armorDebuff.amount, p.lastActed, p.shield,
     ]),
     items: s.players.map(p => p.items.map(i => i ?? '')),
     turnItem: s.turnItem ?? '',
@@ -45,10 +45,10 @@ export function applySnapshot(s: MatchState, snap: Snapshot): void {
   s.wind.x = snap.wind[0]; s.wind.y = snap.wind[1]
   snap.p.forEach((r, i) => {
     const p = s.players[i]!
-    const [x, y, facing, tilt, hp, fuel, onGround, alive, aim, delay, ss, dbT, dbA, last] = r as [number, number, number, number, number, number, number, number, number, number, number, number, number, number]
+    const [x, y, facing, tilt, hp, fuel, onGround, alive, aim, delay, ss, dbT, dbA, last, shield] = r as [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number | undefined]
     p.body.x = x; p.body.y = y; p.body.facing = facing === -1 ? -1 : 1; p.body.tilt = tilt; p.body.fuel = fuel
     p.body.onGround = onGround === 1; p.body.alive = alive === 1
-    p.hp = hp; p.aimAngle = aim; p.delay = delay; p.ss = ss
+    p.hp = hp; p.shield = shield ?? 0; p.aimAngle = aim; p.delay = delay; p.ss = ss
     p.armorDebuff.turns = dbT; p.armorDebuff.amount = dbA; p.lastActed = last
     const it = snap.items?.[i]
     if (it) for (let k = 0; k < p.items.length; k++) { const v = it[k]; p.items[k] = isItemId(v) ? v : null }

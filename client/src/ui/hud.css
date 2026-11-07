@@ -64,7 +64,7 @@
 
 /* ---------- thanh trên: hệ thống | thời tiết | (trống) | item ---------- */
 body.in-match #title, body.in-match #menubtn, body.in-match #mutebtn { display: none !important; }
-#topbar { position: fixed; left: 0; right: 0; top: 0; height: var(--tb-h); z-index: 5; display: none; align-items: stretch; gap: 8px; padding: 6px 10px;
+#topbar { position: fixed; left: 0; right: 0; top: 0; height: var(--tb-h); box-sizing: border-box; z-index: 5; display: none; align-items: stretch; gap: 8px; padding: 6px 10px;
   font: var(--h-font); color: var(--h-ink); user-select: none;
   background: linear-gradient(var(--h-cream-l), var(--h-cream)); border-bottom: 3px solid var(--h-earth); box-shadow: 0 3px 0 var(--h-earth-d), 0 8px 18px #0003; }
 #topbar > div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 12px; background: #fff8; border: 2px solid var(--h-cream-d); }

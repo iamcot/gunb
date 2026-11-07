@@ -32,6 +32,15 @@ describe('stepMobile', () => {
     expect(b.y).toBe(G - R)
   })
 
+  it('hết nhiên liệu vẫn quay đầu được nhưng không đi', () => {
+    const m = flat(), b = createBody(200, G - R, R, 1)
+    b.fuel = 0
+    const r = run(b, -1, 0.5, m)
+    expect(b.facing).toBe(-1)
+    expect(r.moved).toBe(0)
+    expect(b.x).toBe(200)
+  })
+
   it('gặp vách thẳng đứng thì dừng, không xuyên', () => {
     const m = flat()
     for (let x = 300; x < W; x++) for (let y = G - 100; y < G; y++) m.data[y * W + x] = 1

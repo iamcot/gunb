@@ -31,10 +31,10 @@ export function weatherIconHtml(kind: WeatherKind): string {
 
 /** Ảnh hiệu ứng trong bản đồ (plan/13-prompt-thoi-tiet.md): dải lặp dọc cho cột lốc / gương nước; chưa có/chưa tải xong thì vẽ bằng code.
  *  `width` = bề ngang ảnh so với vùng ảnh hưởng, `speed` = px/s (âm = trôi lên). */
-interface StripDef { url: string; width: number; speed: number; alpha: number; tex: Texture | null }
+interface StripDef { url: string; width: number; speed: number; alpha: number; sway: number; swayHz: number; tex: Texture | null }
 const STRIPS: Partial<Record<WeatherKind, StripDef>> = {
-  whirl: { url: '/ui/weather/whirl-strip.png', width: 1.5, speed: -220, alpha: 0.85, tex: null },
-  mirror: { url: '/ui/weather/mirror-strip.png', width: 1.15, speed: 90, alpha: 0.7, tex: null },
+  whirl: { url: '/ui/weather/whirl-strip.png', width: 1.5, speed: -220, alpha: 0.85, sway: 0.08, swayHz: 0.6, tex: null },
+  mirror: { url: '/ui/weather/mirror-strip.png', width: 1.15, speed: 90, alpha: 0.7, sway: 0.04, swayHz: 0.35, tex: null },
 }
 for (const d of Object.values(STRIPS)) {
   const img = new Image()
@@ -56,6 +56,10 @@ const LIGHTNING_LEN = 0.28    // s mỗi lần loé
 const BOLT_SEGS = 9
 /** Cột lốc / gương nước vẽ thêm phía trên mép bản đồ (tỉ lệ chiều cao bản đồ): camera nhìn được lên trên tới nửa màn hình. */
 const SKY_ABOVE = 1
+/** Lá xoáy quanh cột lốc: cách nhau LEAF_GAP px theo chiều dọc, bay lên LEAF_RISE px/s, quay quanh cột LEAF_SPIN rad/s, dài LEAF_SIZE px. */
+const LEAF_GAP = 45, LEAF_RISE = 260, LEAF_SPIN = 3.2, LEAF_SIZE = 20
+/** Gương nước: một giọt mỗi DROP_GAP px, rơi DROP_FALL px/s; bong bóng nổi BUBBLE_RISE px/s. */
+const DROP_GAP = 45, DROP_FALL = 380, BUBBLE_RISE = 60
 
 /** Số giả ngẫu nhiên 0..1 từ một số nguyên (chỉ để vẽ, không phải gameplay). */
 const hash01 = (n: number): number => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s) }
@@ -69,6 +73,7 @@ export class WeatherView {
   private readonly g = new Graphics()
   private readonly label: HTMLElement
   private stripArt: TilingSprite | null = null
+  private stripBack: TilingSprite | null = null   // lớp sau: cùng ảnh, lật ngang, trôi nhanh hơn, mờ hơn -> có chiều sâu
   private cloud: Sprite | null = null
   private bolt: Sprite | null = null
   private w: Weather | null = null
@@ -102,6 +107,7 @@ export class WeatherView {
     const g = this.g, w = this.w
     g.clear()
     if (this.stripArt) this.stripArt.visible = false
+    if (this.stripBack) this.stripBack.visible = false
     if (this.cloud) this.cloud.visible = false
     if (this.bolt) this.bolt.visible = false
     if (!w) return
@@ -115,22 +121,78 @@ export class WeatherView {
     }
   }
 
-  /** Cột lốc / gương nước bằng ảnh: dải lặp dọc phủ từ trên mép bản đồ tới đáy, trôi theo `speed`. */
+  /** Cột lốc / gương nước bằng ảnh: hai lớp dải lặp dọc phủ từ trên mép bản đồ tới đáy, trôi theo `speed`, lắc nhẹ ngang;
+   *  thêm lá xoáy quanh cột (lốc) hoặc giọt nước + bong bóng (gương) vẽ bằng code cho có chuyển động. */
   private drawStripArt(w: Weather, d: StripDef, tex: Texture): void {
-    if (!this.stripArt) {
+    if (!this.stripArt || !this.stripBack) {
+      this.stripBack = new TilingSprite({ texture: tex, width: 1, height: 1 })
       this.stripArt = new TilingSprite({ texture: tex, width: 1, height: 1 })
-      this.container.addChildAt(this.stripArt, 0)
+      this.container.addChildAt(this.stripBack, 0)
+      this.container.addChildAt(this.stripArt, 1)
     }
-    const a = this.stripArt, H = this.mapH * (1 + SKY_ABOVE), top = -this.mapH * SKY_ABOVE
+    const t = this.t, H = this.mapH * (1 + SKY_ABOVE), top = -this.mapH * SKY_ABOVE
     const width = w.hw * 2 * d.width, k = width / tex.width, tileH = tex.height * k
+    const sway = Math.sin(t * d.swayHz * Math.PI * 2) * w.hw * d.sway
+    const a = this.stripArt
     if (a.texture !== tex) a.texture = tex
     a.visible = true
     a.alpha = d.alpha
-    a.position.set(w.x - width / 2, top)
+    a.position.set(w.x - width / 2 + sway, top)
     a.width = width; a.height = H
     a.tileScale.set(k, k)
-    a.tilePosition.set(0, ((this.t * d.speed) % tileH + tileH) % tileH)
+    a.tilePosition.set(0, ((t * d.speed) % tileH + tileH) % tileH)
+    // lớp sau: hẹp hơn chút, lật ngang (scale.x âm, neo ở mép phải), lắc ngược pha
+    const b = this.stripBack, bw = width * 0.85, bk = bw / tex.width, bH = tex.height * bk
+    if (b.texture !== tex) b.texture = tex
+    b.visible = true
+    b.alpha = d.alpha * 0.45
+    b.position.set(w.x + bw / 2 - sway, top)
+    b.width = bw; b.height = H
+    b.scale.x = -1
+    b.tileScale.set(bk, bk)
+    b.tilePosition.set(0, ((t * d.speed * 1.6 + bH * 0.37) % bH + bH) % bH)
     this.g.rect(w.x - w.hw, top, w.hw * 2, H).fill({ color: 0xffffff, alpha: 0.06 })   // vùng ảnh hưởng thật
+    if (w.kind === 'whirl') this.drawWhirlLeaves(w, top, H, sway)
+    else if (w.kind === 'mirror') this.drawDrops(w, top, H, sway)
+  }
+
+  /** Lá + vệt gió xoắn ốc quanh cột lốc, bay lên; lá phía sau cột nhỏ và mờ hơn. */
+  private drawWhirlLeaves(w: Weather, top: number, H: number, sway: number): void {
+    const g = this.g, t = this.t, hw = w.hw, n = Math.ceil(H / LEAF_GAP)
+    for (let i = 0; i < n; i++) {
+      const yy = ((i * LEAF_GAP + hash01(i) * LEAF_GAP - t * LEAF_RISE) % H + H) % H, y = top + yy
+      const ang = t * LEAF_SPIN + i * 2.4
+      const depth = Math.cos(ang)                       // 1 = phía trước cột
+      const cx = w.x + sway + Math.sin(ang) * hw * (1.05 + 0.25 * hash01(i + 9))
+      if (i % 3 === 0) {                                // vệt gió cong theo vòng xoắn
+        const a2 = ang - 0.7, x2 = w.x + sway + Math.sin(a2) * hw * 0.85, y2 = y + 22
+        const am = ang - 0.35, xm = w.x + sway + Math.sin(am) * hw * 1.05
+        g.moveTo(cx, y).quadraticCurveTo(xm, y + 11, x2, y2).stroke({ color: 0xffffff, width: 3, alpha: 0.25 + 0.35 * Math.max(0, depth), cap: 'round' })
+        continue
+      }
+      const sz = LEAF_SIZE * (0.75 + 0.25 * depth) * (0.8 + 0.4 * hash01(i + 3))
+      const rot = t * 5 * (hash01(i + 5) < 0.5 ? -1 : 1) + i
+      const flat = 0.5 + 0.5 * Math.abs(Math.sin(t * 6 + i))   // lá lật -> nhìn dẹt lại
+      const ux = Math.cos(rot) * sz, uy = Math.sin(rot) * sz, vx = -uy * 1.1 * flat, vy = ux * 1.1 * flat
+      g.moveTo(cx + ux, y + uy).quadraticCurveTo(cx + vx, y + vy, cx - ux, y - uy).quadraticCurveTo(cx - vx, y - vy, cx + ux, y + uy)
+        .fill({ color: hash01(i + 1) < 0.65 ? 0x7cc66a : 0xf08a64, alpha: depth > 0 ? 1 : 0.5 })
+        .stroke({ color: 0x5a3b22, width: 1.5, alpha: depth > 0 ? 1 : 0.5 })
+    }
+  }
+
+  /** Giọt nước rơi nhanh + bong bóng lắc lư nổi lên trong dải gương nước. */
+  private drawDrops(w: Weather, top: number, H: number, sway: number): void {
+    const g = this.g, t = this.t, hw = w.hw, n = Math.ceil(H / DROP_GAP)
+    for (let i = 0; i < n; i++) {
+      const x = w.x + sway + (hash01(i) * 2 - 1) * hw * 0.85
+      const yy = ((i * DROP_GAP + hash01(i + 2) * DROP_GAP + t * DROP_FALL) % H + H) % H
+      g.moveTo(x, top + yy).lineTo(x, top + yy + 14).stroke({ color: 0xffffff, width: 2, alpha: 0.55, cap: 'round' })
+      if (i % 2 === 0) {
+        const by = ((i * DROP_GAP - t * BUBBLE_RISE) % H + H) % H
+        const bx = w.x + sway + (hash01(i + 7) * 2 - 1) * hw * 0.7 + Math.sin(t * 3 + i) * 6
+        g.circle(bx, top + by, 3 + 3 * hash01(i + 4)).stroke({ color: 0xffffff, width: 1.5, alpha: 0.7 })
+      }
+    }
   }
 
   /** Cột lốc: cột sáng + phễu xoắn (vòng elip trôi lên, rộng dần lên trên) + mũi tên đi lên + lá cuốn quanh. */

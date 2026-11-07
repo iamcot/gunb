@@ -99,6 +99,11 @@ export class Fx {
       const k = a.length / a.tex.width
       s.rotation = 0
       s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
+    } else if (a) {
+      // xoay theo hướng bay; bay sang trái thì lật dọc để ảnh không bị lộn ngược
+      const k = a.length / a.tex.width
+      s.rotation = rot
+      s.scale.set(k, Math.cos(rot) < 0 ? -k : k)
     } else s.rotation = rot
     p.x = x; p.y = y; p.visible = visible
   }

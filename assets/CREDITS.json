@@ -1405,5 +1405,29 @@
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
     "modified": "Cắt sát, thu về 128 px"
+  },
+  {
+    "file": "fonts/nunito-vietnamese.woff2",
+    "author": "Vernon Adams, Cyreal, Jacques Le Bailly (The Nunito Project Authors)",
+    "source": "Google Fonts – Nunito v32 (biến thể, trục wght), phân đoạn vietnamese",
+    "license": "OFL",
+    "url": "https://fonts.google.com/specimen/Nunito",
+    "modified": "Không sửa (file woff2 tải nguyên từ fonts.gstatic.com)"
+  },
+  {
+    "file": "fonts/nunito-latin-ext.woff2",
+    "author": "Vernon Adams, Cyreal, Jacques Le Bailly (The Nunito Project Authors)",
+    "source": "Google Fonts – Nunito v32 (biến thể, trục wght), phân đoạn latin-ext",
+    "license": "OFL",
+    "url": "https://fonts.google.com/specimen/Nunito",
+    "modified": "Không sửa (file woff2 tải nguyên từ fonts.gstatic.com)"
+  },
+  {
+    "file": "fonts/nunito-latin.woff2",
+    "author": "Vernon Adams, Cyreal, Jacques Le Bailly (The Nunito Project Authors)",
+    "source": "Google Fonts – Nunito v32 (biến thể, trục wght), phân đoạn latin",
+    "license": "OFL",
+    "url": "https://fonts.google.com/specimen/Nunito",
+    "modified": "Không sửa (file woff2 tải nguyên từ fonts.gstatic.com)"
   }
 ]

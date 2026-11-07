@@ -8,7 +8,7 @@ import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
-import { resultsHtml } from './results'
+import { RESULTS_DELAY_S, resultsHtml, showResults } from './results'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
@@ -38,6 +38,7 @@ export class HotseatMode implements Mode {
   private readonly range: AimRange = { min: 0, max: 90 }
   private lastHash: boolean | null = null
   private overlay: HTMLElement | null = null
+  private endWait = RESULTS_DELAY_S
   private readonly stats
   private readonly bot: BotDriver | null
   private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0 }
@@ -137,7 +138,6 @@ export class HotseatMode implements Mode {
             this.settledFor = 0
             applyAction(m, { t: 'endTurn' }, { mask: this.mask })
             this.shownHp.clear()
-            if ((m.phase as string) === 'ended') this.showEnd()
           }
         } else this.settledFor = 0
       }
@@ -152,16 +152,16 @@ export class HotseatMode implements Mode {
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
     ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
     this.shotBar.setVisible(m.phase !== 'ended')
+    // hết trận: chờ hồn thoát xác bay xong rồi mới bung bảng kết quả
+    if (m.phase === 'ended' && !this.playback && !this.overlay && !this.vehicles.dying && (this.endWait -= dt) <= 0) this.showEnd()
   }
 
   private showEnd(): void {
     const m = this.match
-    const el = document.createElement('div')
-    el.className = 'overlay'
-    el.innerHTML = `<div class="panel" style="max-width:92vw">${resultsHtml(m, this.stats)}<div class="row"><button id="again">Ván mới</button><button id="tomenu">Về menu</button></div></div>`
+    // chơi với máy: người là đội Xanh; 2 người 1 máy thì chỉ ghi đội nào thắng
+    const el = showResults(resultsHtml(m, this.stats, this.bot ? { team: 0 } : null, [{ id: 'tomenu', label: 'Về menu' }, { id: 'again', label: 'Ván mới', cls: 'go big' }]))
     el.querySelector('#again')!.addEventListener('click', () => this.onNewGame())
     el.querySelector('#tomenu')!.addEventListener('click', () => this.onMenu())
-    document.body.appendChild(el)
     this.overlay = el
   }
 

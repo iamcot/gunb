@@ -18,7 +18,7 @@ const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 
 const BOOM_S = 0.4          // phần "lõi" vụ nổ: playback chờ hết phần này mới chuyển lượt
 const BOOM_LIFE = 0.6       // chớp sáng + sóng xung kích tắt hẳn
 const FLASH_S = 0.12
-const BOLT_S = 0.3
+const BOLT_S = 0.42
 const BOLT_HEIGHT = 900
 const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
@@ -229,6 +229,28 @@ export class Fx {
     this.trailD[i] = d >= TRAIL_STEP ? 0 : d
   }
 
+  /** Vân sét quanh các viên đạn điện (`arcs` trong shots.json): mỗi frame vẽ lại vài tia gấp khúc ngắn toả ra từ viên đạn nên nhìn như điện nhoáng. */
+  private drawShellArcs(glow: Graphics): void {
+    const a = this.shellArt
+    if (!a || a.arcs <= 0) return
+    for (let i = 0; i < this.shellPos.length; i++) {
+      const p = this.shellPos[i]!
+      if (!p.visible) continue
+      for (let n = 0; n < a.arcs; n++) {
+        let ang = Math.random() * Math.PI * 2
+        const rr = a.length * rnd(0.8, 1.5)
+        let cx = p.x + Math.cos(ang) * a.length * 0.2, cy = p.y + Math.sin(ang) * a.length * 0.2
+        glow.moveTo(cx, cy)
+        for (let s = 0; s < 3; s++) {
+          ang += rnd(-0.9, 0.9)
+          cx += Math.cos(ang) * rr / 3; cy += Math.sin(ang) * rr / 3
+          glow.lineTo(cx, cy)
+        }
+        glow.stroke({ color: 0xcfe8ff, width: 2.2, alpha: 0.9, join: 'round' })
+      }
+    }
+  }
+
   /** Viên đạn `i` (airGrow) bay đủ lâu: đổi sang dạng lớn (ảnh `grow` trong shots.json) + chớp sáng nhỏ. */
   growShell(i: number, x: number, y: number): void {
     this.shellGrown[i] = true
@@ -327,25 +349,42 @@ export class Fx {
     for (let i = 0; i < 2; i++) this.spawn(P_DUST, x + rnd(-3, 3), y - rnd(0, 3), -dirX * rnd(10, 35), -rnd(10, 30), rnd(0.35, 0.6), rnd(2.5, 4.5), 0xc9b08a)
   }
 
-  /** Tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao): đường gấp khúc ngẫu nhiên quanh đoạn thẳng, lõi trắng viền xanh. */
+  /** Tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao): đường gấp khúc dày ba lớp (quầng xanh, thân xanh sáng, lõi trắng) + các nhánh rẽ ra hai bên (vân sét). */
   bolt(x: number, y: number, x0?: number, y0?: number): void {
     const g = new Graphics()
     const sx = x0 ?? x + 10, sy = y0 ?? y - BOLT_HEIGHT
     const dx = x - sx, dy = y - sy, len = Math.hypot(dx, dy) || 1
-    const nx = -dy / len, ny = dx / len          // pháp tuyến của tia
-    const segs = Math.max(8, Math.round(len / 60))
-    g.moveTo(sx, sy)
+    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux          // hướng tia và pháp tuyến
+    const segs = Math.max(10, Math.round(len / 45))
+    const px: number[] = [sx], py: number[] = [sy]
     for (let i = 1; i <= segs; i++) {
-      const k = i / segs, off = i === segs ? 0 : (((i * 7) % 5) - 2) * 9
-      g.lineTo(sx + dx * k + nx * off, sy + dy * k + ny * off)
+      const k = i / segs, off = i === segs ? 0 : rnd(-16, 16)
+      px.push(sx + dx * k + nx * off); py.push(sy + dy * k + ny * off)
     }
-    g.stroke({ color: 0x7fb8ff, width: 9, join: 'round', alpha: 0.55 })
-    g.moveTo(sx, sy)
-    for (let i = 1; i <= segs; i++) {
-      const k = i / segs, off = i === segs ? 0 : (((i * 7) % 5) - 2) * 9
-      g.lineTo(sx + dx * k + nx * off, sy + dy * k + ny * off)
+    const strokePath = (xs: number[], ys: number[], color: number, width: number, alpha: number): void => {
+      g.moveTo(xs[0]!, ys[0]!)
+      for (let i = 1; i < xs.length; i++) g.lineTo(xs[i]!, ys[i]!)
+      g.stroke({ color, width, join: 'round', cap: 'round', alpha })
     }
-    g.stroke({ color: 0xf2f9ff, width: 4, join: 'round' })
+    // nhánh rẽ: từ các đỉnh gấp khúc, lệch 25–55° so với hướng tia, dài 40–130 px, gấp khúc 3 đoạn, thưa dần về phía chạm
+    const branches: { xs: number[]; ys: number[] }[] = []
+    for (let i = 2; i < segs - 1; i += 2) {
+      if (Math.random() < 0.2) continue
+      const side = Math.random() < 0.5 ? -1 : 1, ang = side * rnd(0.45, 0.95), blen = rnd(40, 130)
+      const ca = Math.cos(ang), sa = Math.sin(ang)
+      const bx = ux * ca - uy * sa, by = ux * sa + uy * ca        // hướng nhánh
+      const xs = [px[i]!], ys = [py[i]!]
+      for (let n = 1; n <= 3; n++) { xs.push(xs[n - 1]! + bx * blen / 3 + rnd(-7, 7) * nx); ys.push(ys[n - 1]! + by * blen / 3 + rnd(-7, 7) * ny) }
+      branches.push({ xs, ys })
+    }
+    for (const b of branches) strokePath(b.xs, b.ys, 0x7fb8ff, 7, 0.35)
+    strokePath(px, py, 0x6fb0ff, 24, 0.28)
+    strokePath(px, py, 0x9fd0ff, 12, 0.6)
+    for (const b of branches) strokePath(b.xs, b.ys, 0xe8f4ff, 2.5, 0.95)
+    strokePath(px, py, 0xffffff, 5.5, 1)
+    // chớp sáng tại điểm chạm
+    g.circle(x, y, 26).fill({ color: 0xbfe0ff, alpha: 0.5 })
+    g.circle(x, y, 11).fill({ color: 0xffffff, alpha: 0.9 })
     this.container.addChild(g)
     this.bolts.push({ g, age: 0 })
     this.shake = Math.max(this.shake, 6)
@@ -461,6 +500,7 @@ export class Fx {
     back.clear()
     fire.clear()
     glow.clear()
+    this.drawShellArcs(glow)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt

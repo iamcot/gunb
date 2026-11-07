@@ -100,18 +100,18 @@
   {
     "file": "mobiles/bo-loi/body.png",
     "author": "IamCoT (tạo bằng ChatGPT)",
-    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "source": "Ảnh AI do người dùng cung cấp trong thread (ChatGPT)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+    "modified": "Ảnh mới \"Whimsical Electric Beetle Mech\" (đuôi bọ cạp mang cầu sét): xoá nền trắng, tách đuôi + cầu sét thành nòng xoay quanh khớp tròn vàng (nòng vẽ sau thân), thu về 342×288 px"
   },
   {
     "file": "mobiles/bo-loi/barrel.png",
     "author": "IamCoT (tạo bằng ChatGPT)",
-    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "source": "Ảnh AI do người dùng cung cấp trong thread (ChatGPT)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+    "modified": "Ảnh mới \"Whimsical Electric Beetle Mech\" (đuôi bọ cạp mang cầu sét): xoá nền trắng, tách đuôi + cầu sét thành nòng xoay quanh khớp tròn vàng (nòng vẽ sau thân), thu về 342×288 px"
   },
   {
     "file": "mobiles/bo-loi/rig.json",

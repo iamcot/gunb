@@ -6,11 +6,14 @@ import { preloadShotArt } from './shotArt'
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const FAN_RADIUS = 80
+const FAN_TICK = 5, FAN_TICK_LONG = 10   // px: vạch thước mỗi 5° / 15°
+const NEEDLE_COLOR = 0xff5a1f, NEEDLE_BASE = 3.5, NEEDLE_OVER = 10   // kim ngắm đỏ cam: nửa bề rộng gốc, phần thò ra ngoài vòng cung
 
 interface View {
   root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null
   // chuyển động phụ (chỉ là hình): lúc lắc khi đi, nhún khi bắn, giật khi trúng đạn
   lastX: number; moveAmt: number; phase: number; dustAcc: number; recoilT: number; hitT: number
+  wasAlive: boolean   // để bắt đúng lúc xe chết (hiện hồn thoát xác)
 }
 
 /** `assets/mobiles/<id>/rig.json`. Toạ độ chuẩn hoá 0..1 theo ảnh tương ứng. */
@@ -28,7 +31,7 @@ interface Rig {
 }
 interface RigArt { rig: Rig; body: Texture; barrel: Texture; pilot: PilotArt | null }
 /** Sprite của một xe: `frame` nghiêng theo dốc và lật theo hướng, chứa thân + nòng. */
-interface Art { frame: Container; body: Sprite; barrel: Sprite; top: number; flip: 1 | -1; catapult: boolean; swingT: number; radius: number; barrelX: number; barrelY: number }
+interface Art { frame: Container; body: Sprite; barrel: Sprite; pilot: Sprite | null; top: number; flip: 1 | -1; catapult: boolean; swingT: number; radius: number; barrelX: number; barrelY: number; barrelSX: number; barrelSY: number }
 
 /** Cú vung của máy bắn đá (chỉ là hình): góc vung (độ), thời gian vung lên / giữ / hạ về (giây). */
 const SWING_DEG = 125, SWING_UP = 0.18, SWING_HOLD = 0.12, SWING_BACK = 0.6
@@ -38,6 +41,8 @@ const RECOIL_ATTACK = 0.05, RECOIL_DAMP = 7, RECOIL_FREQ = 19, RECOIL_S = 0.9
 const RECOIL_SQUASH = 0.14    // thân dẹt xuống tối đa 14%
 const RECOIL_PUSH = 5         // px: cả xe lùi về sau
 const RECOIL_KICK = 7         // px: nòng giật lùi dọc trục nòng
+/** Nòng phình ra khi xe bật lên sau cú nhún (phần âm của u): to ngang thêm tối đa 45%, dài thêm 12%. */
+const BULGE_FAT = 0.45, BULGE_LONG = 0.12, BULGE_FULL = 0.3   // |u| âm đạt BULGE_FULL thì phình hết cỡ
 /** Lúc lắc khi đi: pha tăng theo quãng đường (đi nhanh lắc nhanh). */
 const WOBBLE_PER_PX = 0.14    // rad pha / px
 const WOBBLE_ROT = 0.045      // rad nghiêng qua lại
@@ -47,6 +52,8 @@ const DUST_EVERY = 14         // px: mỗi quãng này tung một cụm bụi
 const TELEPORT_PX = 30        // dịch chuyển lớn hơn thế trong 1 frame = đặt lại vị trí, không tính là đi
 /** Giật khi trúng đạn. */
 const HIT_S = 0.35, HIT_SHAKE = 3
+/** Hồn thoát xác khi xe chết: bay lên GHOST_RISE px/s trong GHOST_S s, mờ GHOST_ALPHA, to dần thêm GHOST_GROW, lắc ngang GHOST_SWAY px, rồi vỡ. */
+const GHOST_S = 1.6, GHOST_RISE = 55, GHOST_ALPHA = 0.5, GHOST_GROW = 0.25, GHOST_SWAY = 10, GHOST_TINT = 0xd6ecff
 
 const rigCache = new Map<string, Promise<RigArt | null>>()
 
@@ -100,6 +107,8 @@ export class VehicleViews {
   private readonly tmp: Vec2 = { x: 0, y: 0 }
   private readonly range: AimRange = { min: 0, max: 90 }
   private bob = 0
+  /** Hồn thoát xác đang bay (tạo lúc xe chết, không phải mỗi frame). */
+  private readonly ghosts: { s: Sprite; x: number; y: number; t: number; sx: number; sy: number; ph: number }[] = []
 
   /** `fx`: nếu có thì tung bụi dưới bánh khi xe đi. */
   constructor(match: MatchState, private readonly fx: Fx | null = null) {
@@ -115,7 +124,7 @@ export class VehicleViews {
       marker.visible = false
       root.addChild(body, barrel, bar, name, marker)
       this.container.addChild(root)
-      const view: View = { root, body, barrel, bar, name, marker, art: null, lastX: p.body.x, moveAmt: 0, phase: 0, dustAcc: 0, recoilT: -1, hitT: -1 }
+      const view: View = { root, body, barrel, bar, name, marker, art: null, lastX: p.body.x, moveAmt: 0, phase: 0, dustAcc: 0, recoilT: -1, hitT: -1, wasAlive: p.body.alive }
       this.views.set(p.id, view)
       preloadShotArt(p.mobileId)
       void loadRig(p.mobileId).then(ra => { if (ra && !root.destroyed) this.attachArt(view, ra, p.body.radius) })
@@ -137,22 +146,24 @@ export class VehicleViews {
     barrel.position.set((rig.pivot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pivot[1] - rig.ground[1]) * ra.body.height * k)
     if (rig.barrelBehind) frame.addChild(barrel, body)
     else frame.addChild(body, barrel)
+    let pilotSprite: Sprite | null = null
     if (rig.pilot && ra.pilot) {
       // phi công ngồi trên ghế, vẽ trên thân và dưới nòng (nòng sau thân thì vẽ trên cùng); xe lật ngược thì lật lại để phi công nhìn về phía đầu xe
       const pi = ra.pilot.info
       const pilot = new Sprite(ra.pilot.sit)
       pilot.anchor.set(pi.hip[0], pi.hip[1])
       const pk = pi.sitHeight / ra.pilot.sit.height
-      pilot.scale.set(pk * flip, pk)
+      pilot.scale.set(pk, pk)   // phi công quay cùng hướng với ảnh thân (đầu xe), kể cả xe bắn bằng đuôi
       pilot.position.set((rig.pilot[0] - rig.ground[0]) * ra.body.width * k, radius + (rig.pilot[1] - rig.ground[1]) * ra.body.height * k)
       frame.addChildAt(pilot, frame.getChildIndex(body) + 1)
+      pilotSprite = pilot
     }
     v.root.addChildAt(frame, 0)
     v.body.visible = false
     v.barrel.visible = false
     // xoay/co giãn quanh điểm chạm đất (để nhún không làm xe nhấc khỏi mặt đất); vị trí khung đặt lại mỗi frame
     frame.pivot.set(0, radius)
-    v.art = { frame, body, barrel, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1, radius, barrelX: barrel.x, barrelY: barrel.y }
+    v.art = { frame, body, barrel, pilot: pilotSprite, top: radius - ra.body.height * k, flip, catapult: rig.catapult === true, swingT: -1, radius, barrelX: barrel.x, barrelY: barrel.y, barrelSX: barrel.scale.x, barrelSY: barrel.scale.y }
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
@@ -163,11 +174,16 @@ export class VehicleViews {
       if (v.recoilT >= 0) { v.recoilT += dt; if (v.recoilT > RECOIL_S) v.recoilT = -1 }
       if (v.hitT >= 0) { v.hitT += dt; if (v.hitT > HIT_S) v.hitT = -1 }
     }
+    this.updateGhosts(dt)
     this.fan.clear()
     for (const p of match.players) {
       const v = this.views.get(p.id)!
       const hp = shownHp.get(p.id) ?? p.hp
-      const alive = p.body.alive && (hp > 0 || p.hp > 0)
+      // đang phát lại phát bắn thì theo máu đang hiển thị: xe chỉ chết khi đạn tới nơi, không chết sớm theo kết quả server
+      const shown = shownHp.get(p.id)
+      const alive = shown !== undefined ? shown > 0 : p.body.alive
+      if (v.wasAlive && !alive) this.spawnGhost(v)
+      v.wasAlive = alive
       const isCur = p.id === match.turnPlayerId && match.phase === 'aiming'
       this.trackMove(v, p, dt)
       this.drawOne(v, p, hp, alive, isCur)
@@ -197,6 +213,7 @@ export class VehicleViews {
       // khung xoay quanh điểm chạm đất (pivot) nhưng tương đương xoay quanh tâm xe như trước
       a.frame.position.set(ox - a.radius * Math.sin(rot), oy + a.radius * Math.cos(rot))
       a.body.tint = a.barrel.tint = tint
+      if (a.pilot) a.pilot.visible = alive   // hồn đã thoát khỏi xác
       if (a.catapult) {
         a.barrel.rotation = this.swingRad(a)
         this.drawLabels(v, p, hp, alive, isCur, a.top)
@@ -209,6 +226,8 @@ export class VehicleViews {
       // nòng giật lùi dọc trục (hướng đầu nòng trong khung = flip·(cos, sin) của góc quay)
       const kick = RECOIL_KICK * Math.max(0, u) * a.flip
       a.barrel.position.set(a.barrelX - Math.cos(a.barrel.rotation) * kick, a.barrelY - Math.sin(a.barrel.rotation) * kick)
+      const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+      a.barrel.scale.set(a.barrelSX * (1 + BULGE_LONG * bl), a.barrelSY * (1 + BULGE_FAT * bl))
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
     }
@@ -222,7 +241,8 @@ export class VehicleViews {
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6, cap: 'round' })
+    const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+    v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6 * (1 + BULGE_FAT * bl), cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)
   }
@@ -238,7 +258,9 @@ export class VehicleViews {
   /** Xe `id` trúng đạn: giật ngang + ửng đỏ một thoáng. */
   hitAnim(id: number): void {
     const v = this.views.get(id)
-    if (v) v.hitT = 0
+    if (!v) return
+    v.hitT = 0
+    this.fx?.hitImpact(v.root.x + (Math.random() - 0.5) * 10, v.root.y - 6)
   }
 
   /** Độ nén khi bắn: 0 → 1 rất nhanh, rồi dao động tắt dần quanh 0. */
@@ -293,19 +315,72 @@ export class VehicleViews {
     v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch góc hiện tại của người đến lượt. */
+  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch thước trên vòng cung + kim ngắm đỏ cam chỉ góc hiện tại. */
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan
+    const cx = b.x, cy = b.y - 4
     const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
-    g.moveTo(b.x, b.y - 4)
+    g.moveTo(cx, cy)
     for (let a = r.min; ; a = Math.min(a + 5, r.max)) {
       const d = aimDir(this.tmp, a, b.facing)
-      g.lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS)
+      g.lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
       if (a >= r.max) break
     }
-    g.closePath().fill({ color: 0xffffff, alpha: 0.14 })
+    g.closePath().fill({ color: 0xffffff, alpha: 0.2 }).stroke({ color: 0x3a2412, width: 1.5, alpha: 0.55 })
+    // vạch thước: mỗi 5° một vạch ngắn, mỗi 15° vạch dài hơn (tính theo góc so với phương ngang)
+    for (let a = Math.ceil(r.min / 5) * 5; a <= r.max; a += 5) {
+      const d = aimDir(this.tmp, a, b.facing)
+      const len = a % 15 === 0 ? FAN_TICK_LONG : FAN_TICK
+      g.moveTo(cx + d.x * (FAN_RADIUS - len), cy + d.y * (FAN_RADIUS - len)).lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
+    }
+    g.stroke({ color: 0x3a2412, width: 1.5, alpha: 0.8 })
+    // kim ngắm: tam giác thon từ tâm tới quá vòng cung một chút
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    g.moveTo(b.x, b.y - 4).lineTo(b.x + d.x * FAN_RADIUS, b.y - 4 + d.y * FAN_RADIUS).stroke({ color: 0xffffff, width: 2, alpha: 0.8 })
+    const nx = -d.y, ny = d.x, tip = FAN_RADIUS + NEEDLE_OVER
+    g.moveTo(cx + nx * NEEDLE_BASE, cy + ny * NEEDLE_BASE)
+      .lineTo(cx + d.x * tip, cy + d.y * tip)
+      .lineTo(cx - nx * NEEDLE_BASE, cy - ny * NEEDLE_BASE)
+      .closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
+    g.circle(cx, cy, NEEDLE_BASE + 1).fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
+  }
+
+  /** Hồn thoát xác: bản sao mờ của phi công (xe không có phi công thì của thân xe) bay lên, lắc lư, rồi vỡ thành tia sáng. */
+  private spawnGhost(v: View): void {
+    const a = v.art
+    const src = a ? (a.pilot ?? a.body) : null
+    if (!src || !src.texture) return
+    const s = new Sprite(src.texture)
+    s.anchor.copyFrom(src.anchor)
+    s.tint = GHOST_TINT
+    s.alpha = GHOST_ALPHA
+    const pos = this.container.toLocal(src.getGlobalPosition())
+    const ws = src.worldTransform, cs = this.container.worldTransform
+    const sx = Math.hypot(ws.a, ws.b) / Math.hypot(cs.a, cs.b) * Math.sign(ws.a || 1)
+    const sy = Math.hypot(ws.c, ws.d) / Math.hypot(cs.c, cs.d)
+    s.position.set(pos.x, pos.y)
+    s.scale.set(sx, sy)
+    s.alpha = 0
+    this.container.addChild(s)
+    this.ghosts.push({ s, x: pos.x, y: pos.y, t: 0, sx, sy, ph: Math.random() * 6 })
+  }
+
+  private updateGhosts(dt: number): void {
+    for (let i = this.ghosts.length - 1; i >= 0; i--) {
+      const g = this.ghosts[i]!
+      g.t += dt
+      const k = g.t / GHOST_S
+      if (k >= 1) {
+        this.fx?.soulBurst(g.s.x, g.s.y)
+        g.s.destroy()
+        this.ghosts.splice(i, 1)
+        continue
+      }
+      const grow = 1 + GHOST_GROW * k
+      g.s.position.set(g.x + Math.sin(g.t * 5 + g.ph) * GHOST_SWAY * k, g.y - GHOST_RISE * g.t)
+      g.s.scale.set(g.sx * grow, g.sy * grow)
+      g.s.rotation = Math.sin(g.t * 4 + g.ph) * 0.12
+      g.s.alpha = GHOST_ALPHA * (k < 0.15 ? k / 0.15 : 1) * (1 - 0.3 * k)
+    }
   }
 
   destroy(): void { this.container.destroy({ children: true }) }

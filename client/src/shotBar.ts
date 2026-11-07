@@ -30,7 +30,9 @@ export class ShotBar {
     this.last = key
     def.shots.forEach((sh, i) => {
       const b = this.btns[i]!
-      b.innerHTML = `<span class="sb-key">${i + 1}</span><span class="sb-name">${i === 2 ? 'SS · ' : ''}${sh.name}</span><small>delay ${sh.delay}${i === 2 && !ready ? ` · ${Math.floor((ss / ssMax) * 100)}%` : ''}</small>`
+      // icon = ảnh đạn của xe (assets/mobiles/<id>/shot-N.png); tên đạn để ở tooltip
+      b.title = `${i === 2 ? 'SS · ' : ''}${sh.name}`
+      b.innerHTML = `<span class="sb-key">${i + 1}</span><img class="sb-icon" src="/mobiles/${encodeURIComponent(def.id)}/shot-${i + 1}.png" alt="${sh.name}" draggable="false"><small>${i === 2 ? 'SS · ' : ''}delay ${sh.delay}${i === 2 && !ready ? ` · ${Math.floor((ss / ssMax) * 100)}%` : ''}</small>`
       b.className = (i === slot ? 'sel ' : '') + (i === 2 ? (ready ? 'ss ready' : 'ss locked') : '')
       b.disabled = i === 2 && !ready
     })

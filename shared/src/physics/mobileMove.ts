@@ -47,8 +47,8 @@ function chunk(b: MobileBody, dir: -1 | 0 | 1, dt: number, mask: TerrainMask, t:
   let bottom = b.y + b.radius
 
   if (b.onGround) {
+    if (dir !== 0) b.facing = dir         // hết xăng vẫn được quay đầu, chỉ không đi được
     if (dir !== 0 && b.fuel > 0) {
-      b.facing = dir
       let dx = dir * m.speed * b.speedMul * dt
       if (Math.abs(dx) > b.fuel) dx = dir * b.fuel
       const nx = b.x + dx

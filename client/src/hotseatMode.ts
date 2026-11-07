@@ -1,7 +1,7 @@
 import {
   BotDriver, TEAM_NAMES, TUNING, weatherOf, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
-  aimRange, type AimRange,
+  aimRange, type AimRange, groundYBelow,
 } from '@gunb/shared'
 import { getShotArt, getShotSfx } from './shotArt'
 import { audio } from './audio'
@@ -34,6 +34,7 @@ export class HotseatMode implements Mode {
   private playback: ShotPlayback | null = null
   private settledFor = 0
   private lastTurnPlayer = -1
+  private lastTurnNo = -1   // cùng một người được bắn 2 lượt liền thì vẫn phải coi là lượt mới (camera về xe, đổi gió)
   private readonly range: AimRange = { min: 0, max: 90 }
   private lastHash: boolean | null = null
   private overlay: HTMLElement | null = null
@@ -53,7 +54,7 @@ export class HotseatMode implements Mode {
     this.stats = newStats(this.match.players.length)
     this.bot = setup.botLevel ? new BotDriver(setup.botLevel) : null
     this.vehicles = new VehicleViews(this.match, ctx.fx)
-    this.weather = new WeatherView(ctx.map.height)
+    this.weather = new WeatherView(ctx.map.height, (x, fromY) => groundYBelow(ctx.view.mask, x, fromY))
     ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
     ctx.hud.setVisible(true)
@@ -72,6 +73,7 @@ export class HotseatMode implements Mode {
     this.aim.lastPower = this.lastPower.get(p.id) ?? 0
     this.aim.power = 0
     this.lastTurnPlayer = p.id
+    this.lastTurnNo = this.match.turnNo
     audio.turn()
     this.ctx.hud.setWind(this.match.wind)
     this.ctx.focus.x = p.body.x; this.ctx.focus.y = p.body.y; this.ctx.focus.t = 1.2
@@ -97,7 +99,7 @@ export class HotseatMode implements Mode {
   update(dt: number): void {
     const { match: m, ctx, aim } = this
     if (m.phase === 'aiming' && !this.playback) {
-      if (m.turnPlayerId !== this.lastTurnPlayer) this.beginTurnUi()
+      if (m.turnPlayerId !== this.lastTurnPlayer || m.turnNo !== this.lastTurnNo) this.beginTurnUi()
       const p = currentPlayer(m)
       const isBot = this.bot !== null && p.team === 1
       aim.locked = isBot
@@ -125,6 +127,7 @@ export class HotseatMode implements Mode {
         if (this.playback.update(dt)) {
           this.lastHash = this.playback.hashMatches
           this.playback = null
+          this.shownHp.clear()   // đã phát hết sự kiện: máu hiển thị = máu trận
         }
       } else {
         applyAction(m, { t: 'tick', dt }, { mask: this.mask })   // xe mất đất dưới chân rơi xuống
@@ -141,6 +144,7 @@ export class HotseatMode implements Mode {
     }
     if (!this.playback && m.phase !== 'resolving') this.shownHp.clear()
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)

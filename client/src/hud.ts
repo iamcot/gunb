@@ -1,7 +1,11 @@
-import { ANGLE_MAX, ANGLE_MIN, WIND_MAX, windMagnitude, type Wind } from '@gunb/shared'
+import { ANGLE_MAX, ANGLE_MIN, TUNING, WEATHER_NAMES, WIND_MAX, weatherForTurn, windMagnitude, type Wind } from '@gunb/shared'
+import { audio } from './audio'
 import './ui/hud.css'
+import { clearIconHtml, weatherIconHtml } from './weatherView'
 
 const WIND_LEVELS = 5
+const WEATHER_AHEAD = 5   // số lượt thời tiết sắp tới hiện trên thanh trên
+const ITEM_SLOTS = 3      // ô item (để dành, chưa dùng)
 
 /** Vạch chia của đồng hồ góc (0..90°, tâm (8,56), bán kính 50 trong toạ độ SVG; trục Y hướng xuống). */
 function dialTicks(): string {
@@ -15,6 +19,8 @@ function dialTicks(): string {
 }
 
 /**
+ * Thanh trên (`#topbar`): trái = Esc + âm thanh, rồi thời tiết lượt này + các lượt sắp tới; phải = ô item (để dành).
+ * Giữa trên (`#hud-top`): báo thời tiết (weatherView.ts gắn vào đầu) rồi vòng gió bên dưới, có báo thời tiết thì vòng gió bị đẩy xuống.
  * HUD HTML (bảng điều khiển dưới cùng): ô thanh đạn (`#hud-shots`, shotBar.ts tự gắn vào), đồng hồ góc, thanh lực (kèm vạch lực
  * lần bắn trước), la bàn gió; gợi ý phím; mũi tên khi đạn bay quá mép trên. Kiểu dáng ở ui/hud.css.
  */
@@ -33,6 +39,12 @@ export class Hud {
   private readonly offscreen: HTMLElement
   private readonly root: HTMLElement
   private readonly helpEl: HTMLElement
+  private readonly topbar: HTMLElement
+  private readonly top: HTMLElement
+  private readonly soundBtn: HTMLElement
+  private readonly wxNow: HTMLElement
+  private readonly wxNext: HTMLElement
+  private weatherKey = ''
   private windKey = ''
   private aimKey = ''
   /** Gió đang hiện (đã tính chiều đạn đi ngược nếu có) — hiệu ứng gió nền (windFx.ts) đọc mỗi frame. */
@@ -55,12 +67,39 @@ export class Hud {
         <div class="hud-bar"><div class="hud-fill"></div><div class="hud-ticks"></div><div class="hud-last"></div></div>
         <div class="hud-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
       </div>
-      <div class="hud-wind">
-        <div class="hud-compass"><div class="hud-arrow"><svg viewBox="0 0 64 64"><path class="shaft" d="M14 28 H38 V19 L54 32 L38 45 V36 H14 Z"/></svg></div></div>
-        <div class="hud-wtext"><span class="cap">Gió</span><b>0</b><div class="hud-wbars">${'<i></i>'.repeat(WIND_LEVELS)}</div><span class="hud-rev">đạn đi ngược</span></div>
       </div>`
     document.body.appendChild(root)
     this.root = root
+
+    const bar = document.createElement('div')
+    bar.id = 'topbar'
+    bar.innerHTML = `
+      <div class="tb-sys"><button class="tb-btn" data-a="esc" title="Về menu (Esc)"><img src="/ui/icons/leave.png" alt=""><small>ESC</small></button>
+        <button class="tb-btn" data-a="sound" title="Bật/tắt âm thanh"><b class="tb-snd">🔊</b><small>ÂM</small></button></div>
+      <div class="tb-wx"><div class="tb-now" title="Thời tiết lượt này"></div>
+        <div class="tb-queue"><span class="cap">Sắp tới</span><div class="tb-next"></div></div></div>
+      <div class="tb-space"></div>
+      <div class="tb-items" title="Item (sắp có)">${Array.from({ length: ITEM_SLOTS }, (_, i) => `<div class="tb-slot"><small>F${i + 1}</small></div>`).join('')}</div>`
+    document.body.appendChild(bar)
+    this.topbar = bar
+    this.soundBtn = bar.querySelector('.tb-snd')!
+    this.wxNow = bar.querySelector('.tb-now')!
+    this.wxNext = bar.querySelector('.tb-next')!
+    bar.querySelector('[data-a="esc"]')!.addEventListener('click', () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' })))
+    bar.querySelector('[data-a="sound"]')!.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); this.syncSound() })
+    this.syncSound()
+    this.setWeatherTurn(null)
+
+    const top = document.createElement('div')
+    top.id = 'hud-top'
+    top.innerHTML = `
+      <div class="hud-wind">
+        <div class="hud-compass"><div class="hud-arrow"><svg viewBox="0 0 64 64"><path class="shaft" d="M52 23 L66 32 L52 41 Z"/></svg></div>
+          <div class="hud-wtext"><b>0</b><span class="cap">Gió</span></div></div>
+        <div class="hud-wbars">${'<i></i>'.repeat(WIND_LEVELS)}</div><span class="hud-rev">đạn đi ngược</span>
+      </div>`
+    document.body.appendChild(top)
+    this.top = top
     this.helpEl = root.querySelector('.hud-help')!
     this.angleEl = root.querySelector('.hud-angle .val b')!
     this.needle = root.querySelector('.needle')!
@@ -68,11 +107,11 @@ export class Hud {
     this.lastEl = root.querySelector('.hud-last')!
     this.lastNum = root.querySelector('.hud-power .last')!
     this.powerNum = root.querySelector('.hud-power .top b')!
-    this.compass = root.querySelector('.hud-compass')!
-    this.windArrow = root.querySelector('.hud-arrow')!
-    this.windNum = root.querySelector('.hud-wtext b')!
-    this.windBars = Array.from(root.querySelectorAll<HTMLElement>('.hud-wbars i'))
-    this.windRev = root.querySelector('.hud-rev')!
+    this.compass = top.querySelector('.hud-compass')!
+    this.windArrow = top.querySelector('.hud-arrow')!
+    this.windNum = top.querySelector('.hud-wtext b')!
+    this.windBars = Array.from(top.querySelectorAll<HTMLElement>('.hud-wbars i'))
+    this.windRev = top.querySelector('.hud-rev')!
     this.offscreen = document.createElement('div')
     this.offscreen.id = 'offscreen'
     document.body.appendChild(this.offscreen)
@@ -81,10 +120,45 @@ export class Hud {
   setVisible(v: boolean): void {
     this.visible = v
     this.root.style.display = v ? 'flex' : 'none'
+    this.topbar.style.display = v ? 'flex' : 'none'
+    this.top.style.display = v ? 'flex' : 'none'
+    document.body.classList.toggle('in-match', v)
+    if (v) this.syncSound()
     if (!v) this.setOffscreen(null)
   }
 
   setHelp(text: string): void { this.helpEl.textContent = text }
+
+  private syncSound(): void {
+    this.soundBtn.textContent = audio.muted ? '🔇' : '🔊'
+    const old = document.getElementById('mutebtn')
+    if (old) old.textContent = audio.muted ? '🔇 Tắt tiếng' : '🔊 Âm thanh'
+  }
+
+  /**
+   * Thời tiết lượt này + WEATHER_AHEAD lượt sau, suy ra từ seed + số lượt (giống server, shared/weather.ts).
+   * null = không có thời tiết (tập bắn). Gọi mỗi frame được (chỉ tính lại khi đổi lượt).
+   */
+  setWeatherTurn(seed: number | null, turnNo = 0, mapW = 0, mapH = 0): void {
+    const key = seed === null ? '-' : `${seed}:${turnNo}`
+    if (key === this.weatherKey) return
+    this.weatherKey = key
+    if (seed === null) {
+      this.wxNow.className = 'tb-now none'
+      this.wxNow.innerHTML = '<small>Không có thời tiết</small>'
+      this.wxNext.innerHTML = ''
+      return
+    }
+    const now = weatherForTurn(seed, turnNo, mapW, mapH, TUNING.weather)
+    this.wxNow.className = 'tb-now' + (now ? ` k-${now.kind}` : ' k-clear')
+    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Lượt này</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Lượt này</small><b>Trời quang</b></span>`
+    let html = ''
+    for (let k = 1; k <= WEATHER_AHEAD; k++) {
+      const w = weatherForTurn(seed, turnNo + k, mapW, mapH, TUNING.weather)
+      html += w ? `<i class="k-${w.kind}" title="+${k} lượt: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} lượt: trời quang">${clearIconHtml()}</i>`
+    }
+    this.wxNext.innerHTML = html
+  }
 
   /** Gọi mỗi frame được (chỉ đụng DOM khi đổi). */
   setAim(angle: number, power: number, lastPower: number): void {

@@ -53,7 +53,7 @@ export function weatherForTurn(seed: number, turnNo: number, mapW: number, mapH:
   switch (kind) {
     case 'whirl': w.x = between(mapW * 0.3, mapW * 0.7); w.y = mapH / 2; w.hw = t.whirl.halfWidth; break
     case 'mirror': w.x = between(mapW * 0.3, mapW * 0.7); w.y = mapH / 2; w.hw = t.mirror.halfWidth; break
-    case 'storm': w.x = between(mapW * 0.3, mapW * 0.7); w.y = between(mapH * 0.1, mapH * 0.25); w.hw = t.storm.halfWidth; w.hh = t.storm.halfHeight; break
+    case 'storm': w.x = between(mapW * 0.3, mapW * 0.7); w.y = between(-mapH * 0.05, mapH * 0.1); w.hw = t.storm.halfWidth; w.hh = t.storm.halfHeight; break
     case 'portal':
       w.x = between(mapW * 0.28, mapW * 0.45); w.y = between(mapH * 0.25, mapH * 0.5)
       w.x2 = between(mapW * 0.55, mapW * 0.72); w.y2 = between(mapH * 0.25, mapH * 0.5); w.hw = t.portal.radius

@@ -780,7 +780,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 3.7–5.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 3.7–5.0 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/boom-2.ogg",
@@ -788,7 +788,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.01–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.01–1.03 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/boom-3.ogg",
@@ -796,7 +796,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_boom-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.46–2.46 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.46–2.46 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-1.ogg",
@@ -804,7 +804,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.02–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.02–0.97 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-2.ogg",
@@ -812,7 +812,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.03–0.93 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.03–0.93 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/chui-khoan/fire-3.ogg",
@@ -820,7 +820,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt chui-khoan_fire-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.0–1.14 s của bản gốc 5.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/cua-lan/boom-1.ogg",
@@ -876,7 +876,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.13–1.56 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.13–1.56 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/boom-2.ogg",
@@ -884,7 +884,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.07–0.43 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.07–0.43 s của bản gốc 1.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/boom-3.ogg",
@@ -892,7 +892,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_boom-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.17–2.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.17–2.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-1.ogg",
@@ -900,7 +900,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-1 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.77–1.42 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.77–1.42 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-2.ogg",
@@ -908,7 +908,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-2 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 0.0–0.95 s của bản gốc 3.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/dieu-hau-giay/fire-3.ogg",
@@ -916,7 +916,7 @@
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt dieu-hau-giay_fire-3 trong plan/11-prompt-am-thanh.md",
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
-    "modified": "Lấy đoạn 1.16–2.3 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+    "modified": "Lấy đoạn 1.16–2.3 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis; nén động (compressor) + tăng âm lượng lên ~−14 dB trung bình"
   },
   {
     "file": "mobiles/nhim-chum/boom-1.ogg",
@@ -1125,5 +1125,285 @@
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
     "modified": "Lấy đoạn 0.03–1.17 s của bản gốc 4.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "textures/dirt-tile.png",
+    "author": "IamCoT (tạo bằng AI)",
+    "source": "Ảnh AI tạo từ prompt trong plan/12-prompt-dat-dap.md (file gốc Cartoon Layered Soil Texture with Roots and Rocks.png, 1254×1254)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Chỉnh màu 70% về màu dải đất nâu của Đảo nổi, thu về 256×256"
+  },
+  {
+    "file": "ui/hud/weather-whirl.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-whirl.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-storm.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-storm.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-mirror.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-mirror.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/hud/weather-portal.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Icon thời tiết AI tạo bằng ChatGPT (weather-portal.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Xoá nền trắng (loang từ mép), cắt sát, thu về cạnh dài 128 px"
+  },
+  {
+    "file": "ui/weather/whirl-strip.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/13-prompt-thoi-tiet.md (weather-whirl-strip.png, 724×2172)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi màu viền mờ bị hắt đỏ/vàng thành sáng bạc hà, trộn 160 px đầu–cuối để lặp dọc liền mạch, thu về rộng 256 px"
+  },
+  {
+    "file": "ui/weather/mirror-strip.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/13-prompt-thoi-tiet.md (weather-mirror-strip.png, 724×2172)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Đổi màu viền mờ bị hắt đỏ thành xanh nhạt, trộn 160 px đầu–cuối để lặp dọc liền mạch, thu về rộng 256 px"
+  },
+  {
+    "file": "ui/weather/storm-cloud.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/13-prompt-thoi-tiet.md (weather-storm-cloud.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu về rộng 512 px"
+  },
+  {
+    "file": "ui/weather/storm-bolt.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 4 trong plan/13-prompt-thoi-tiet.md (weather-storm-bolt.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu về cao 512 px"
+  },
+  {
+    "file": "fx/bits-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-4.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-5.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-6.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/bits-7.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 8 trong plan/14-prompt-no-khoi.md (fx-hit-bits.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-4.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-5.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-6.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/dirt-7.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 3 trong plan/14-prompt-no-khoi.md (fx-dirt-chunks.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/fireball.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1 trong plan/14-prompt-no-khoi.md (fx-fireball.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/hit-impact.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 7 trong plan/14-prompt-no-khoi.md (fx-hit-impact.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/muzzle-flash.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 5 trong plan/14-prompt-no-khoi.md (fx-muzzle-flash.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/shockwave.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 4 trong plan/14-prompt-no-khoi.md (fx-shockwave.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-0.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-1.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-2.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/smoke-3.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 2 trong plan/14-prompt-no-khoi.md (fx-smoke-puffs.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt rời từng hình trong ảnh, thu nhỏ"
+  },
+  {
+    "file": "fx/spark.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 6 trong plan/14-prompt-no-khoi.md (fx-spark.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu nhỏ"
+  },
+  {
+    "file": "ui/hud/weather-clear.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mục 1e trong plan/11-prompt-hud.md (weather-clear.png)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát, thu về 128 px"
   }
 ]

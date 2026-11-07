@@ -1,7 +1,7 @@
 import {
   MsgType, TEAM_NAMES, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
-  aimRange, type AimRange,
+  aimRange, type AimRange, groundYBelow,
 } from '@gunb/shared'
 import { getShotArt, getShotSfx } from './shotArt'
 import { audio } from './audio'
@@ -42,6 +42,7 @@ export class OnlineMode implements Mode {
   private pendingMask: TerrainMask | null = null
   private gotSnapshot = false
   private lastTurnPlayer = -1
+  private lastTurnNo = -1   // cùng một người được bắn 2 lượt liền thì vẫn phải coi là lượt mới (camera về xe, đổi gió)
   private readonly range: AimRange = { min: 0, max: 90 }
   private focusedSelf = false
   private lastHash: boolean | null = null
@@ -63,7 +64,7 @@ export class OnlineMode implements Mode {
     this.tx = new Float64Array(n); this.ty = new Float64Array(n); this.tt = new Float64Array(n)
     ctx.view.applyMask(mask)
     this.vehicles = new VehicleViews(this.match, ctx.fx)
-    this.weather = new WeatherView(ctx.map.height)
+    this.weather = new WeatherView(ctx.map.height, (x, fromY) => groundYBelow(ctx.view.mask, x, fromY))
     ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
     ctx.hud.setVisible(true)
@@ -123,6 +124,7 @@ export class OnlineMode implements Mode {
     this.aim.lastPower = this.lastPower.get(p.id) ?? 0
     this.aim.power = 0
     this.lastTurnPlayer = p.id
+    this.lastTurnNo = this.match.turnNo
     this.lastDir = -9; this.lastAngle = -9; this.inputT = 1
     if (p.id === this.start.youId) audio.turn()
     this.ctx.hud.setWind(this.match.wind)
@@ -150,7 +152,7 @@ export class OnlineMode implements Mode {
     }
     if (m.phase === 'aiming') m.turnTimeLeft = Math.max(0, m.turnTimeLeft - dt)
 
-    if (m.phase === 'aiming' && m.turnPlayerId !== this.lastTurnPlayer) this.beginTurnUi()
+    if (m.phase === 'aiming' && (m.turnPlayerId !== this.lastTurnPlayer || m.turnNo !== this.lastTurnNo)) this.beginTurnUi()
     if (this.isMyTurn() && !this.playback) {
       aim.locked = false
       const p = currentPlayer(m)
@@ -174,6 +176,7 @@ export class OnlineMode implements Mode {
     }
     if (!this.playback) this.shownHp.clear()
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)

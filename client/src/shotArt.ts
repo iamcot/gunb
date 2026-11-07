@@ -7,6 +7,9 @@ import { audio, type ShotSfx } from './audio'
 interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string }[] }
 export interface ShotArt { tex: Texture; length: number; upright: boolean }
 
+/** Phóng to ảnh đạn khi vẽ (chỉ là hình, va chạm vẫn theo shared/). */
+const SHOT_ART_SCALE = 2
+
 const cache = new Map<string, (ShotArt | null)[]>()
 const sfxCache = new Map<string, ShotSfx[]>()
 const loading = new Set<string>()
@@ -31,7 +34,7 @@ export function preloadShotArt(mobileId: string): void {
       const img = new Image()
       img.src = base + s.file
       await img.decode()
-      return { tex: Texture.from(img), length: s.length, upright: s.upright === true }
+      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true }
     }))
     cache.set(mobileId, arts)
   })().catch(() => cache.set(mobileId, [])).finally(() => loading.delete(mobileId))

@@ -36,3 +36,8 @@ Same art style, line weight and palette as the vehicle images in this chat. Sing
 ```
 Same art style, line weight and palette as the vehicle images in this chat. Single game icon, no text: two small round swirling magic portals side by side, the left one orange, the right one soft purple, linked by a short dotted arc. Bold simple silhouette readable at 26 pixels, centered, flat front view. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Plain white background.
 ```
+
+**1e. Trời quang – `weather-clear.png`** (lượt không có thời tiết, hiện trên thanh trên; làm trong cùng chat đã vẽ 4 icon kia)
+```
+Same art style, line weight and palette as the four weather icons in this chat. Single game icon, no text: a small round warm yellow sun with no face with short chunky rays and one tiny soft white cloud peeking at the bottom right, calm clear-sky feeling. Bold simple silhouette readable at 26 pixels, centered, flat front view. Hand-painted anime game art, soft watercolor shading, two-tone cel shading, thick dark brown outlines, warm light from top-left, palette sky blue #6FB2E8, grass green #46A843, earth brown #7A5233, cream #F6E7C8, coral #FF7A59. Transparent background (or pure green #00FF00 if transparency is not possible).
+```

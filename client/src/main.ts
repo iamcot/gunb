@@ -13,6 +13,7 @@ import { SelectScreen } from './selectScreen'
 import { PracticeMode } from './practiceMode'
 import { TerrainView } from './terrainView'
 import { TuningPanel } from './tuningPanel'
+import { WindFx } from './windFx'
 
 const PAN_SPEED = 900     // px/s (WASD)
 const FOLLOW_K = 6        // hệ số bám đạn / quay về xe (1/s)
@@ -44,6 +45,8 @@ async function main(): Promise<void> {
     ? await Promise.all(map.backgrounds.map(b => loadImage(base + b.file))).catch(() => null) : null
   const background = new Background(map, bgImages, app.screen.width, app.screen.height)
   app.stage.addChild(background.container)
+  const windFx = new WindFx(app.screen.width, app.screen.height)   // lá + vệt gió, giữa nền và địa hình
+  app.stage.addChild(windFx.container)
   const world = new Container()
   const fx = new Fx()
   app.stage.addChild(world)
@@ -139,7 +142,7 @@ async function main(): Promise<void> {
     mouseX = e.clientX
     mouseY = e.clientY
   })
-  window.addEventListener('resize', () => { cam.resize(app.screen.width, app.screen.height); background.resize(app.screen.width, app.screen.height) })
+  window.addEventListener('resize', () => { cam.resize(app.screen.width, app.screen.height); background.resize(app.screen.width, app.screen.height); windFx.resize(app.screen.width, app.screen.height) })
 
   // Âm thanh: trình duyệt chỉ cho phát sau thao tác đầu tiên của người dùng
   const muteBtn = document.getElementById('mutebtn') as HTMLButtonElement
@@ -168,6 +171,7 @@ async function main(): Promise<void> {
     if (dx || dy) { cam.pan(dx * PAN_SPEED * dt, dy * PAN_SPEED * dt); ctx.focus.t = 0 }
     world.position.set(-cam.x + fx.shakeX, -cam.y + fx.shakeY)
     background.update(cam.x, cam.y)
+    windFx.update(dt, cam.x, cam.y, hud.wind, hud.visible)
 
     hud.setOffscreen(lead && lead.y - cam.y < 0 ? lead.x - cam.x : null, lead ? -lead.y : 0)
 

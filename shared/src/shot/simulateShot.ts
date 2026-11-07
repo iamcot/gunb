@@ -272,7 +272,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     s.p.x = nx; s.p.y = ny; s.p.t = t
     s.remaining -= adv
     s.sinceCarve += adv
-    if (s.sinceCarve >= Math.max(4, b.tunnelRadius / 2)) {
+    if (!b.resurface && s.sinceCarve >= Math.max(4, b.tunnelRadius / 2)) {   // lặn trồi thì chui xuyên đất, không khoét hầm
       s.sinceCarve = 0
       mask.carveCircle(nx, ny, b.tunnelRadius)
       events.push({ t, kind: 'carve', x: nx, y: ny, r: b.tunnelRadius })
@@ -328,21 +328,14 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return false
   }
 
-  /** Đạn xuyên địa hình: bay theo trọng lực/gió như thường nhưng không va đất, khoét hầm dọc đường, nổ khi chạm xe (kể cả xác). */
-  const stepGhost = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'ghost' }>, sax: number, say: number): void => {
+  /** Đạn xuyên địa hình: bay theo trọng lực/gió như thường nhưng không va đất và không khoét đất, nổ khi chạm xe (kể cả xác). */
+  const stepGhost = (s: Shell, t: number, sax: number, say: number): void => {
     s.p.vx += sax * DT_SIM; s.p.vy += say * DT_SIM
-    const adv = Math.hypot(s.p.vx, s.p.vy) * DT_SIM
     s.p.x += s.p.vx * DT_SIM; s.p.y += s.p.vy * DT_SIM; s.p.t = t
     if (s.p.x < 0 || s.p.x >= mask.width || s.p.y >= mask.height) {
       s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }); return
     }
     if (hitsVehicle(s, s.p.x, s.p.y, true)) { explodeShell(s, s.p.x, s.p.y, t); return }
-    s.sinceCarve += adv
-    if (s.sinceCarve >= Math.max(4, b.tunnelRadius / 2) && mask.isSolid(s.p.x, s.p.y)) {
-      s.sinceCarve = 0
-      mask.carveCircle(s.p.x, s.p.y, b.tunnelRadius)
-      events.push({ t, kind: 'carve', x: s.p.x, y: s.p.y, r: b.tunnelRadius })
-    }
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
   }
 
@@ -352,7 +345,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (W.kind === 'whirl' && Math.abs(s.p.x - W.x) <= W.hw) say -= wt.whirl.lift
       else if (W.kind === 'mirror' && Math.abs(s.p.x - W.x) <= W.hw) { sax = ax - 2 * wax; say = ay - 2 * way }
     }
-    if (beh.kind === 'ghost') { stepGhost(s, t, beh, sax, say); return }
+    if (beh.kind === 'ghost') { stepGhost(s, t, sax, say); return }
     const r = stepProjectile(s.p, sax, say, DT_SIM, mask)
     s.p.t = t
     if (beh.kind === 'airGrow' && !s.grown && t - s.tStart >= beh.afterS) {

@@ -97,3 +97,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Hiệu ứng tụ lực: thân nhún + nòng phập phồng + rung nhẹ, nhanh/mạnh dần theo lực (mọi xe; VehicleViews.setCharge).
 - Thanh trên: hai nút ESC/ÂM sát mép khung, ô thời tiết cân lề, chữ SẮP TỚI không bị chạm viền.
 - B4: Chũi Khoan đ1 nổ thường, đ2 lặn 110px rồi đào chếch lên 55° và nổ ở chỗ trồi (drill.resurface), SS xuyên địa hình, chỉ nổ khi chạm xe kể cả xác (ghost). Bọ Lôi đ2: hai tia chụm một điểm, mỗi tia 170 (tổng = đạn 1). Balance mẫu nhỏ 128 ván: Chũi 62%, Bọ Lôi 43% (nhiễu, cần chạy 640 ván).
+- Sửa theo bản gốc: Chũi Khoan đ2 và SS chui xuyên đất KHÔNG khoét hầm (chỉ hố ở chỗ nổ); Bọ Lôi đ2 mỗi tia 204 (tổng 408 ≈ 1,2× đạn 1, khớp tỉ lệ gốc 300/250 và delay 330/275).

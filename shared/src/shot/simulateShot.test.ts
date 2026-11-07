@@ -116,22 +116,25 @@ describe('simulateShot: behavior', () => {
     expect(dc[dc.length - 1]!.y).toBeGreaterThan(dc[0]!.y + 100)
     expect(Math.abs(dc[dc.length - 1]!.x - dc[0]!.x)).toBeLessThan(5)
   })
-  it('lặn trồi (Chũi Khoan đạn 2): lặn xuống dưới mặt đất rồi trồi lên và nổ ở mặt đất, xa hơn chỗ lặn', () => {
-    const base = { vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })], fire: { angle: 45, power: 60, slot: 1 as const } }
-    const r = simulateShot(input(base))
-    const carves = r.events.filter((e): e is Extract<ShotEvent, { kind: 'carve' }> => e.kind === 'carve')
-    const deepest = Math.max(...carves.map(c => c.y))
+  it('lặn trồi (Chũi Khoan đạn 2): chui xuyên đất không khoét hầm, trồi lên và nổ ở mặt đất, xa hơn chỗ lặn', () => {
+    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })], fire: { angle: 45, power: 60, slot: 1 } }))
+    const path = r.paths[0]!
+    let deepest = 0, dive = 0
+    for (let k = 0; k < path.length; k += 3) deepest = Math.max(deepest, path[k + 2]!)
     expect(deepest).toBeGreaterThan(GROUND + 30)             // có lặn sâu
+    expect(r.events.filter(e => e.kind === 'carve')).toHaveLength(1)   // chỉ có hố của vụ nổ, không có đường hầm
     const ex = explodes(r)
     expect(ex).toHaveLength(1)
     expect(ex[0]!.y).toBeLessThan(GROUND + 25)               // nổ gần mặt đất, không phải dưới sâu
-    expect(ex[0]!.x).toBeGreaterThan(carves[0]!.x + 40)      // chỗ trồi cách chỗ lặn
+    for (let k = 0; k < path.length; k += 3) if (path[k + 2]! > GROUND + 5) { dive = path[k + 1]!; break }
+    expect(ex[0]!.x).toBeGreaterThan(dive + 40)              // chỗ trồi cách chỗ lặn
   })
   it('xuyên địa hình (Chũi Khoan SS): bay xuyên đất, chỉ nổ khi chạm xe (kể cả xác xe)', () => {
     const base = { fire: { angle: 5, power: 90, slot: 2 as const } }
     const free = simulateShot(input({ ...base, vehicles: [veh(1, 200, { mobileId: 'chui-khoan' })] }))
     expect(explodes(free)).toHaveLength(0)                    // không có xe nào: xuyên đi mất
     expect(free.events.some(e => e.kind === 'out')).toBe(true)
+    expect(free.events.filter(e => e.kind === 'carve')).toHaveLength(0)   // xuyên đất mà không khoét
     const path = free.paths[0]!, k = Math.floor(path.length / 3 / 2) * 3   // điểm giữa đường bay
     const px = path[k + 1]!, py = path[k + 2]!
     const dead = simulateShot(input({ ...base, vehicles: [veh(1, 200, { mobileId: 'chui-khoan' }), veh(2, px, { hp: 0, y: py })] }))

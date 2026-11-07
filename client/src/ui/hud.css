@@ -69,19 +69,22 @@ body.in-match #title, body.in-match #menubtn, body.in-match #mutebtn { display: 
   background: linear-gradient(var(--h-cream-l), var(--h-cream)); border-bottom: 3px solid var(--h-earth); box-shadow: 0 3px 0 var(--h-earth-d), 0 8px 18px #0003; }
 #topbar > div { display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 12px; background: #fff8; border: 2px solid var(--h-cream-d); }
 #topbar .tb-space { flex: 1; background: none; border: 0; }
+/* nhóm nút trái / ô thời tiết: lề đều, nút sát mép khung */
+#topbar > .tb-sys { padding: 0 3px; gap: 4px; }
+#topbar > .tb-wx { padding: 0 8px 0 3px; gap: 8px; }
 .tb-btn { width: 44px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; cursor: pointer; font: inherit;
   color: #fff; background: linear-gradient(var(--h-sky), var(--h-sky-d)); border: 2px solid var(--h-sky-dd); border-radius: 9px; box-shadow: 0 3px 0 var(--h-sky-dd); }
 .tb-btn b { font-size: 17px; line-height: 1; } .tb-btn img { width: 20px; height: 20px; object-fit: contain; } .tb-btn small { font-size: 9px; letter-spacing: .5px; line-height: 1.1; }
 .tb-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--h-sky-dd); }
 .tb-wx { min-width: 0; }
-.tb-now { display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px 0 4px; border-radius: 10px; background: var(--h-sky-l); border: 2px solid var(--h-earth); white-space: nowrap; }
-.tb-now i { width: 34px; height: 34px; display: grid; place-items: center; }
-.tb-now i img, .tb-now i svg { width: 32px; height: 32px; object-fit: contain; }
+.tb-now { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px 0 4px; border-radius: 10px; background: var(--h-sky-l); border: 2px solid var(--h-earth); white-space: nowrap; }
+.tb-now i { width: 28px; height: 28px; display: grid; place-items: center; }
+.tb-now i img, .tb-now i svg { width: 26px; height: 26px; object-fit: contain; }
 .tb-now small { display: block; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--h-earth); }
 .tb-now b { display: block; font-size: 13px; }
-.tb-now.none { background: var(--h-cream); padding-left: 10px; } .tb-now.none b { color: var(--h-earth); font-weight: 600; }
+.tb-now.none { background: var(--h-cream); padding: 0 14px; } .tb-now.none b { color: var(--h-earth); font-weight: 600; }
 .tb-queue { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.tb-queue .cap { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--h-earth); writing-mode: vertical-rl; transform: rotate(180deg); }
+.tb-queue .cap { font-size: 8px; letter-spacing: 0; line-height: 1; white-space: nowrap; padding: 4px 0; text-transform: uppercase; color: var(--h-earth); writing-mode: vertical-rl; transform: rotate(180deg); }
 .tb-next { display: flex; gap: 4px; }
 .tb-next i { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: #fff; border: 2px solid var(--h-cream-d); }
 .tb-next i:first-child { border-color: var(--h-earth); }
@@ -131,6 +134,8 @@ body.in-match #title, body.in-match #menubtn, body.in-match #mutebtn { display: 
   padding: 5px 10px 8px 10px; font: var(--h-font); font-size: 13px; text-align: left; color: var(--h-ink); cursor: pointer;
   background: var(--h-cream-l); border: 3px solid var(--h-cream-d); border-radius: 12px; box-shadow: 0 3px 0 var(--h-cream-d); transition: transform .06s; }
 #shotbar button:hover { border-color: var(--h-sky); }
+#shotbar button .sb-icons { display: flex; gap: 2px; margin: 2px 0 1px; height: 30px; pointer-events: none; }
+#shotbar button .sb-icons .sb-icon { width: auto; max-width: 34px; margin: 0; }
 #shotbar button .sb-icon { display: block; height: 30px; width: 100%; object-fit: contain; object-position: left center; margin: 2px 0 1px; pointer-events: none; filter: drop-shadow(0 1px 0 rgba(0,0,0,.35)); }
 #shotbar button .sb-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 #shotbar button small { display: block; font-size: 10px; font-weight: 600; color: var(--h-earth); opacity: .85; }

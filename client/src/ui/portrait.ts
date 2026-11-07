@@ -1,13 +1,25 @@
 /** Ảnh chân dung xe cho giao diện sảnh/phòng: ghép thân + nòng theo `rig.json` (cùng cách VehicleViews ghép), nòng ngóc lên một góc cố định, cắt sát viền. */
 
 interface Rig {
-  body: string; barrel: string
+  body: string; barrel: string; width?: number; pilot?: [number, number]
   pivot: [number, number]; barrelPivot: [number, number]
   reverse?: boolean; barrelBehind?: boolean; catapult?: boolean
 }
 
 /** Góc nòng trên ảnh chân dung (độ, so với phương ngang). Chỉ là hình. */
 const PORTRAIT_AIM_DEG = 28
+
+interface PilotInfo { sit: string; hip: [number, number]; sitHeight: number }
+let pilotP: Promise<{ info: PilotInfo; sit: HTMLImageElement } | null> | null = null
+function loadPilot(): Promise<{ info: PilotInfo; sit: HTMLImageElement } | null> {
+  pilotP ??= (async () => {
+    const res = await fetch('/pilots/nam/pilot.json')
+    if (!res.ok) return null
+    const info = await res.json() as PilotInfo
+    return { info, sit: await loadImage('/pilots/nam/' + info.sit) }
+  })().catch(() => null)
+  return pilotP
+}
 
 const cache = new Map<string, Promise<string | null>>()
 
@@ -18,11 +30,12 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   return img
 }
 
-async function render(mobileId: string): Promise<string | null> {
+async function render(mobileId: string, withPilot: boolean): Promise<string | null> {
   const base = `/mobiles/${encodeURIComponent(mobileId)}/`
   const res = await fetch(base + 'rig.json')
   if (!res.ok) return null
   const rig = await res.json() as Rig
+  const pil = withPilot && rig.pilot ? await loadPilot() : null
   const [body, barrel] = await Promise.all([loadImage(base + rig.body), loadImage(base + rig.barrel)])
   const bw = body.naturalWidth, bh = body.naturalHeight
   const W = Math.ceil(bw * 2.4), H = Math.ceil(bh * 2.6)
@@ -44,7 +57,13 @@ async function render(mobileId: string): Promise<string | null> {
     g.drawImage(barrel, -rig.barrelPivot[0] * barrel.naturalWidth, -rig.barrelPivot[1] * barrel.naturalHeight)
     g.restore()
   }
-  if (rig.barrelBehind) { drawBarrel(); drawBody() } else { drawBody(); drawBarrel() }
+  // phi công ngồi trên ghế (giống VehicleViews): vẽ trên thân, dưới nòng; nòng sau thân thì vẽ trên cùng
+  const drawPilot = (): void => {
+    if (!pil || !rig.pilot) return
+    const k = (pil.info.sitHeight * bw / (rig.width ?? bw)) / pil.sit.naturalHeight
+    g.drawImage(pil.sit, (rig.pilot[0] - 0.5) * bw - pil.info.hip[0] * pil.sit.naturalWidth * k, (rig.pilot[1] - 0.5) * bh - pil.info.hip[1] * pil.sit.naturalHeight * k, pil.sit.naturalWidth * k, pil.sit.naturalHeight * k)
+  }
+  if (rig.barrelBehind) { drawBarrel(); drawBody(); drawPilot() } else { drawBody(); drawPilot(); drawBarrel() }
   // cắt theo vùng có điểm ảnh
   const px = g.getImageData(0, 0, W, H).data
   let x0 = W, y0 = H, x1 = -1, y1 = -1
@@ -60,9 +79,10 @@ async function render(mobileId: string): Promise<string | null> {
 }
 
 /** URL ảnh (data:) của xe, quay mặt sang phải; null nếu xe chưa có ảnh. Có cache. */
-export function portraitUrl(mobileId: string): Promise<string | null> {
-  let p = cache.get(mobileId)
-  if (!p) { p = render(mobileId).catch(() => null); cache.set(mobileId, p) }
+export function portraitUrl(mobileId: string, withPilot = false): Promise<string | null> {
+  const key = withPilot ? mobileId + '|pilot' : mobileId
+  let p = cache.get(key)
+  if (!p) { p = render(mobileId, withPilot).catch(() => null); cache.set(key, p) }
   return p
 }
 
@@ -70,9 +90,11 @@ export function portraitUrl(mobileId: string): Promise<string | null> {
 export function fillPortraits(root: ParentNode): void {
   root.querySelectorAll<HTMLImageElement>('img[data-portrait]').forEach(img => {
     const id = img.dataset.portrait!
-    if (img.dataset.loaded === id) return
-    img.dataset.loaded = id
-    void portraitUrl(id).then(url => {
+    const withPilot = img.dataset.pilot === '1'
+    const key = withPilot ? id + '|pilot' : id
+    if (img.dataset.loaded === key) return
+    img.dataset.loaded = key
+    void portraitUrl(id, withPilot).then(url => {
       if (img.dataset.portrait !== id) return
       if (url) { img.src = url; img.classList.remove('empty') } else img.classList.add('empty')
     })

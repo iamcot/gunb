@@ -25,14 +25,14 @@ export interface ItemsTuning {
 
 export function defaultItemsTuning(): ItemsTuning {
   return {
-    dual: { id: 'dual', name: 'Bắn 2 lần', desc: 'Phát bắn lượt này bắn 2 lần liền (không dùng với SS)', delay: 150, gap: 0.5 },
-    heal: { id: 'heal', name: 'Hồi máu', desc: 'Hồi ngay 30 máu', delay: 60, amount: 30 },
+    dual: { id: 'dual', name: 'Bắn 2 lần', desc: 'Phát bắn lượt này bắn 2 lần liền (không dùng với SS)', delay: 375, gap: 0.5 },
+    heal: { id: 'heal', name: 'Hồi máu', desc: 'Hồi ngay 300 máu', delay: 150, amount: 300 },
     teleport: {
-      id: 'teleport', name: 'Dịch chuyển', desc: 'Phát bắn lượt này là quả dịch chuyển: rơi đâu đứng đó, không gây sát thương', delay: 140,
+      id: 'teleport', name: 'Dịch chuyển', desc: 'Phát bắn lượt này là quả dịch chuyển: rơi đâu đứng đó, không gây sát thương', delay: 350,
       shot: { name: 'Quả dịch chuyển', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 0, carveRadius: 0, damage: 0, delay: 0, behavior: { kind: 'teleport' } },
     },
-    windShield: { id: 'windShield', name: 'Lá chắn gió', desc: 'Gió lượt này về 0', delay: 60 },
-    fastTurn: { id: 'fastTurn', name: 'Đổi lượt nhanh', desc: 'Giảm delay, sớm tới lượt sau', delay: -70 },
+    windShield: { id: 'windShield', name: 'Lá chắn gió', desc: 'Gió lượt này về 0', delay: 150 },
+    fastTurn: { id: 'fastTurn', name: 'Đổi lượt nhanh', desc: 'Giảm delay, sớm tới lượt sau', delay: -175 },
   }
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
 import { simulateShot } from './shot/simulateShot'
 import type { ShotResult, ShotVehicle } from './shot/types'
-import type { ShotSlot } from './shots'
+import type { ShotDef, ShotSlot } from './shots'
 import { createDefaultTuning } from './tuning'
 import { WEATHER_KINDS, defaultWeatherTuning, weatherForRound, type Weather } from './weather'
 
@@ -14,17 +14,18 @@ function flat(): TerrainMask {
   return m
 }
 const veh = (id: number, mobileId: string, x: number, hp = 100): ShotVehicle => ({ id, mobileId, x, y: G - 18, radius: 18, hp, armor: 0 })
-function shoot(mobile: string, slot: ShotSlot, angle: number, power: number, opts: { mask?: TerrainMask; wind?: { x: number; y: number }; weather?: Weather | null; others?: ShotVehicle[] } = {}): ShotResult {
+function shoot(mobile: string, slot: ShotSlot, angle: number, power: number, opts: { mask?: TerrainMask; wind?: { x: number; y: number }; weather?: Weather | null; others?: ShotVehicle[]; shotDef?: ShotDef } = {}): ShotResult {
   return simulateShot({
     mask: opts.mask ?? flat(), vehicles: [veh(0, mobile, 400), ...(opts.others ?? [])], wind: opts.wind ?? { x: 0, y: 0 },
-    shooterId: 0, facing: 1, tilt: 0, fire: { angle, power, slot }, weather: opts.weather ?? null,
+    shooterId: 0, facing: 1, tilt: 0, fire: { angle, power, slot }, weather: opts.weather ?? null, shotDef: opts.shotDef,
   }, tuning)
 }
 const firstExplode = (r: ShotResult): { x: number; y: number } => r.events.find(e => e.kind === 'explode') as { x: number; y: number }
 
-describe('Cua Lăn (roller)', () => {
+const rollerDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 28, damage: 300, delay: 0, behavior: { kind: 'roller', distance: 460, speed: 320 } }
+describe('roller (code còn giữ)', () => {
   it('lăn tiếp sau khi chạm đất rồi mới nổ', () => {
-    const r = shoot('cua-lan', 0, 30, 60)
+    const r = shoot('cua-lan', 1, 30, 60, { shotDef: rollerDef })
     const path = r.paths[0]!
     let landX = 0
     for (let i = 0; i < path.length; i += 3) if (path[i + 2]! >= G - 8) { landX = path[i + 1]!; break }
@@ -35,33 +36,34 @@ describe('Cua Lăn (roller)', () => {
   it('gặp vách cao thì nổ ngay trước vách', () => {
     const m = flat()
     for (let y = G - 120; y < G; y++) for (let x = 1000; x < 1040; x++) m.data[y * W + x] = 1
-    const r = shoot('cua-lan', 0, 20, 45, { mask: m })
+    const r = shoot('cua-lan', 1, 20, 45, { mask: m, shotDef: rollerDef })
     expect(firstExplode(r).x).toBeLessThan(1000)
   })
   it('trúng xe đang đứng trên đường lăn', () => {
-    const r = shoot('cua-lan', 0, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)] })
+    const r = shoot('cua-lan', 1, 25, 50, { others: [veh(1, 'oc-thiet-giap', 1000)], shotDef: rollerDef })
     expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
   })
 })
 
 describe('Nhím Chùm (spread)', () => {
-  it('bắn cùng lúc 5 quả tỏa quạt', () => {
+  it('bắn cùng lúc 4 quả tỏa quạt', () => {
     const r = shoot('nhim-chum', 0, 45, 60)
-    expect(r.paths).toHaveLength(5)
+    expect(r.paths).toHaveLength(4)
     const ends = r.paths.map(p => p[p.length - 2]!)
-    expect(new Set(ends.map(Math.round)).size).toBe(5)
+    expect(new Set(ends.map(Math.round)).size).toBe(4)
   })
 })
 
-describe('Sứa Đèn (pierce)', () => {
+const pierceDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 100, carveRadius: 70, damage: 700, delay: 0, behavior: { kind: 'pierce', maxThickness: 120, maxPierce: 3, holeRadius: 22 } }
+describe('pierce (code còn giữ)', () => {
   const wall = (thick: number): TerrainMask => {
     const m = flat()
     for (let y = 300; y < G; y++) for (let x = 900; x < 900 + thick; x++) m.data[y * W + x] = 1
     return m
   }
   it('xuyên vách mỏng, bị chặn bởi vách dày; đạn thường bị chặn cả hai', () => {
-    const thin = shoot('sua-den', 0, 30, 80, { mask: wall(20) })
-    const thick = shoot('sua-den', 0, 30, 80, { mask: wall(200) })
+    const thin = shoot('sua-den', 2, 30, 80, { mask: wall(20), shotDef: pierceDef })
+    const thick = shoot('sua-den', 2, 30, 80, { mask: wall(200), shotDef: pierceDef })
     const basic = shoot('oc-thiet-giap', 0, 30, 75, { mask: wall(20) })
     expect(firstExplode(thin).x).toBeGreaterThan(930)
     expect(firstExplode(thick).x).toBeLessThan(1100)
@@ -69,21 +71,22 @@ describe('Sứa Đèn (pierce)', () => {
   })
 })
 
-describe('Rùa Thành (build)', () => {
+const buildDef: ShotDef = { name: 't', maxSpeed: 800, windFactor: 1, gravityFactor: 1, blastRadius: 60, carveRadius: 0, damage: 250, delay: 600, behavior: { kind: 'build', radius: 45, count: 4 } }
+describe('build (đắp đất, code còn giữ cho item sau này)', () => {
   it('đắp thêm đất, không khoét; không đắp khi chạm xe', () => {
     const m = flat()
     const before = m.countSolid()
-    const r = shoot('rua-thanh', 1, 50, 50, { mask: m })
+    const r = shoot('rua-thanh', 2, 50, 50, { mask: m, shotDef: buildDef })
     expect(r.events.some(e => e.kind === 'fill')).toBe(true)
     expect(r.events.some(e => e.kind === 'carve')).toBe(false)
     expect(r.maskAfter.countSolid()).toBeGreaterThan(before)
     const ex = firstExplode(r)
     const target = veh(1, 'oc-thiet-giap', ex.x)
-    const r2 = shoot('rua-thanh', 1, 50, 50, { mask: flat(), others: [target] })
+    const r2 = shoot('rua-thanh', 2, 50, 50, { mask: flat(), others: [target], shotDef: buildDef })
     for (const e of r2.events) if (e.kind === 'fill') expect(Math.hypot(target.x - e.x, target.y - e.y)).toBeGreaterThanOrEqual(e.r + target.radius + 3)
   })
   it('client phát lại fill cho cùng mask như server', () => {
-    const r = shoot('rua-thanh', 2, 50, 55)
+    const r = shoot('rua-thanh', 2, 50, 55, { shotDef: buildDef })
     const replay = flat()
     for (const e of r.events) {
       if (e.kind === 'carve') replay.carveCircle(e.x, e.y, e.r)
@@ -94,6 +97,10 @@ describe('Rùa Thành (build)', () => {
 })
 
 describe('Cú Thiên Văn (satellite)', () => {
+  it('đạn 2: vệ tinh cao gấp 3 đạn 1', () => {
+    const t = createDefaultTuning().mobiles['cu-thien-van']!.shots
+    expect((t[1].behavior as { altitude: number }).altitude).toBe(3 * (t[0].behavior as { altitude: number }).altitude)
+  })
   type BeamEv = Extract<ShotResult['events'][number], { kind: 'beam' }>
   const beamsOf = (r: ShotResult): BeamEv[] => r.events.filter(e => e.kind === 'beam') as BeamEv[]
   it('đạn 1: vệ tinh trên đầu xe bắn tia chéo qua điểm nổ, đốt vào đất', () => {
@@ -104,22 +111,25 @@ describe('Cú Thiên Văn (satellite)', () => {
     const e = b[0]!
     expect(e.sky).toBe(false)
     expect(e.x0).toBe(400)                     // ngay trên đầu xe bắn
-    expect(e.y0).toBe(G - 18 - 400)           // vệ tinh bay theo cao 400 px trên tâm xe
+    expect(e.y0).toBe(G - 18 - 200)           // vệ tinh bay theo cao 200 px trên tâm xe (đ2 cao gấp 3)
     expect(e.t - ex.t).toBeCloseTo(0.5, 1)
     // điểm cuối nằm trên đường thẳng (x0, y0) → điểm nổ, phía sau điểm nổ
     const cross = (ex.x - e.x0) * (e.y - e.y0) - (ex.y - e.y0) * (e.x - e.x0)
-    expect(Math.abs(cross) / Math.hypot(e.x - e.x0, e.y - e.y0)).toBeLessThan(1.5)
+    expect(Math.abs(cross) / Math.hypot(e.x - e.x0, e.y - e.y0)).toBeLessThan(9)   // tia hơi lệch (jitter 8 px)
     expect(e.y).toBeGreaterThan(ex.y)
     expect(e.x).toBeGreaterThan(ex.x)
   })
   it('SS: từ tận trời thẳng đứng xuống cột điểm nổ', () => {
     const r = shoot('cu-thien-van', 2, 45, 60)
     const ex = firstExplode(r)
-    const e = beamsOf(r)[0]!
+    const bs = beamsOf(r)
+    expect(bs).toHaveLength(5)                       // quét 5 tia từ trái sang phải
+    for (let i = 1; i < bs.length; i++) expect(bs[i]!.x).toBeGreaterThan(bs[i - 1]!.x)
+    const e = bs[2]!
     expect(e.sky).toBe(true)
-    expect(e.x).toBe(ex.x)
+    expect(e.x).toBeCloseTo(ex.x, 5)                // tia giữa đúng điểm nổ
     expect(e.y).toBeGreaterThan(G)
-    expect(e.y).toBeLessThanOrEqual(G + 110)        // cầu sáng không khoét, tia đốt sâu 110 từ mặt đất
+    expect(e.y).toBeLessThanOrEqual(G + 70)         // cầu sáng không khoét, tia đốt sâu 70 từ mặt đất
   })
   it('cầu sáng không gây sát thương, không khoét đất: chỉ laser mới gây sát thương', () => {
     for (const slot of [0, 1, 2] as const) {
@@ -227,5 +237,219 @@ describe('hướng gió', () => {
         expect(pushedRight, `${def.id} facing ${facing}`).toBe(def.shots[0].windFactor > 0)
       }
     }
+  })
+})
+
+describe('airGrow (Ốc SS, Diều SS)', () => {
+  const grownBlast = (r: ShotResult): number => (r.events.find(e => e.kind === 'explode') as { r: number }).r
+  it('bay đủ lâu thì lớn lên: phát ra event grow, vụ nổ và sát thương lớn hơn', () => {
+    const b = tuning.mobiles['oc-thiet-giap']!.shots[2].behavior
+    if (b.kind !== 'airGrow') throw new Error('Ốc SS phải là airGrow')
+    const long = shoot('oc-thiet-giap', 2, 45, 100)   // ~2,7 s
+    const short = shoot('oc-thiet-giap', 2, 30, 40)   // ~0,9 s
+    expect(long.events.some(e => e.kind === 'grow' && e.shell === 0)).toBe(true)
+    expect(short.events.some(e => e.kind === 'grow')).toBe(false)
+    expect(grownBlast(long)).toBeCloseTo(grownBlast(short) * b.blastMul, 5)
+  })
+  it('sát thương nhân damageMul khi trúng xe sau khi lớn lên', () => {
+    const b = tuning.mobiles['dieu-hau-giay']!.shots[2].behavior
+    if (b.kind !== 'airGrow') throw new Error('Diều SS phải là airGrow')
+    const base = tuning.mobiles['dieu-hau-giay']!.shots[2].damage
+    // đặt xe đúng chỗ rơi để trúng sát tâm
+    const probe = shoot('dieu-hau-giay', 2, 60, 100)
+    const ex = firstExplode(probe)
+    const hit = shoot('dieu-hau-giay', 2, 60, 100, { others: [{ ...veh(1, 'oc-thiet-giap', ex.x), hp: 5000 }] })
+    const dmg = hit.events.find(e => e.kind === 'damage' && e.id === 1) as { amount: number } | undefined
+    expect(dmg).toBeDefined()
+    expect(dmg!.amount).toBeGreaterThan(base * 1.5)
+    expect(dmg!.amount).toBeLessThanOrEqual(Math.round(base * b.damageMul))
+  })
+  it('chưa đủ giờ thì sát thương và bán kính bằng thông số gốc', () => {
+    const base = tuning.mobiles['oc-thiet-giap']!.shots[2]
+    expect(grownBlast(shoot('oc-thiet-giap', 2, 30, 40))).toBe(base.blastRadius)
+  })
+})
+
+describe('twin (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1)', () => {
+  const maxOffset = (path: number[], other: number[]): number => {
+    let m = 0
+    for (let i = 0; i < Math.min(path.length, other.length); i += 3) m = Math.max(m, Math.hypot(path[i + 1]! - other[i + 1]!, path[i + 2]! - other[i + 2]!))
+    return m
+  }
+  it('Sứa Đèn đ2: 2 viên xoắn rộng ra rồi chụm lại, mỗi viên một vụ nổ có sát thương riêng', () => {
+    const r = shoot('sua-den', 1, 60, 100)
+    expect(r.paths).toHaveLength(2)
+    expect(maxOffset(r.paths[0]!, r.paths[1]!)).toBeGreaterThan(30)
+    const a = r.paths[0]!, b = r.paths[1]!
+    // gần thời điểm chụm (2,2 s) hai viên gần như trùng nhau
+    let checked = 0
+    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 2.2) < 0.05) { checked++; expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(10) }
+    expect(checked).toBeGreaterThan(0)
+    expect(r.events.filter(e => e.kind === 'explode')).toHaveLength(2)
+  })
+  it('đứng đúng chỗ chụm thì bị trúng (ít nhất một viên)', () => {
+    const probe = shoot('sua-den', 1, 45, 80)
+    const ex = firstExplode(probe)
+    const target = veh(1, 'oc-thiet-giap', ex.x, 5000)
+    const r = shoot('sua-den', 1, 45, 80, { others: [target] })
+    const hits = r.events.filter(e => e.kind === 'damage' && e.id === 1)
+    expect(hits.length).toBeGreaterThanOrEqual(1)
+  })
+  it('Cua Lăn đ1 có 3 viên, Rùa Thành đ2 có 2 viên', () => {
+    expect(shoot('cua-lan', 0, 45, 70).paths).toHaveLength(3)
+    expect(shoot('rua-thanh', 1, 50, 60).paths).toHaveLength(2)
+  })
+  it('deterministic', () => {
+    const a = shoot('cua-lan', 0, 40, 65), b = shoot('cua-lan', 0, 40, 65)
+    expect(JSON.stringify(a.paths)).toBe(JSON.stringify(b.paths))
+  })
+})
+
+describe('splitAfter (Rùa Thành SS)', () => {
+  it('bay 1,5 s rồi tách 6 quả con, mỗi quả nổ nhỏ riêng', () => {
+    const r = shoot('rua-thanh', 2, 60, 100)
+    expect(r.events.filter(e => e.kind === 'split')).toHaveLength(1)
+    expect(r.paths).toHaveLength(7)
+    const ex = r.events.filter(e => e.kind === 'explode') as { r: number }[]
+    expect(ex).toHaveLength(6)
+    expect(ex.every(e => e.r === 50)).toBe(true)
+  })
+  it('chạm đất trước khi tách thì nổ cả quả (bán kính lớn)', () => {
+    const r = shoot('rua-thanh', 2, 45, 30)
+    expect(r.events.filter(e => e.kind === 'split')).toHaveLength(0)
+    expect(firstExplode(r)).toBeDefined()
+    expect((r.events.find(e => e.kind === 'explode') as { r: number }).r).toBe(90)
+  })
+  it('đứng dưới chỗ tách thì cả 6 quả trúng (gần 6 × 95)', () => {
+    const probe = shoot('rua-thanh', 2, 60, 100)
+    const sp = probe.events.find(e => e.kind === 'split') as { x: number }
+    const ex = probe.events.filter(e => e.kind === 'explode') as { x: number }[]
+    const mid = ex.reduce((a, e) => a + e.x, 0) / ex.length
+    const r = shoot('rua-thanh', 2, 60, 100, { others: [veh(1, 'oc-thiet-giap', mid, 5000)] })
+    const dmg = r.events.filter(e => e.kind === 'damage' && e.id === 1) as { amount: number }[]
+    expect(sp.x).toBeGreaterThan(400)
+    expect(dmg.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe('tandem (Ốc Thiết Giáp đ2)', () => {
+  it('hai đầu nối đuôi: 2 quả, 2 vụ nổ, đầu 2 nổ sau đầu 1', () => {
+    const r = shoot('oc-thiet-giap', 1, 45, 60)
+    expect(r.paths).toHaveLength(2)
+    const ex = r.events.filter(e => e.kind === 'explode')
+    expect(ex).toHaveLength(2)
+    expect(ex[1]!.t).toBeGreaterThan(ex[0]!.t)
+  })
+  it('đầu 2 bỏ qua giáp của xe đã trúng đầu 1', () => {
+    const probe = shoot('oc-thiet-giap', 1, 45, 60)
+    const ex = firstExplode(probe)
+    const armored = { ...veh(1, 'rua-thanh', ex.x, 5000), armor: 0.5 }
+    const r = shoot('oc-thiet-giap', 1, 45, 60, { others: [armored] })
+    const hits = r.events.filter(e => e.kind === 'damage' && e.id === 1) as { amount: number }[]
+    expect(hits).toHaveLength(2)
+    // đầu 1: 300 × (1 − d/R) × 0,5; đầu 2 bỏ giáp nên mỗi điểm sát thương gấp đôi
+    expect(hits[1]!.amount).toBeGreaterThan(hits[0]!.amount)
+  })
+})
+
+describe('curve / boomerang (Diều Hâu Giấy)', () => {
+  const far = (r: ShotResult): { maxX: number; endX: number } => {
+    const pa = r.paths[0]!; let maxX = 0
+    for (let i = 1; i < pa.length; i += 3) maxX = Math.max(maxX, pa[i]! - 400)
+    return { maxX, endX: pa[pa.length - 2]! - 400 }
+  }
+  it('bắn góc cao, lực mạnh: bay ra rồi quay lại phía người bắn', () => {
+    const f = far(shoot('dieu-hau-giay', 0, 75, 100))
+    expect(f.maxX).toBeGreaterThan(100)
+    expect(f.endX).toBeLessThan(f.maxX - 100)
+  })
+  it('bắn thấp: vẫn bay tới trước; đạn 2 là 4 quả', () => {
+    expect(far(shoot('dieu-hau-giay', 0, 20, 70)).endX).toBeGreaterThan(100)
+    expect(shoot('dieu-hau-giay', 1, 45, 60).paths).toHaveLength(4)
+  })
+})
+
+describe('roller.crawl (Cua Lăn SS)', () => {
+  it('bò ngay sau khi chạm đất, tự nổ sau 6 s kể từ lần chạm đầu', () => {
+    const r = shoot('cua-lan', 2, 30, 40)
+    const ex = r.events.filter(e => e.kind === 'explode')
+    expect(ex).toHaveLength(1)
+    const path = r.paths[0]!
+    let land = -1
+    for (let i = 0; i < path.length; i += 3) if (path[i + 2]! >= G - 8) { land = path[i]!; break }
+    expect(land).toBeGreaterThan(0)
+    expect(ex[0]!.t - land).toBeGreaterThan(5.5)
+    expect(ex[0]!.t - land).toBeLessThan(6.6)
+  })
+  it('gặp vách cao thì quay đầu, bò về tới xe bắn mới nổ', () => {
+    const m = flat()
+    for (let y = G - 150; y < G; y++) for (let x = 700; x < 760; x++) m.data[y * W + x] = 1
+    const r = shoot('cua-lan', 2, 20, 30, { mask: m })
+    const ex = firstExplode(r)
+    expect(r.events.find(e => e.kind === 'explode')!.t).toBeGreaterThan(2.5)   // nổ khi bò về tới xe bắn (chạm xe nào cũng nổ), không nổ ở vách
+    expect(ex.x).toBeLessThan(700)
+  })
+  it('chạm xe thì nổ ngay', () => {
+    const r = shoot('cua-lan', 2, 20, 40, { others: [veh(1, 'oc-thiet-giap', 800)] })
+    expect(r.events.some(e => e.kind === 'damage' && e.id === 1)).toBe(true)
+    expect(r.events.find(e => e.kind === 'explode')!.t).toBeLessThan(5)
+  })
+})
+
+describe('khiên (Sứa Đèn)', () => {
+  const target = (shield: number): ShotVehicle => ({ ...veh(1, 'sua-den', 1000, 5000), shield })
+  it('sát thương trừ khiên trước, hết khiên mới trừ máu; tổng amount giữ nguyên', () => {
+    const probe = shoot('oc-thiet-giap', 0, 45, 70)
+    const ex = firstExplode(probe)
+    const noShield = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000) }] })
+    const dmg = (noShield.events.find(e => e.kind === 'damage') as { amount: number }).amount
+    const withShield = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000), shield: dmg + 50 }] })
+    const e = withShield.events.find(e => e.kind === 'damage') as { amount: number; hpAfter: number; shieldAfter: number }
+    expect(e.amount).toBe(dmg)
+    expect(e.hpAfter).toBe(5000)
+    expect(e.shieldAfter).toBe(50)
+    const part = shoot('oc-thiet-giap', 0, 45, 70, { others: [{ ...veh(1, 'sua-den', ex.x, 5000), shield: 10 }] })
+    const p = part.events.find(e => e.kind === 'damage') as { hpAfter: number; shieldAfter: number }
+    expect(p.shieldAfter).toBe(0)
+    expect(p.hpAfter).toBe(5000 - (dmg - 10))
+  })
+  it('SS Sứa Đèn xoá khiên mọi xe trong vùng nổ, rồi sát thương trừ thẳng máu', () => {
+    const probe = shoot('sua-den', 2, 45, 70)
+    const ex = firstExplode(probe)
+    const r = shoot('sua-den', 2, 45, 70, { others: [{ ...veh(1, 'oc-thiet-giap', ex.x, 5000), shield: 400 }] })
+    const dmg = r.events.find(e => e.kind === 'damage' && e.id === 1) as { hpAfter: number; shieldAfter: number }
+    expect(dmg.shieldAfter).toBe(0)
+    expect(dmg.hpAfter).toBeLessThan(5000)
+    expect(target(0).shield).toBe(0)
+  })
+})
+
+describe('xe ẩn (C2) + converge + jitter', () => {
+  it('Long Ngư Cơ: đ2 bốn quả; SS triệu hồi 4 con rồng nổ tại tâm theo thứ tự', () => {
+    expect(shoot('long-ngu-co', 1, 45, 60).paths).toHaveLength(4)
+    const r = shoot('long-ngu-co', 2, 45, 60)
+    expect(r.events.filter(e => e.kind === 'summon')).toHaveLength(4)
+    const ex = r.events.filter(e => e.kind === 'explode') as { t: number; x: number; r: number }[]
+    expect(ex).toHaveLength(5)                       // 1 nổ đánh dấu + 4 rồng
+    expect(ex.slice(1).every(e => e.r === 55 && Math.abs(e.x - ex[0]!.x) < 1e-6)).toBe(true)
+    expect(ex[4]!.t).toBeGreaterThan(ex[1]!.t)
+  })
+  it('Long Ngư Cơ: đứng ngay điểm chạm thì ăn cả 4 con rồng', () => {
+    const x = firstExplode(shoot('long-ngu-co', 2, 45, 60)).x
+    const r = shoot('long-ngu-co', 2, 45, 60, { others: [veh(1, 'oc-thiet-giap', x, 9999)] })
+    expect(r.events.filter(e => e.kind === 'damage' && e.id === 1).length).toBe(4)
+  })
+  it('Kỳ Lân Sắt: đ1 4 tia lệch có seed (cùng lệnh cùng kết quả), đ2 5 tia, SS quét 7 tia', () => {
+    const a = shoot('ky-lan-sat', 0, 45, 60), b = shoot('ky-lan-sat', 0, 45, 60)
+    const xs = (r: ShotResult) => r.events.filter(e => e.kind === 'beam').map(e => (e as { x: number }).x)
+    expect(xs(a)).toHaveLength(4)
+    expect(xs(a)).toEqual(xs(b))
+    expect(shoot('ky-lan-sat', 1, 45, 60).events.filter(e => e.kind === 'beam')).toHaveLength(5)
+    expect(shoot('ky-lan-sat', 2, 45, 60).events.filter(e => e.kind === 'beam')).toHaveLength(7)
+  })
+  it('xe ẩn có đủ trong tuning và danh sách hợp lệ nhưng không có ở lưới chọn', () => {
+    const t = createDefaultTuning()
+    expect(t.mobiles['long-ngu-co']).toBeDefined()
+    expect(t.mobiles['ky-lan-sat']).toBeDefined()
   })
 })

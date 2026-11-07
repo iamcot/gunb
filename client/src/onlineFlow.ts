@@ -1,5 +1,5 @@
 import {
-  GAME_NAME, ITEM_SLOTS, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
+  GAME_NAME, ITEM_SLOTS, MAX_PLAYERS, MOBILE_IDS, RANDOM_MOBILE, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
   type BotLevel, type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
@@ -15,6 +15,7 @@ const esc = (s: string): string => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<
 const MOBILE_KEY = 'gunb.mobile'          // xe chọn lần trước (chỉ là tiện ích giao diện)
 const LOGO_URL = '/ui/logo.png'
 /** Icon nút đã có ảnh trong `assets/ui/icons/` (thêm tên khi có file mới). Chưa có ảnh thì dùng ký tự thay thế. */
+const BUBBLE_MS = 8000   // bóng thoại hiện bấy nhiêu ms
 const ICONS = new Set(['create', 'quick-join', 'refresh', 'ready', 'start', 'switch-team', 'leave', 'add-bot', 'chat', 'remove'])
 /** `only`: nút chỉ có icon (không kèm chữ). */
 const ico = (name: string, fallback = '', only = false): string =>
@@ -72,7 +73,8 @@ export class OnlineFlow {
   private myName = ''
   private roomFilter: 'all' | 'wait' = 'all'
   private botLevel: BotLevel = 'normal'
-  private pickTab: 'mob' | 'item' = 'mob'   // ô dưới cột phải: chọn xe / chọn item
+  private readonly bubbles = new Map<string, { text: string; at: number }>()   // câu chat gần nhất của mỗi người (theo tên), hiện thành bóng thoại trên khung
+  private bubbleTimer: ReturnType<typeof setTimeout> | null = null
   private toastTimer = 0
 
   /** `onBack` null: không có nút Quay lại (trang login là trang đầu tiên). */
@@ -270,16 +272,21 @@ export class OnlineFlow {
     const r = this.room
     if (!r) return
     if (this.shellFor !== r.id) {
-      const el = this.panel(`<div class="gs-body">
-          <div class="gs-col">
-            <div class="gs-box gs-info" id="rinfo"></div>
-            <div class="gs-teams"><div class="gs-team t0" id="team0"></div><div class="gs-mid" id="ractions"></div><div class="gs-team t1" id="team1"></div></div>
-            <div class="gs-box gs-chat"><div class="log" id="gschat"></div><div class="row">${ico('chat')}<input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi"></div></div>
+      const el = this.panel(`<div class="gs-body gs-roomx">
+          <div class="gs-arena">
+            <div class="gs-team t0" id="team0"></div>
+            <div class="gs-mid"><div class="vs">VS</div><div class="gs-box gs-info" id="rinfo"></div></div>
+            <div class="gs-team t1" id="team1"></div>
           </div>
-          <div class="gs-col">
-            <div class="gs-box gs-detail" id="mdetail"></div>
-            <div class="gs-box gs-pickbox"><div class="gs-ptabs"><button class="gs-tab" data-ptab="mob">Chọn xe</button><button class="gs-tab" data-ptab="item" title="Bấm item để thêm vào ô (được trùng), bấm ô để bỏ. Trong trận: F1–F3 hoặc bấm ô trên thanh trên, mỗi lượt 1 item.">Item <span id="icount"></span></button></div>
-              <div class="gs-grid" id="mgrid"></div><div id="ipick"></div></div>
+          <div class="gs-bottom">
+            <div class="gs-box gs-pickcol"><div class="gs-grid" id="mgrid"></div></div>
+            <div class="gs-box gs-preview" id="mdetail"></div>
+            <div class="gs-box gs-itembox"><div class="ttl" title="Bấm item để thêm vào ô (được trùng), bấm ô để bỏ. Trong trận: F1–F3 hoặc bấm ô trên thanh trên, mỗi lượt 1 item.">Item <span id="icount"></span></div><div id="ipick"></div></div>
+          </div>
+          <div class="gs-footer">
+            <div class="gs-fl" id="ractions-l"></div>
+            <div class="gs-chatbar">${ico('chat')}<input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi (hiện thành bóng thoại trên khung của bạn)"></div>
+            <div class="gs-fr" id="ractions-r"></div>
           </div>
         </div>`, true, `<span class="num" id="rnum"></span><span id="rtitle"></span>`)
       this.shellFor = r.id
@@ -288,8 +295,6 @@ export class OnlineFlow {
         e.stopPropagation()
         if (e.key === 'Enter' && cin.value.trim()) { this.net?.send({ t: MsgType.Chat, text: cin.value }); cin.value = '' }
       })
-      this.renderChat()
-      el.querySelectorAll<HTMLButtonElement>('[data-ptab]').forEach(b => b.addEventListener('click', () => { this.pickTab = b.dataset.ptab === 'item' ? 'item' : 'mob'; this.renderRoom() }))
       // vào phòng mới: dùng lại xe đã chọn lần trước
       const saved = this.savedMobile()
       const mine0 = r.members.find(m => m.pid === this.net?.pid)
@@ -309,40 +314,45 @@ export class OnlineFlow {
     el.querySelector('#rtitle')!.textContent = r.name
     el.querySelector('#rinfo')!.innerHTML = `<div class="thumb" style='background:${map.thumb}'><span>${esc(map.name)}</span></div>
       <dl><dt>Số người</dt><dd>${perTeam} vs ${perTeam} (${r.members.length}/${r.max})</dd><dt>Thời gian lượt</dt><dd>${r.turnTime} giây</dd>
-        <dt>Bản đồ</dt><dd>${esc(map.name)}</dd><dt>Chủ phòng</dt><dd>${esc(r.members.find(m => m.pid === r.hostPid)?.name ?? '?')}</dd></dl>`
+        <dt>Chủ phòng</dt><dd>${esc(r.members.find(m => m.pid === r.hostPid)?.name ?? '?')}</dd></dl>`
 
     for (const team of [0, 1] as const) {
       const members = r.members.filter(m => m.team === team)
-      const slots = Math.max(perTeam, members.length)
-      let html = `<h4><img src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="" onerror="this.remove()">${esc(TEAM_NAMES[team])}</h4>`
+      const slots = Math.max(Math.floor(MAX_PLAYERS / 2), members.length)   // luôn hiện đủ ô; ô vượt số người của phòng bị khoá
+      let html = `<img class="logo" src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="${esc(TEAM_NAMES[team])}" title="${esc(TEAM_NAMES[team])}" onerror="this.remove()"><div class="slots">`
       for (let i = 0; i < slots; i++) {
         const m = members[i]
+        if (!m && i >= perTeam) { html += `<div class="gs-slot emptyslot locked"><div>🔒</div></div>`; continue }
         if (!m) {
           html += `<div class="gs-slot emptyslot"><div>Chỗ trống${isHost && editable ? `<br><button class="gs-btn sm" data-bot="${team}">${ico('add-bot', '＋')}Thêm máy</button>` : ''}</div></div>`
           continue
         }
-        const def = TUNING.mobiles[m.mobileId]
-        const badge = !m.connected ? '<span class="gs-badge off">Mất kết nối</span>'
-          : m.pid === r.hostPid ? '<span class="gs-badge host">Chủ phòng</span>'
-          : m.ready || m.bot ? '<span class="gs-badge ready">Sẵn sàng</span>' : '<span class="gs-badge">Đang chọn…</span>'
-        html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">
-          <div class="pic"><img data-portrait="${esc(m.mobileId)}" alt=""><span class="fallback">${esc(def?.name ?? m.mobileId)}</span></div>
-          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${badge}</div>
+        const isRand = m.mobileId === RANDOM_MOBILE
+        const state = !m.connected ? '<span class="gs-st off" title="Mất kết nối">⚠</span>'
+          : m.ready || m.bot ? '<span class="gs-st ok" title="Sẵn sàng">✔</span>' : m.pid === r.hostPid ? '' : '<span class="gs-st" title="Đang chọn xe">…</span>'
+        const bub = this.bubbles.get(m.name)
+        const bubble = bub && Date.now() - bub.at < BUBBLE_MS ? `<div class="bubble">${esc(bub.text)}</div>` : ''
+        const tip = `${isRand ? 'Ngẫu nhiên' : TUNING.mobiles[m.mobileId]?.name ?? m.mobileId}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}`
+        html += `<div class="gs-slot${m.pid === me ? ' me' : ''}" title="${esc(tip)}">${bubble}
+          ${m.pid === r.hostPid ? '<span class="gs-key" title="Chủ phòng">🔑</span>' : ''}
+          <div class="pic">${isRand ? '<img class="car" src="/ui/random-mobile.png" alt="?">' : `<img class="car" data-portrait="${esc(m.mobileId)}" data-pilot="1" alt="">`}<span class="fallback">${esc(isRand ? 'Ngẫu nhiên' : TUNING.mobiles[m.mobileId]?.name ?? m.mobileId)}</span>
+            ${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${state}</div>
+          <div class="plate"><b>${esc(m.name)}</b></div>
           ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">${ico('remove', '✕', true)}</button>` : ''}</div>`
       }
-      el.querySelector(`#team${team}`)!.innerHTML = html
+      el.querySelector(`#team${team}`)!.innerHTML = html + '</div>'
     }
     el.querySelectorAll<HTMLButtonElement>('[data-rm]').forEach(b => b.addEventListener('click', () => this.net?.send({ t: MsgType.RemoveBot, pid: Number(b.dataset.rm) })))
     el.querySelectorAll<HTMLButtonElement>('[data-bot]').forEach(b => b.addEventListener('click', () =>
       this.net?.send({ t: MsgType.AddBot, level: this.botLevel, team: Number(b.dataset.bot) })))
 
-    const actions = el.querySelector('#ractions')!
-    actions.innerHTML = `<div class="vs">VS</div>` +
-      (isHost ? `<button class="gs-btn primary big" id="st"${editable ? '' : ' disabled'}>${ico('start')}Bắt đầu</button>`
-        : `<button class="gs-btn ${mine?.ready ? '' : 'go '}big" id="rd"${editable ? '' : ' disabled'}>${mine?.ready ? 'Huỷ' : ico('ready') + 'Sẵn sàng'}</button>`) +
+    const left = el.querySelector('#ractions-l')!, right = el.querySelector('#ractions-r')!
+    left.innerHTML = `<button class="gs-btn" id="lv">${ico('leave')}Rời phòng</button>` +
       `<button class="gs-btn sky" id="team"${editable ? '' : ' disabled'}>${ico('switch-team', '⇄')}Đổi đội</button>` +
       (isHost && editable ? `<select id="blv" title="Mức máy khi thêm vào chỗ trống">${(['easy', 'normal', 'hard'] as const).map(l => `<option value="${l}"${l === this.botLevel ? ' selected' : ''}>Máy: ${BOT_LABEL[l]}</option>`).join('')}</select>` : '')
-    actions.insertAdjacentHTML('beforeend', `<button class="gs-btn" id="lv">${ico('leave')}Rời phòng</button>`)
+    right.innerHTML = isHost ? `<button class="gs-btn primary big" id="st"${editable ? '' : ' disabled'}>${ico('start')}Bắt đầu</button>`
+      : `<button class="gs-btn ${mine?.ready ? '' : 'go '}big" id="rd"${editable ? '' : ' disabled'}>${mine?.ready ? 'Huỷ' : ico('ready') + 'Sẵn sàng'}</button>`
+    const actions = el
     actions.querySelector('#lv')!.addEventListener('click', () => { this.net?.send({ t: MsgType.LeaveRoom }) })
     actions.querySelector('#st')?.addEventListener('click', () => this.net?.send({ t: MsgType.StartGame }))
     actions.querySelector('#rd')?.addEventListener('click', () => this.net?.send({ t: MsgType.SetSeat, ready: !mine?.ready }))
@@ -355,9 +365,6 @@ export class OnlineFlow {
     const items = mine?.items ?? []
     ipick.innerHTML = itemPickerHtml(items, canPick)
     el.querySelector('#icount')!.textContent = `${items.length}/${ITEM_SLOTS}`
-    el.querySelectorAll<HTMLElement>('[data-ptab]').forEach(b => b.classList.toggle('on', b.dataset.ptab === this.pickTab))
-    el.querySelector<HTMLElement>('#mgrid')!.style.display = this.pickTab === 'mob' ? '' : 'none'   // .gs-grid đặt display nên không dùng `hidden`
-    ipick.style.display = this.pickTab === 'item' ? '' : 'none'
     bindItemPicker(ipick, items, next => { saveItems(next); this.net?.send({ t: MsgType.SetSeat, items: next }) })
     fillPortraits(el)
     if (this.errText) this.toast(this.errText)
@@ -367,39 +374,33 @@ export class OnlineFlow {
   private renderMobilePicker(current: string, canPick: boolean): void {
     const el = this.el!
     const d = TUNING.mobiles[current]
-    if (d) {
+    if (current === RANDOM_MOBILE) {
+      el.querySelector('#mdetail')!.innerHTML = `<div class="nm">NGẪU NHIÊN</div><div class="stage"><img src="/ui/random-mobile.png" alt="?"></div><div class="role" title="Xe được bốc khi chủ phòng bấm Bắt đầu, có thể ra cả xe ẩn.">Bốc xe khi vào trận</div>`
+    } else if (d) {
       const stat = (label: string, v: number, txt: string): string => `<div class="gs-stat"><span>${label}</span><div class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></i></div><b>${txt}</b></div>`
       el.querySelector('#mdetail')!.innerHTML = `
-        <div class="gs-me"><div class="stage"><img data-portrait="${esc(d.id)}" alt=""><span class="fallback">${esc(d.name)}</span></div></div>
-        <div class="nm">${esc(d.name)}</div><div class="role">${esc(d.role)}</div>
-        ${stat('Máu', d.hp / STAT_MAX.hp, String(d.hp))}
+        <div class="nm">${esc(d.name)}</div>
+        <div class="stage"><img data-portrait="${esc(d.id)}" data-pilot="1" alt=""><span class="fallback">${esc(d.name)}</span></div>
+        <div class="stats">${stat('Máu', d.hp / STAT_MAX.hp, String(d.hp))}
         ${stat('Giáp', d.armor / STAT_MAX.armor, `${Math.round(d.armor * 100)}%`)}
         ${stat('Cơ động', (d.fuel * d.speedMul) / STAT_MAX.move, String(Math.round(d.fuel * d.speedMul)))}
-        ${stat('Góc bắn', (d.angleMax - d.angleMin) / 90, `${d.angleMin}–${d.angleMax}°`)}
-        <div class="gs-shots">${d.shots.map((s, i) => `<div${i === 2 ? ' class="ss"' : ''}><b>${i === 2 ? 'SS' : i + 1}. ${esc(s.name)}</b><span>${s.damage} st · delay ${s.delay}</span></div>`).join('')}</div>`
+        ${stat('Góc bắn', (d.angleMax - d.angleMin) / 90, `${d.angleMin}–${d.angleMax}°`)}</div>`
     }
     el.querySelector('#mgrid')!.innerHTML = MOBILE_IDS.map(id => `<button class="gs-pick${id === current ? ' on' : ''}" data-mob="${esc(id)}" title="${esc(TUNING.mobiles[id]!.name)}"${canPick ? '' : ' disabled'}>
         <img data-portrait="${esc(id)}" alt=""><span class="fallback">${esc(TUNING.mobiles[id]!.name)}</span></button>`).join('') +
-      `<button class="gs-pick" id="mrand" title="Ngẫu nhiên"${canPick ? '' : ' disabled'}><img src="/ui/random-mobile.png" alt="?"></button>`
+      `<button class="gs-pick${current === RANDOM_MOBILE ? ' on' : ''}" id="mrand" title="Ngẫu nhiên: bốc xe lúc vào game"${canPick ? '' : ' disabled'}><img src="/ui/random-mobile.png" alt="?"></button>`
     const pick = (id: string): void => {
       try { localStorage.setItem(MOBILE_KEY, id) } catch { /* bỏ qua */ }
       this.net?.send({ t: MsgType.SetSeat, mobileId: id })
     }
     el.querySelectorAll<HTMLButtonElement>('[data-mob]').forEach(b => b.addEventListener('click', () => pick(b.dataset.mob!)))
-    el.querySelector('#mrand')!.addEventListener('click', () => pick(MOBILE_IDS[Math.floor(Math.random() * MOBILE_IDS.length)]!))
+    el.querySelector('#mrand')!.addEventListener('click', () => pick(RANDOM_MOBILE))
   }
 
   private savedMobile(): string {
     let id: string | null = null
     try { id = localStorage.getItem(MOBILE_KEY) } catch { /* bỏ qua */ }
-    return id && TUNING.mobiles[id] && (MOBILE_IDS as readonly string[]).includes(id) ? id : MOBILE_IDS[0]
-  }
-
-  private renderChat(): void {
-    const log = this.el?.querySelector('#gschat')
-    if (!log) return
-    log.innerHTML = this.chat.length === 0 ? '<div class="sys">Chào mừng vào phòng! Nhắn tin cho cả phòng ở ô bên dưới.</div>' : this.chat.slice(-30).map(l => `<div>${l}</div>`).join('')
-    log.scrollTop = log.scrollHeight
+    return id === RANDOM_MOBILE || (id && TUNING.mobiles[id] && (MOBILE_IDS as readonly string[]).includes(id)) ? id! : MOBILE_IDS[0]
   }
 
   private renderLoading(): void {
@@ -455,7 +456,10 @@ export class OnlineFlow {
       case MsgType.RoomState: this.onRoomState(m.room as RoomInfo | null); break
       case MsgType.ChatMsg:
         this.chat.push(`<b>${esc(String(m.from))}:</b> ${esc(String(m.text))}`)
-        this.renderChat()
+        this.bubbles.set(String(m.from), { text: String(m.text), at: Date.now() })
+        if (this.bubbleTimer) clearTimeout(this.bubbleTimer)
+        this.bubbleTimer = setTimeout(() => { this.bubbleTimer = null; if (this.screen === 'room') this.renderRoom() }, BUBBLE_MS + 100)
+        if (this.screen === 'room') this.renderRoom()
         break
       case MsgType.Loading:
         for (const x of m.members as { pid: number; pct: number; ready: boolean }[]) this.loadPct.set(x.pid, x)

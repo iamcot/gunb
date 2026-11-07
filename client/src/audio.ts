@@ -9,12 +9,13 @@ const BATTLE_MUSIC_VOL = 0.18 // nhạc trong trận nhỏ hơn để nghe rõ t
 const SFX_FILE_VOL = 0.7      // tiếng từ file
 const MUSIC_FADE = 0.8        // s, chuyển bài
 const SAME_SFX_GAP = 0.05     // s, cùng một tiếng không phát chồng sát nhau (vd. 7 gai nổ gần như cùng lúc)
+const CHARGE_FADE = 0.08      // s, tắt tiếng tụ lực khi nhả
 const MANIFEST_URL = '/audio/sounds.json'
 
 /** `assets/audio/sounds.json`: tên file (trong `assets/audio/`), mục nào không có thì dùng tiếng tạo bằng code. */
-interface SoundsFile { music?: { lobby?: string; battle?: string }; sfx?: { turn?: string; hit?: string } }
+interface SoundsFile { music?: { lobby?: string; battle?: string }; sfx?: { turn?: string; hit?: string; aim?: string; aimLoop?: string } }
 /** URL tiếng của một loại đạn (từ shots.json của xe). */
-export interface ShotSfx { fire?: string; boom?: string; bolt?: string; beam?: string }
+export interface ShotSfx { fire?: string; boom?: string; bolt?: string; beam?: string; dig?: string }
 /** Nhạc đang cần: sảnh (menu, phòng chờ) hoặc trận (`mapUrl` = nhạc riêng của bản đồ nếu có). */
 export type MusicScene = { kind: 'lobby' } | { kind: 'battle'; mapUrl: string | null }
 // Giai điệu: 4 hợp âm (Am F C G) × 8 nốt gam ngũ cung, tốc độ 96 bpm
@@ -39,13 +40,15 @@ class AudioEngine {
   private manifest: SoundsFile = {}
   private scene: MusicScene = { kind: 'lobby' }
   private track: { url: string; src: AudioBufferSourceNode; gain: GainNode } | null = null
+  private digLoop: { g: GainNode; src: AudioBufferSourceNode; url: string } | null = null
+  private charge: { g: GainNode; srcs: AudioBufferSourceNode[] } | null = null
   muted = false
 
   constructor() {
     try { this.muted = localStorage.getItem(STORE_KEY) === '1' } catch { /* bỏ qua */ }
     void fetch(MANIFEST_URL).then(r => (r.ok ? r.json() : {}) as Promise<SoundsFile>).then(m => {
       this.manifest = m
-      const urls = [m.music?.lobby, m.music?.battle, m.sfx?.turn, m.sfx?.hit]
+      const urls = [m.music?.lobby, m.music?.battle, m.sfx?.turn, m.sfx?.hit, m.sfx?.aim, m.sfx?.aimLoop]
       for (const f of urls) if (f) this.load(this.audioUrl(f))
       this.applyMusic()
     }).catch(() => { /* không có manifest: dùng tiếng tạo bằng code */ })
@@ -212,6 +215,60 @@ class AudioEngine {
     this.tone(1800, 0.45, 'sine', 0.25 * SFX_VOL, 300); this.tone(900, 0.45, 'sawtooth', 0.12 * SFX_VOL, 150); this.noise(0.3, 0.4 * SFX_VOL, 6000, 800)
     this.noise(0.5, 0.7 * SFX_VOL, 2500, 120); this.tone(90, 0.4, 'sine', 0.5 * SFX_VOL, 35)
   }
+  /** Bắt đầu tụ lực: phát tiếng tăng dần (`aim`), hết thì chuyển sang tiếng lặp (`aimLoop`). Gọi `chargeStop()` khi nhả/hủy. Thiếu file thì im lặng. */
+  chargeStart(): void {
+    const c = this.ctx, m = this.manifest.sfx
+    if (!c || !this.master || !m?.aim || this.charge) return
+    const a = this.samples.get(this.audioUrl(m.aim))
+    if (!a) return
+    const g = c.createGain()
+    g.gain.value = SFX_FILE_VOL
+    g.connect(this.master)
+    const t0 = c.currentTime, srcs: AudioBufferSourceNode[] = []
+    const s1 = c.createBufferSource()
+    s1.buffer = a; s1.connect(g); s1.start(t0); srcs.push(s1)
+    const l = m.aimLoop ? this.samples.get(this.audioUrl(m.aimLoop)) : null
+    if (l) {
+      const s2 = c.createBufferSource()
+      s2.buffer = l; s2.loop = true; s2.connect(g); s2.start(t0 + a.duration); srcs.push(s2)
+    }
+    this.charge = { g, srcs }
+  }
+
+  /** Dừng tiếng tụ lực (nhả bắn / hủy), tắt nhanh để không bị giật. */
+  chargeStop(): void {
+    const c = this.ctx, ch = this.charge
+    if (!c || !ch) return
+    this.charge = null
+    ch.g.gain.setValueAtTime(ch.g.gain.value, c.currentTime)
+    ch.g.gain.linearRampToValueAtTime(0, c.currentTime + CHARGE_FADE)
+    for (const s of ch.srcs) s.stop(c.currentTime + CHARGE_FADE + 0.02)
+  }
+
+  /** Tiếng rè lặp khi đạn chui dưới đất (Chũi Khoan): bật khi `on`, tắt (fade ngắn) khi không. Dùng file bắn của đạn đó; chưa tải được thì im. */
+  digLoopSet(on: boolean, url?: string): void {
+    const c = this.ctx
+    if (!c || !this.master) return
+    if (!on) {
+      const d = this.digLoop
+      if (!d) return
+      this.digLoop = null
+      d.g.gain.setValueAtTime(d.g.gain.value, c.currentTime)
+      d.g.gain.linearRampToValueAtTime(0, c.currentTime + CHARGE_FADE)
+      d.src.stop(c.currentTime + CHARGE_FADE + 0.02)
+      return
+    }
+    if (this.digLoop || !url) return
+    const buf = this.samples.get(url)
+    if (!buf) return
+    const g = c.createGain(), src = c.createBufferSource()
+    g.gain.value = SFX_FILE_VOL * 0.8
+    src.buffer = buf; src.loop = true
+    src.connect(g).connect(this.master)
+    src.start()
+    this.digLoop = { g, src, url }
+  }
+
   turn(): void {
     const f = this.manifest.sfx?.turn
     if (f && this.play(this.audioUrl(f), SFX_FILE_VOL)) return

@@ -1,6 +1,6 @@
 import { DT_SIM, MUZZLE_DIST, SHOT_MAX_TIME_S, SHOT_SAMPLE_EVERY } from '../constants'
 import { aimDir, aimRange, type AimRange } from '../aim'
-import { clamp, type Vec2 } from '../math'
+import { clamp, degToRad, mulberry32, type Vec2 } from '../math'
 import type { MobileDef } from '../mobiles'
 import { FLYING, HIT_TERRAIN, stepProjectile, type ProjectileState } from '../physics/projectile'
 import type { ShotDef } from '../shots'
@@ -17,18 +17,29 @@ interface Shell {
   tStart: number
   child: boolean          // quả con sau khi tách: không tách nữa
   mode: 'fly' | 'drill' | 'roll'
+  rising: boolean         // drill.resurface: đang ở pha trồi lên
   dx: number; dy: number  // hướng khoan
   remaining: number       // px khoan còn lại
   sinceCarve: number
   samples: number
   alive: boolean
+  grown: boolean          // airGrow: đã bay đủ lâu
   pierced: number         // số lần đã xuyên đất (pierce)
   tp: number              // lần cuối qua cổng (portal)
+  fuseAt: number          // roller.crawl: thời điểm tự nổ (-1 = chưa chạm đất)
+  head: number            // tandem: 1 = đầu 1, 2 = đầu 2 (0 = không phải tandem)
+  twinK: number           // twin: số thứ tự viên (-1 = không xoắn)
+  off: number             // twin: độ lệch hiện tại khỏi trục bay (px, theo phương vuông góc vận tốc)
 }
 
-interface Pending { tStart: number; angleDeg: number }
-interface Bolt { t: number; x: number; y: number; def: { damage: number; blastRadius: number; carveRadius: number } }
+interface Pending { tStart: number; angleDeg: number; head: number }
+type LightningBeh = Extract<ShotDef['behavior'], { kind: 'lightning' }>
+/** Tia sét chờ giáng: `ang` = lệch khỏi phương thẳng đứng (rad); `march` = tia đi từ trời xuống và dừng ở vật rắn đầu tiên (không thì nổ thẳng tại (x, y), như sét của thời tiết). */
+interface Bolt { t: number; x: number; y: number; ang: number; march: boolean; after: { delay: number; damage: number } | null; def: { damage: number; blastRadius: number; carveRadius: number } }
+interface After { t: number; id: number; damage: number }
+const BOLT_STEP = 3, BOLT_MAX_ANG = degToRad(70), ZERO_ANGLES: readonly number[] = [0]
 type SatelliteBeh = Extract<ShotDef['behavior'], { kind: 'satellite' }>
+interface Converge { t: number; x: number; y: number; def: Extract<ShotDef['behavior'], { kind: 'converge' }> }
 interface Beam { t: number; x: number; y: number; def: SatelliteBeh }
 
 const sanRange: AimRange = { min: 0, max: 90 }
@@ -54,6 +65,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const beh = def.behavior
   const mask = input.mask.clone()
   const hp = new Map<number, number>(input.vehicles.map(v => [v.id, v.hp]))
+  const shield = new Map<number, number>(input.vehicles.map(v => [v.id, v.shield ?? 0]))
   const ax = input.wind.x * tuning.windScale * def.windFactor
   const ay = tuning.gravity * def.gravityFactor + input.wind.y * tuning.windScale * def.windFactor
   const speed = (fire.power / 100) * def.maxSpeed
@@ -67,19 +79,35 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   const shells: Shell[] = []
   const pending: Pending[] = []
   const bolts: Bolt[] = []
+  const afters: After[] = []
+  const aftered = new Set<number>()
+  const tandemHit = new Set<number>()   // tandem: xe đã trúng đầu 1 (đầu 2 bỏ qua giáp của chúng)
+  const hitNow: number[] = []
+  const strike = { x: 0, y: 0, x0: 0, y0: 0 }
   const beams: Beam[] = []
+  const converges: Converge[] = []
 
   const newShell = (x: number, y: number, vx: number, vy: number, t: number, child: boolean): Shell => {
     const s: Shell = {
       p: { x, y, vx, vy, t, alive: true }, path: [t, x, y], tStart: t, child, mode: 'fly',
-      dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, pierced: 0, tp: -1,
+      rising: false, dx: 0, dy: 0, remaining: 0, sinceCarve: 0, samples: 0, alive: true, grown: false, pierced: 0, tp: -1, twinK: -1, off: 0, head: 0, fuseAt: -1,
     }
     shells.push(s)
     return s
   }
 
+  /** Trừ `amount` sát thương (đã tính giáp) của xe `id`: khiên hấp thụ trước, phần dư trừ máu. Báo event damage (amount = tổng, kèm máu và khiên còn lại). */
+  const hurt = (id: number, amount: number, t: number): void => {
+    const sh = shield.get(id) ?? 0
+    const absorbed = Math.min(sh, amount)
+    shield.set(id, sh - absorbed)
+    const after = Math.max(0, (hp.get(id) ?? 0) - (amount - absorbed))
+    hp.set(id, after)
+    events.push({ t, kind: 'damage', id, amount, hpAfter: after, shieldAfter: sh - absorbed })
+  }
+
   /** Nổ: khoét hố + sát thương lên mọi xe trong bán kính + (nếu có) giảm giáp. */
-  const blast = (x: number, y: number, t: number, blastR: number, carveR: number, damage: number, breakArmor: boolean): void => {
+  const blast = (x: number, y: number, t: number, blastR: number, carveR: number, damage: number, breakArmor: boolean, bypass: Set<number> | null = null): void => {
     events.push({ t, kind: 'explode', x, y, r: blastR })
     if (carveR > 0) {
       mask.carveCircle(x, y, carveR)
@@ -90,12 +118,44 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (cur <= 0) continue
       const d = Math.max(0, Math.hypot(v.x - x, v.y - y) - v.radius)
       if (d >= blastR) continue
-      const amount = Math.round(damage * (1 - d / blastR) * (1 - v.armor))
+      if (def.shieldBreak && (shield.get(v.id) ?? 0) > 0) { shield.set(v.id, 0); events.push({ t, kind: 'shield', id: v.id, shieldAfter: 0 }) }   // xoá khiên của mọi xe trong vùng nổ trước khi tính sát thương
+      const amount = Math.round(damage * (1 - d / blastR) * (1 - (bypass?.has(v.id) ? 0 : v.armor)))
       if (amount <= 0) continue
-      const after = Math.max(0, cur - amount)
-      hp.set(v.id, after)
-      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+      hitNow.push(v.id)
+      hurt(v.id, amount, t)
       if (breakArmor && def.armorBreak) events.push({ t, kind: 'armorBreak', id: v.id, turns: def.armorBreak.turns, amount: def.armorBreak.amount })
+    }
+  }
+
+  /** Lên lịch các tia sét của đạn lightning sau khi đạn chạm (x, y): các tia chéo/thẳng ở chỗ chạm + (SS) một tia vào đầu mỗi xe trong vùng. */
+  const scheduleLightning = (b: LightningBeh, x: number, y: number, t: number): void => {
+    for (const a of b.angles ?? ZERO_ANGLES) {
+      bolts.push({ t: t + b.delay, x: x - Math.sign(a) * (b.spread ?? 0), y, ang: clamp(degToRad(a), -BOLT_MAX_ANG, BOLT_MAX_ANG), march: true, after: b.aftershock ?? null, def: b })
+    }
+    if (b.area) {
+      let k = 0
+      for (const v of input.vehicles) {
+        if (v.id === input.shooterId || (hp.get(v.id) ?? 0) <= 0 || Math.hypot(v.x - x, v.y - y) > b.area.radius) continue
+        bolts.push({ t: t + b.delay + k * b.area.stagger, x: v.x, y: v.y, ang: 0, march: true, after: b.aftershock ?? null, def: b.area })
+        k++
+      }
+    }
+    bolts.sort((p, q) => p.t - q.t)
+  }
+
+  /** Điểm chạm của tia sét: đi từ trời (y = -20) tới (b.x, b.y) theo góc `b.ang`, dừng ở vật rắn đầu tiên (đất hoặc xe còn sống). Kết quả ở `strike`. */
+  const boltTarget = (b: Bolt): void => {
+    if (!b.march) { strike.x = b.x; strike.y = b.y; strike.x0 = b.x; strike.y0 = -20; return }
+    const sa = Math.sin(b.ang), ca = Math.cos(b.ang)
+    const len = Math.max(30, (b.y + 20) / ca)
+    const x0 = b.x - sa * len, y0 = b.y - ca * len
+    strike.x0 = x0; strike.y0 = y0
+    strike.x = b.x; strike.y = b.y
+    for (let d = 0; d < len; d += BOLT_STEP) {
+      const px = x0 + sa * d, py = y0 + ca * d
+      let stop = mask.isSolid(px, py)
+      if (!stop) for (const v of input.vehicles) if ((hp.get(v.id) ?? 0) > 0 && Math.hypot(v.x - px, v.y - py) <= v.radius) { stop = true; break }
+      if (stop) { strike.x = px; strike.y = py; return }
     }
   }
 
@@ -103,15 +163,31 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     s.alive = false
     s.path.push(t, x, y)
     if (beh.kind === 'teleport') { events.push({ t, kind: 'teleport', x, y }); return }
-    blast(x, y, t, def.blastRadius, beh.kind === 'build' ? 0 : def.carveRadius, def.damage, true)
-    if (beh.kind === 'lightning') bolts.push({ t: t + beh.delay, x, y, def: beh })
+    const g = beh.kind === 'airGrow' && s.grown ? beh : null
+    const c = beh.kind === 'splitAfter' && s.child ? beh.child : null
+    const dmg = c?.damage ?? (beh.kind === 'tandem' && s.head === 2 ? beh.secondDamage : def.damage * (g?.damageMul ?? 1))
+    hitNow.length = 0
+    blast(x, y, t, c?.blastRadius ?? def.blastRadius * (g?.blastMul ?? 1), beh.kind === 'build' ? 0 : c?.carveRadius ?? def.carveRadius * (g?.carveMul ?? 1), dmg, true, s.head === 2 ? tandemHit : null)
+    if (s.head === 1) for (const id of hitNow) tandemHit.add(id)
+    if (beh.kind === 'lightning') scheduleLightning(beh, x, y, t)
     if (beh.kind === 'build') build(x, y, t, beh)
     if (beh.kind === 'satellite') {
+      const rng = beh.jitter ? mulberry32((fire.angle * 1009 + Math.round(fire.power) * 31 + Math.round(shooter.x)) >>> 0) : null
       for (let k = 0; k < beh.count; k++) {
-        const off = k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
-        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off, y, def: beh })
+        const off = beh.sweep ? (k - (beh.count - 1) / 2) * beh.spacing : k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.ceil(k / 2) * beh.spacing
+        const jit = rng ? (rng() * 2 - 1) * beh.jitter! : 0
+        beams.push({ t: t + beh.delay + k * beh.interval, x: x + off + jit, y, def: beh })
       }
       beams.sort((a, b) => a.t - b.t)
+    }
+    if (beh.kind === 'converge') {
+      for (let k = 0; k < beh.count; k++) {
+        const a = Math.PI * (k + 0.5) / beh.count   // nửa vòng tròn phía trên: từ phải (0) qua đỉnh tới trái (π)
+        const arrive = t + beh.delay + k * beh.interval
+        events.push({ t, kind: 'summon', x, y, x0: x + Math.cos(a) * beh.radius, y0: y - Math.sin(a) * beh.radius, arrive })
+        converges.push({ t: arrive, x, y, def: beh })
+      }
+      converges.sort((p, q) => p.t - q.t)
     }
   }
 
@@ -161,9 +237,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (d >= b.halfWidth) continue
       const amount = Math.round(b.damage * (1 - d / b.halfWidth) * (1 - v.armor))
       if (amount <= 0) continue
-      const after = Math.max(0, cur - amount)
-      hp.set(v.id, after)
-      events.push({ t, kind: 'damage', id: v.id, amount, hpAfter: after })
+      hurt(v.id, amount, t)
     }
   }
 
@@ -183,22 +257,32 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return -1
   }
 
-  const hitsVehicle = (s: Shell, x: number, y: number): ShotVehicle | undefined => {
+  const hitsVehicle = (s: Shell, x: number, y: number, corpses = false): ShotVehicle | undefined => {
     for (const v of input.vehicles) {
       if (v.id === input.shooterId && s.p.t - s.tStart < IMMUNE_S) continue
-      if ((hp.get(v.id) ?? 0) > 0 && Math.hypot(v.x - x, v.y - y) <= v.radius) return v
+      if ((corpses || (hp.get(v.id) ?? 0) > 0) && Math.hypot(v.x - x, v.y - y) <= v.radius) return v
     }
     return undefined
   }
 
-  const spawn = (t: number, angleDeg: number): void => {
+  const spawn = (t: number, angleDeg: number, twinK = -1, head = 0): void => {
     aimDir(dir, angleDeg, input.facing)   // góc so với phương ngang, không cộng độ dốc
-    const x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
+    let x = shooter.x + dir.x * MUZZLE_DIST, y = shooter.y + dir.y * MUZZLE_DIST
+    const mz = mobile.muzzle
+    if (mz) {   // đạn ra từ đầu nòng: gốc nòng xoay theo dốc xe, đầu nòng = gốc + ox dọc nòng + oy vuông góc nòng
+      const f = input.facing, c = Math.cos(-input.tilt), sn = Math.sin(-input.tilt)
+      const gx = f * mz.px, gy = mz.py
+      const nx = f > 0 ? -dir.y : dir.y, ny = f > 0 ? dir.x : -dir.x
+      x = shooter.x + gx * c - gy * sn + dir.x * mz.ox + nx * mz.oy
+      y = shooter.y + gx * sn + gy * c + dir.y * mz.ox + ny * mz.oy
+    }
     const s = newShell(x, y, dir.x * speed, dir.y * speed, t, false)
-    if (mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất
+    if (twinK >= 0) s.twinK = twinK
+    s.head = head
+    if (beh.kind !== 'ghost' && mask.isSolid(x, y)) explodeShell(s, x, y, t)   // nòng chĩa thẳng vào đất (đạn xuyên địa hình thì cứ bay)
   }
 
-  const split = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'splitAtApex' }>): void => {
+  const split = (s: Shell, t: number, b: { count: number; spreadDeg: number }): void => {
     s.alive = false
     s.path.push(t, s.p.x, s.p.y)
     events.push({ t, kind: 'split', x: s.p.x, y: s.p.y })
@@ -211,31 +295,49 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
 
   const stepDrill = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'drill' }>): void => {
     const adv = Math.min(b.speed * DT_SIM, s.remaining)
+    if (s.rising && b.resurface) {   // pha trồi: hướng đào quay dần về hướng chếch lên (cua mềm, không gấp khúc)
+      const up = degToRad(b.resurface.riseDeg), tx = (Math.sign(s.p.vx) || input.facing) * Math.cos(up), ty = -Math.sin(up)
+      const cur = Math.atan2(s.dy, s.dx)
+      let diff = Math.atan2(ty, tx) - cur
+      if (diff > Math.PI) diff -= 2 * Math.PI
+      else if (diff < -Math.PI) diff += 2 * Math.PI
+      const turn = Math.sign(diff) * Math.min(Math.abs(diff), adv / b.resurface.turnRadius)
+      s.dx = Math.cos(cur + turn); s.dy = Math.sin(cur + turn)
+    }
     const nx = s.p.x + s.dx * adv, ny = s.p.y + s.dy * adv
     const inside = nx >= 0 && nx < mask.width && ny >= 0 && ny < mask.height
     // Mỗi lần khoan khoét hố bán kính R quanh đầu khoan nên "đất phía trước" phải xét cách R: hết đất trong phạm vi đó thì nổ luôn.
     const ahead = b.tunnelRadius + 1
-    if (!inside || !mask.isSolid(nx + s.dx * ahead, ny + s.dy * ahead) || hitsVehicle(s, nx, ny)) { explodeShell(s, inside ? nx : s.p.x, inside ? ny : s.p.y, t); return }
+    const diving = !!b.resurface && !s.rising   // đang lặn: chưa xét chuyện ra khỏi đất
+    if (!inside || (!diving && !mask.isSolid(nx + s.dx * ahead, ny + s.dy * ahead)) || hitsVehicle(s, nx, ny)) { explodeShell(s, inside ? nx : s.p.x, inside ? ny : s.p.y, t); return }
     s.p.x = nx; s.p.y = ny; s.p.t = t
     s.remaining -= adv
     s.sinceCarve += adv
-    if (s.sinceCarve >= Math.max(4, b.tunnelRadius / 2)) {
+    if (!b.resurface && s.sinceCarve >= Math.max(4, b.tunnelRadius / 2)) {   // lặn trồi thì chui xuyên đất, không khoét hầm
       s.sinceCarve = 0
       mask.carveCircle(nx, ny, b.tunnelRadius)
       events.push({ t, kind: 'carve', x: nx, y: ny, r: b.tunnelRadius })
     }
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, nx, ny)
-    if (s.remaining <= 1e-6) explodeShell(s, nx, ny, t)
+    if (s.remaining <= 1e-6) {
+      if (diving) {   // hết đoạn lặn: quay đầu đào chếch lên
+        s.rising = true; s.remaining = b.resurface!.riseMax
+      } else explodeShell(s, nx, ny, t)
+    }
   }
 
   /** Lăn theo mặt đất (Cua Lăn): bám mặt đất, rơi tiếp khi hết đất, nổ khi gặp xe/vách cao/hết quãng. */
   const stepRoll = (s: Shell, t: number, b: Extract<ShotDef['behavior'], { kind: 'roller' }>): void => {
-    const adv = Math.min(b.speed * DT_SIM, s.remaining)
+    if (b.crawl && t >= s.fuseAt) { explodeShell(s, s.p.x, s.p.y, t); return }
+    const adv = b.crawl ? b.speed * DT_SIM : Math.min(b.speed * DT_SIM, s.remaining)
     const nx = s.p.x + s.dx * adv
     const up = tuning.move.stepUp, down = tuning.move.snapDown + 6
     let gy = -1
     for (let y = Math.floor(s.p.y) - up; y <= s.p.y + down; y++) if (mask.isSolid(nx, y)) { gy = y; break }
-    if (gy === Math.floor(s.p.y) - up) { explodeShell(s, s.p.x, s.p.y, t); return }          // vách cao: nổ
+    if (gy === Math.floor(s.p.y) - up) {                                                       // vách cao: nổ (crawl: quay đầu)
+      if (b.crawl) { s.dx = -s.dx; if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y); return }
+      explodeShell(s, s.p.x, s.p.y, t); return
+    }
     if (gy < 0) {                                                                              // hết đất: rơi tiếp
       s.mode = 'fly'; s.p.x = nx; s.p.vx = s.dx * b.speed; s.p.vy = 0
       s.path.push(t, s.p.x, s.p.y)
@@ -245,7 +347,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     if (hitsVehicle(s, s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
     s.remaining -= adv
     if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
-    if (s.remaining <= 1e-6) explodeShell(s, s.p.x, s.p.y, t)
+    if (!b.crawl && s.remaining <= 1e-6) explodeShell(s, s.p.x, s.p.y, t)
   }
 
   /** Xuyên lớp đất mỏng (Sứa Đèn). Trả true nếu xuyên được (đạn tiếp tục bay). */
@@ -269,18 +371,35 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
     return false
   }
 
+  /** Đạn xuyên địa hình: bay theo trọng lực/gió như thường nhưng không va đất và không khoét đất, nổ khi chạm xe (kể cả xác). */
+  const stepGhost = (s: Shell, t: number, sax: number, say: number): void => {
+    s.p.vx += sax * DT_SIM; s.p.vy += say * DT_SIM
+    s.p.x += s.p.vx * DT_SIM; s.p.y += s.p.vy * DT_SIM; s.p.t = t
+    if (s.p.x < 0 || s.p.x >= mask.width || s.p.y >= mask.height) {
+      s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }); return
+    }
+    if (hitsVehicle(s, s.p.x, s.p.y, true)) { explodeShell(s, s.p.x, s.p.y, t); return }
+    if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
+  }
+
   const stepFly = (s: Shell, t: number): void => {
     let sax = ax, say = ay
     if (W) {
       if (W.kind === 'whirl' && Math.abs(s.p.x - W.x) <= W.hw) say -= wt.whirl.lift
       else if (W.kind === 'mirror' && Math.abs(s.p.x - W.x) <= W.hw) { sax = ax - 2 * wax; say = ay - 2 * way }
     }
+    if (def.curve) sax -= input.facing * def.curve.returnAccel * Math.min(1, (t - s.tStart) / def.curve.rampS)   // boomerang: kéo ngược về phía người bắn
+    if (beh.kind === 'ghost') { stepGhost(s, t, sax, say); return }
     const r = stepProjectile(s.p, sax, say, DT_SIM, mask)
     s.p.t = t
+    if (beh.kind === 'airGrow' && !s.grown && t - s.tStart >= beh.afterS) {
+      s.grown = true
+      events.push({ t, kind: 'grow', shell: shells.indexOf(s), x: s.p.x, y: s.p.y })
+    }
     if (r === FLYING && W) {
       if (W.kind === 'storm' && !stormUsed && Math.abs(s.p.x - W.x) <= W.hw && Math.abs(s.p.y - W.y) <= W.hh) {
         const gy = groundBelow(s.p.x, s.p.y, mask.height)
-        if (gy >= 0) { stormUsed = true; bolts.push({ t: t + wt.storm.delay, x: s.p.x, y: gy, def: wt.storm }); bolts.sort((a, b) => a.t - b.t) }
+        if (gy >= 0) { stormUsed = true; bolts.push({ t: t + wt.storm.delay, x: s.p.x, y: gy, ang: 0, march: false, after: null, def: wt.storm }); bolts.sort((a, b) => a.t - b.t) }
       } else if (W.kind === 'portal' && t - s.tp > 0.3) {
         const inA = Math.hypot(s.p.x - W.x, s.p.y - W.y) <= W.hw
         const inB = !inA && Math.hypot(s.p.x - W.x2, s.p.y - W.y2) <= W.hw
@@ -293,9 +412,18 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
         }
       }
     }
+    if (r === FLYING && s.twinK >= 0 && beh.kind === 'twin') {   // xoắn quanh trục: dịch viên đạn thêm phần chênh của độ lệch so với bước trước
+      const tt = Math.min(t - s.tStart, beh.convergeS)
+      const off = beh.radius * (1 - tt / beh.convergeS) * Math.sin((2 * Math.PI * s.twinK) / beh.count + (2 * Math.PI * beh.turns * tt) / beh.convergeS)
+      const sp = Math.hypot(s.p.vx, s.p.vy) || 1
+      const d = off - s.off
+      s.p.x += (-s.p.vy / sp) * d; s.p.y += (s.p.vx / sp) * d; s.off = off
+      if (mask.isSolid(s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
+    }
     if (r === FLYING) {
       if (hitsVehicle(s, s.p.x, s.p.y)) { explodeShell(s, s.p.x, s.p.y, t); return }
       if (beh.kind === 'splitAtApex' && !s.child && s.p.vy >= 0) { split(s, t, beh); return }
+      if (beh.kind === 'splitAfter' && !s.child && t - s.tStart >= beh.afterS) { split(s, t, beh); return }
       if (++s.samples % SHOT_SAMPLE_EVERY === 0) s.path.push(t, s.p.x, s.p.y)
       return
     }
@@ -305,17 +433,23 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
         if (beh.direction === 'horizontal') { dx = Math.sign(s.p.vx) || input.facing; dy = 0 }
         else if (beh.direction === 'down') { dx = 0; dy = 1 }
         const n = Math.hypot(dx, dy) || 1
-        s.mode = 'drill'; s.dx = dx / n; s.dy = dy / n; s.remaining = beh.length; s.sinceCarve = 0
+        s.mode = 'drill'; s.dx = dx / n; s.dy = dy / n; s.remaining = beh.resurface ? beh.resurface.diveLength : beh.length; s.sinceCarve = 0
         s.path.push(t, s.p.x, s.p.y)
         return
       }
       if (beh.kind === 'roller') {
         s.mode = 'roll'; s.dx = Math.sign(s.p.vx) || input.facing; s.remaining = beh.distance
+        if (beh.crawl && s.fuseAt < 0) s.fuseAt = t + beh.crawl.fuseS
         s.p.alive = true; s.p.y -= 3
         s.path.push(t, s.p.x, s.p.y)
         return
       }
       if (beh.kind === 'pierce' && tryPierce(s, t, beh)) return
+      if (beh.kind === 'mine') {   // chạm đất: nằm lại thành mìn, không nổ
+        s.alive = false; s.path.push(t, s.p.x, s.p.y)
+        events.push({ t, kind: 'mineDrop', x: s.p.x, y: s.p.y - 2, crawlPx: beh.crawlPx, detect: beh.detect, damage: beh.mineDamage, blastRadius: beh.mineBlast, carveRadius: beh.mineCarve })
+        return
+      }
       explodeShell(s, s.p.x, s.p.y, t)
       return
     }
@@ -325,21 +459,42 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
   }
 
   // Lịch bắn: đạn đầu ở t = 0; chùm liền thì các quả sau theo `interval`.
-  if (beh.kind === 'spread') {
+  if (beh.kind === 'spread' || beh.kind === 'mine') {
     for (let k = 0; k < beh.count; k++) spawn(0, fire.angle + (k - (beh.count - 1) / 2) * beh.spreadDeg)
+  } else if (beh.kind === 'tandem') {
+    spawn(0, fire.angle, -1, 1)
+    pending.push({ tStart: beh.gapS, angleDeg: fire.angle, head: 2 })
+  } else if (beh.kind === 'twin') {
+    for (let k = 0; k < beh.count; k++) spawn(0, fire.angle, k)
   } else spawn(0, fire.angle)
-  if (beh.kind === 'burst') for (let k = 1; k < beh.count; k++) pending.push({ tStart: k * beh.interval, angleDeg: fire.angle + k * beh.angleStepDeg })
+  if (beh.kind === 'burst') for (let k = 1; k < beh.count; k++) pending.push({ tStart: k * beh.interval, angleDeg: fire.angle + k * beh.angleStepDeg, head: 0 })
 
   let t = 0
   const maxSteps = Math.round(SHOT_MAX_TIME_S / DT_SIM)
   for (let i = 1; i <= maxSteps; i++) {
     t = i * DT_SIM
-    while (pending.length && pending[0]!.tStart <= t + 1e-9) { const q = pending.shift()!; spawn(t, q.angleDeg) }
+    while (pending.length && pending[0]!.tStart <= t + 1e-9) { const q = pending.shift()!; spawn(t, q.angleDeg, -1, q.head) }
     while (bolts.length && bolts[0]!.t <= t + 1e-9) {
       const b = bolts.shift()!
-      events.push({ t, kind: 'bolt', x: b.x, y: b.y })
-      blast(b.x, b.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
+      boltTarget(b)
+      events.push(b.march ? { t, kind: 'bolt', x: strike.x, y: strike.y, x0: strike.x0, y0: strike.y0 } : { t, kind: 'bolt', x: strike.x, y: strike.y })
+      hitNow.length = 0
+      blast(strike.x, strike.y, t, b.def.blastRadius, b.def.carveRadius, b.def.damage, false)
+      if (b.after) {
+        for (const id of hitNow) if (!aftered.has(id)) { aftered.add(id); afters.push({ t: t + b.after.delay, id, damage: b.after.damage }) }
+        afters.sort((p, q) => p.t - q.t)
+      }
     }
+    while (afters.length && afters[0]!.t <= t + 1e-9) {
+      const a = afters.shift()!
+      const v = input.vehicles.find(q => q.id === a.id)
+      const cur = hp.get(a.id) ?? 0
+      if (!v || cur <= 0) continue
+      const amount = Math.round(a.damage * (1 - v.armor))
+      if (amount <= 0) continue
+      hurt(a.id, amount, t)
+    }
+    while (converges.length && converges[0]!.t <= t + 1e-9) { const c = converges.shift()!; blast(c.x, c.y, t, c.def.blastRadius, c.def.carveRadius, c.def.damage, false) }
     while (beams.length && beams[0]!.t <= t + 1e-9) { const b = beams.shift()!; beamRay(b.x, b.y, t, b.def) }
     for (let k = 0; k < shells.length; k++) {   // vòng for theo chỉ số: quả con có thể được thêm vào cuối khi đang lặp
       const s = shells[k]!
@@ -348,7 +503,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       else if (s.mode === 'roll') stepRoll(s, t, beh as Extract<ShotDef['behavior'], { kind: 'roller' }>)
       else stepFly(s, t)
     }
-    if (!pending.length && !bolts.length && !beams.length && shells.every(s => !s.alive)) break
+    if (!pending.length && !bolts.length && !afters.length && !beams.length && !converges.length && shells.every(s => !s.alive)) break
   }
   // hết giờ mô phỏng: đạn còn bay coi như ra ngoài
   for (const s of shells) if (s.alive) { s.alive = false; s.path.push(t, s.p.x, s.p.y); events.push({ t, kind: 'out', x: s.p.x, y: s.p.y }) }

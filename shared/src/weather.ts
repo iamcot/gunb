@@ -38,7 +38,7 @@ export function defaultWeatherTuning(): WeatherTuning {
   return {
     chance: 0.5,
     whirl: { halfWidth: 70, lift: 900 },
-    storm: { halfWidth: 110, halfHeight: 50, delay: 0.25, damage: 45, blastRadius: 70, carveRadius: 40 },
+    storm: { halfWidth: 110, halfHeight: 50, delay: 0.25, damage: 450, blastRadius: 70, carveRadius: 40 },
     mirror: { halfWidth: 70 },
     portal: { radius: 38 },
   }

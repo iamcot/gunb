@@ -8,15 +8,19 @@
     },
     {
       "file": "shot-2.png",
-      "length": 14,
+      "length": 30,
       "fire": "fire-2.ogg",
-      "boom": "boom-2.ogg"
+      "boom": "boom-2.ogg",
+      "upright": true,
+      "wobble": true
     },
     {
       "file": "shot-3.png",
-      "length": 26,
+      "length": 46,
       "fire": "fire-3.ogg",
-      "boom": "boom-3.ogg"
+      "boom": "boom-3.ogg",
+      "upright": true,
+      "wobble": true
     }
   ]
 }

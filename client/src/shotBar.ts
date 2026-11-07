@@ -32,12 +32,21 @@ export class ShotBar {
       const b = this.btns[i]!
       // icon = ảnh đạn của xe (assets/mobiles/<id>/shot-N.png); tên đạn để ở tooltip
       b.title = `${i === 2 ? 'SS · ' : ''}${sh.name}`
-      b.innerHTML = `<span class="sb-key">${i + 1}</span><img class="sb-icon" src="/mobiles/${encodeURIComponent(def.id)}/shot-${i + 1}.png" alt="${sh.name}" draggable="false"><small>${i === 2 ? 'SS · ' : ''}delay ${sh.delay}${i === 2 && !ready ? ` · ${Math.floor((ss / ssMax) * 100)}%` : ''}</small>`
+      b.innerHTML = `<span class="sb-key">${i + 1}</span>${this.icon(def.id, i, sh.name, sh.behavior.kind === 'twin' ? sh.behavior.count : 1)}<small>${i === 2 ? 'SS · ' : ''}delay ${sh.delay}${i === 2 && !ready ? ` · ${Math.floor((ss / ssMax) * 100)}%` : ''}</small>`
       b.className = (i === slot ? 'sel ' : '') + (i === 2 ? (ready ? 'ss ready' : 'ss locked') : '')
       b.disabled = i === 2 && !ready
     })
     this.fill.style.width = `${Math.min(100, (ss / ssMax) * 100)}%`
     this.btns[2]!.appendChild(this.fill)
+  }
+
+  /** Icon đạn; đạn `twin` hiện `n` viên cạnh nhau (viên thứ 2 dùng `shot-Nb.png` nếu có, không thì dùng lại ảnh chính). */
+  private icon(id: string, i: number, name: string, n: number): string {
+    const base = `/mobiles/${encodeURIComponent(id)}/shot-${i + 1}`
+    if (n <= 1) return `<img class="sb-icon" src="${base}.png" alt="${name}" draggable="false" onerror="this.style.display='none'">`   // chưa có ảnh thì ẩn icon (còn tên + delay)
+    let h = '<span class="sb-icons">'
+    for (let k = 0; k < n; k++) h += `<img class="sb-icon" src="${base}${k === 1 ? 'b' : ''}.png" alt="${name}" draggable="false"${k === 1 ? ` onerror="this.onerror=null;this.src='${base}.png'"` : ''}>`
+    return h + '</span>'
   }
 
   setVisible(v: boolean): void { this.el.style.display = v ? 'flex' : 'none' }

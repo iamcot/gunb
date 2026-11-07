@@ -5,9 +5,19 @@ import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
-const FAN_RADIUS = 80
-const FAN_TICK = 5, FAN_TICK_LONG = 10   // px: vạch thước mỗi 5° / 15°
-const NEEDLE_COLOR = 0xff5a1f, NEEDLE_BASE = 3.5, NEEDLE_OVER = 10   // kim ngắm đỏ cam: nửa bề rộng gốc, phần thò ra ngoài vòng cung
+const TEAM_LIGHT = [0xbfe0ff, 0xffc4c4] as const
+const BAR_W = 60, BAR_H = 9, BAR_GAP = 8, BAR_SEGS = 4   // thanh máu dưới xe: bề rộng, cao, cách đáy xe, số ô
+const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
+const ARC_GREEN = 0x4fb35a, ARC_BANDS = 16   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
+const ARC_EXTEND2 = 0.2
+const ARC_EXTEND = 0.3, DEG = Math.PI / 180   // cung vẽ thêm 30% bề rộng dải góc ở mỗi đầu
+const NEEDLE_W = 54, NEEDLE_ANCHOR_X = 0.97, NEEDLE_ANCHOR_Y = 0.446   // ảnh kim: bề rộng khi vẽ (px) và toạ độ mũi trên ảnh (0..1)
+const NEEDLE_ALPHA = 0.7   // kim hơi trong suốt cho đỡ thô
+let needleTex: Texture | null = null
+void loadImage('/ui/aim-needle.png').then(img => { needleTex = Texture.from(img) }).catch(() => { /* dùng mũi tên vẽ bằng code */ })
+const NEEDLE_COLOR = 0x5ec4ff
+/** Con trỏ mũi tên: các cặp (lùi dọc kim, lệch ngang) quanh mũi ở (0,0). */
+const NEEDLE: readonly number[] = [0, 0, 24, 11, 17, 3.5, 34, 3.5, 34, -3.5, 17, -3.5, 24, -11]
 
 interface View {
   root: Container; body: Graphics; barrel: Graphics; bar: Graphics; name: Text; marker: Text; art: Art | null
@@ -43,6 +53,8 @@ const RECOIL_PUSH = 5         // px: cả xe lùi về sau
 const RECOIL_KICK = 7         // px: nòng giật lùi dọc trục nòng
 /** Nòng phình ra khi xe bật lên sau cú nhún (phần âm của u): to ngang thêm tối đa 45%, dài thêm 12%. */
 const BULGE_FAT = 0.45, BULGE_LONG = 0.12, BULGE_FULL = 0.3   // |u| âm đạt BULGE_FULL thì phình hết cỡ
+/** Tụ lực: độ nén thân thêm tối đa, rung ngang tối đa (px), nhịp (vòng/s) lúc lực 0 và lúc đầy. */
+const CHARGE_SQUASH = 0.45, CHARGE_SHAKE = 1.2, CHARGE_HZ0 = 3, CHARGE_HZ1 = 8
 /** Lúc lắc khi đi: pha tăng theo quãng đường (đi nhanh lắc nhanh). */
 const WOBBLE_PER_PX = 0.14    // rad pha / px
 const WOBBLE_ROT = 0.045      // rad nghiêng qua lại
@@ -111,22 +123,32 @@ function satAltitude(mobileId: string): number {
 export class VehicleViews {
   readonly container = new Container()
   private readonly fan = new Graphics()
+  private readonly mineG = new Graphics()
+  private readonly needle = new Sprite()
+  private readonly angleText = new Text({ text: '', style: { fontFamily: 'sans-serif', fontSize: 16, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x1a2b3c, width: 4 } } })
   private readonly views = new Map<number, View>()
   private readonly tmp: Vec2 = { x: 0, y: 0 }
   private readonly range: AimRange = { min: 0, max: 90 }
   private bob = 0
+  /** Xe đang tụ lực (id, mức 0..1; id < 0 = không ai): thân nhún và nòng phập phồng, càng đầy càng nhanh/mạnh. */
+  private chargeId = -1
+  private chargeK = 0
+  private chargePhase = 0
   /** Hồn thoát xác đang bay (tạo lúc xe chết, không phải mỗi frame). */
   private readonly ghosts: { s: Sprite; x: number; y: number; t: number; sx: number; sy: number; ph: number }[] = []
 
   /** `fx`: nếu có thì tung bụi dưới bánh khi xe đi. */
   constructor(match: MatchState, private readonly fx: Fx | null = null) {
-    this.container.addChild(this.fan)
+    this.container.addChild(this.fan, this.mineG)
+    this.angleText.anchor.set(0.5, 0)
+    this.angleText.visible = false
+    this.container.addChild(this.needle, this.angleText)
+    this.needle.visible = false
     for (const p of match.players) {
       const root = new Container()
       const body = new Graphics(), barrel = new Graphics(), bar = new Graphics()
-      const name = new Text({ text: p.name, style: { fill: 0xffffff, fontSize: 12, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
-      name.anchor.set(0.5, 1)
-      name.position.set(0, -44)
+      const name = new Text({ text: p.name, style: { fill: 0xffffff, fontSize: 12, fontWeight: '700', stroke: { color: TEAM_DARK[p.team], width: 3.5 } } })
+      name.anchor.set(0.5, 0)
       const marker = new Text({ text: '▼', style: { fill: 0xffe14d, fontSize: 18, stroke: { color: 0x000000, width: 3 } } })
       marker.anchor.set(0.5, 1)
       marker.visible = false
@@ -175,8 +197,28 @@ export class VehicleViews {
   }
 
   /** `shownHp`: máu đang hiển thị (có thể chậm hơn trạng thái trận khi đang phát lại phát bắn). */
+  /** Mìn (cua mìn): thân cam, mắt; có xe địch trong bán kính phát hiện thì râu đỏ vẫy + viền đỏ nhấp nháy. */
+  private drawMines(match: MatchState): void {
+    const g = this.mineG
+    g.clear()
+    for (const m of match.mines) {
+      let alert = false
+      for (const q of match.players) if (q.hp > 0 && q.team !== m.team && Math.hypot(q.body.x - m.x, q.body.y - m.y) <= m.detect) { alert = true; break }
+      const w = alert ? Math.sin(this.bob * 3) * 3 : 0, col = m.team === 0 ? 0x4aa3ff : 0xff6a4a
+      g.ellipse(m.x, m.y - 2, 10, 6.5).fill(0xf08a3c).stroke({ color: 0x5a2a12, width: 1.5 })
+      g.rect(m.x - 8, m.y - 6.5, 16, 2).fill({ color: col, alpha: 0.9 })   // vạch màu đội
+      for (const sx of [-1, 1]) {
+        g.moveTo(m.x + sx * 4, m.y - 7).lineTo(m.x + sx * (6 + w), m.y - 13).stroke({ color: alert ? 0xff2a2a : 0xf5d6a8, width: 1.6, cap: 'round' })
+        g.circle(m.x + sx * (6 + w), m.y - 13, 1.8).fill(alert ? 0xff2a2a : 0xf5d6a8)
+      }
+      if (alert) g.circle(m.x, m.y - 3, 13 + Math.abs(w)).stroke({ color: 0xff2a2a, width: 1, alpha: 0.5 })
+    }
+  }
+
   update(dt: number, match: MatchState, shownHp: ReadonlyMap<number, number>): void {
     this.bob += dt * 6
+    if (this.chargeId < 0) this.chargePhase = 0
+    else this.chargePhase += dt * Math.PI * 2 * (CHARGE_HZ0 + (CHARGE_HZ1 - CHARGE_HZ0) * this.chargeK)
     for (const v of this.views.values()) {
       if (v.art && v.art.swingT >= 0) v.art.swingT += dt
       if (v.recoilT >= 0) { v.recoilT += dt; if (v.recoilT > RECOIL_S) v.recoilT = -1 }
@@ -184,6 +226,9 @@ export class VehicleViews {
     }
     this.updateGhosts(dt)
     this.fan.clear()
+    this.drawMines(match)
+    this.angleText.visible = false
+    this.needle.visible = false
     for (const p of match.players) {
       const v = this.views.get(p.id)!
       const hp = shownHp.get(p.id) ?? p.hp
@@ -204,17 +249,27 @@ export class VehicleViews {
     }
   }
 
+  /** Báo xe `id` đang tụ lực mức `k` (0..1); gọi với id < 0 khi không tụ. */
+  setCharge(id: number, k: number): void { this.chargeId = id; this.chargeK = k }
+
   private drawOne(v: View, p: PlayerState, hp: number, alive: boolean, isCur: boolean): void {
     const b = p.body, r = b.radius
     v.root.position.set(b.x, b.y)
     v.root.alpha = alive ? 1 : 0.35
     v.root.visible = b.alive || hp > 0 || true
     // chuyển động phụ: u = độ nén khi bắn (âm = bật ngược), lắc khi đi, giật khi trúng đạn
-    const u = this.recoilU(v)
+    let u = this.recoilU(v)
+    let chargeBulge = 0, shake = 0
+    if (alive && p.id === this.chargeId) {   // tụ lực: nhún (nén thân + nòng thụt) và nòng phình theo nhịp, gồng dần
+      const k = this.chargeK, ph = this.chargePhase
+      u += CHARGE_SQUASH * (0.4 + 0.6 * k) * (0.5 - 0.5 * Math.cos(ph))
+      chargeBulge = (0.5 + 0.5 * Math.sin(ph + 1.2)) * (0.25 + 0.6 * k)
+      shake = Math.sin(ph * 3.1) * CHARGE_SHAKE * k
+    }
     const sinP = Math.sin(v.phase), bounce = (1 - Math.cos(2 * v.phase)) * 0.5
     const rot = -b.tilt + sinP * WOBBLE_ROT * v.moveAmt
     const hitK = v.hitT >= 0 ? 1 - v.hitT / HIT_S : 0
-    const ox = -b.facing * RECOIL_PUSH * Math.max(0, u) + Math.sin(v.hitT * 70) * HIT_SHAKE * hitK
+    const ox = -b.facing * RECOIL_PUSH * Math.max(0, u) + Math.sin(v.hitT * 70) * HIT_SHAKE * hitK + shake
     const oy = -bounce * WOBBLE_BOB * v.moveAmt
     const sy = 1 - RECOIL_SQUASH * u - 0.03 * v.moveAmt * (bounce - 0.5)
     const sx = 1 + RECOIL_SQUASH * 0.6 * u
@@ -239,7 +294,7 @@ export class VehicleViews {
       // nòng giật lùi dọc trục (hướng đầu nòng trong khung = flip·(cos, sin) của góc quay)
       const kick = RECOIL_KICK * Math.max(0, u) * a.flip
       a.barrel.position.set(a.barrelX - Math.cos(a.barrel.rotation) * kick, a.barrelY - Math.sin(a.barrel.rotation) * kick)
-      const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+      const bl = Math.max(chargeBulge, Math.min(1, Math.max(0, -u) / BULGE_FULL))
       a.barrel.scale.set(a.barrelSX * (1 + BULGE_LONG * bl), a.barrelSY * (1 + BULGE_FAT * bl))
       this.drawLabels(v, p, hp, alive, isCur, a.top)
       return
@@ -254,7 +309,7 @@ export class VehicleViews {
     v.body.roundRect(-r * 0.9, r * 0.45, r * 1.8, r * 0.35, 4).fill(0x1f2937)
     v.barrel.clear()
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    const bl = Math.min(1, Math.max(0, -u) / BULGE_FULL)
+    const bl = Math.max(chargeBulge, Math.min(1, Math.max(0, -u) / BULGE_FULL))
     v.barrel.moveTo(0, -4).lineTo(d.x * 30, -4 + d.y * 30).stroke({ color: 0x1e293b, width: 6 * (1 + BULGE_FAT * bl), cap: 'round' })
     v.barrel.circle(0, -4, 5).fill(0x1e293b)
     this.drawLabels(v, p, hp, alive, isCur, -30)
@@ -318,43 +373,90 @@ export class VehicleViews {
   /** Thanh máu, tên, mũi tên lượt; `top` là mép trên của hình xe (so với tâm). */
   private drawLabels(v: View, p: PlayerState, hp: number, alive: boolean, isCur: boolean, top: number): void {
     v.bar.clear()
+    const y0 = p.body.radius + BAR_GAP   // thanh máu + tên nằm dưới xe cho khỏi che nòng súng
     if (alive) {
-      const w = 40, k = Math.max(0, Math.min(1, hp / p.maxHp))
-      v.bar.rect(-w / 2, top - 8, w, 5).fill(0x000000)
-      v.bar.rect(-w / 2 + 1, top - 7, (w - 2) * k, 3).fill(k > 0.5 ? 0x4ade80 : k > 0.25 ? 0xfacc15 : 0xef4444)
+      const k = Math.max(0, Math.min(1, hp / p.maxHp)), x0 = -BAR_W / 2, col = TEAM_COLORS[p.team], light = TEAM_LIGHT[p.team]
+      // quầng sáng nhẹ theo màu đội
+      for (let i = 3; i >= 1; i--) v.bar.roundRect(x0 - i * 2, y0 - i * 2, BAR_W + i * 4, BAR_H + i * 4, BAR_H / 2 + i * 2).fill({ color: col, alpha: 0.07 })
+      v.bar.roundRect(x0 - 1.5, y0 - 1.5, BAR_W + 3, BAR_H + 3, BAR_H / 2 + 1.5).fill(0x1b2130).stroke({ color: TEAM_DARK[p.team], width: 1 })
+      v.bar.roundRect(x0, y0, BAR_W, BAR_H, BAR_H / 2).fill(0x4a4f5c)   // phần máu đã mất
+      if (k > 0) {
+        v.bar.roundRect(x0, y0, BAR_W * k, BAR_H, BAR_H / 2).fill(col)
+        v.bar.roundRect(x0 + 1, y0 + 1, Math.max(0, BAR_W * k - 2), BAR_H * 0.35, BAR_H * 0.17).fill({ color: light, alpha: 0.55 })   // vệt sáng trên
+      }
+      for (let i = 1; i < BAR_SEGS; i++) v.bar.rect(x0 + (BAR_W * i) / BAR_SEGS - 0.75, y0, 1.5, BAR_H).fill(0x1b2130)   // vạch chia 4 phần
+      if (p.maxShield > 0) {   // khiên (máu xanh) là thanh mảnh ngay trên thanh máu
+        const sk = Math.max(0, Math.min(1, p.shield / p.maxShield)), sy = y0 - 6
+        v.bar.roundRect(x0, sy, BAR_W, 4, 2).fill(0x1b2130)
+        if (sk > 0) {
+          v.bar.roundRect(x0, sy, BAR_W * sk, 4, 2).fill(0x4fd8ff)
+          v.bar.roundRect(x0 + 1, sy + 0.5, Math.max(0, BAR_W * sk - 2), 1.5, 1).fill({ color: 0xffffff, alpha: 0.6 })
+        }
+      }
     }
-    v.name.position.set(0, top - 14)
+    v.name.position.set(0, y0 + BAR_H + 4)
     v.marker.visible = isCur
-    v.marker.position.set(0, top - 28 + Math.sin(this.bob) * 3)
+    v.marker.position.set(0, top - 46 + Math.sin(this.bob) * 3)
   }
 
-  /** Hình quạt dải góc hợp lệ (aimRange của pháo, so với phương ngang) + vạch thước trên vòng cung + kim ngắm đỏ cam chỉ góc hiện tại. */
+  /** Thước ngắm vòng tròn trong mờ, tách khỏi xe: tâm ở gốc nòng súng, dải góc quay được tô xanh lá nhạt, kim ngắm mũi tên xanh chỉ góc hiện tại, số độ hiện dưới vòng. */
   private drawFan(p: PlayerState): void {
-    const b = p.body, g = this.fan
-    const cx = b.x, cy = b.y - 4
+    const b = p.body, g = this.fan, a = this.views.get(p.id)?.art
+    let cx = b.x, cy = b.y - 4
+    const mz = TUNING.mobiles[p.mobileId]!.muzzle
+    if (mz) {   // tâm cung = đầu nòng, đúng chỗ đạn xuất phát (cùng công thức với simulateShot trong shared/)
+      const d = aimDir(this.tmp, p.aimAngle, b.facing)
+      const f = b.facing, c = Math.cos(-b.tilt), sn = Math.sin(-b.tilt)
+      const gx = f * mz.px, gy = mz.py, nx = f > 0 ? -d.y : d.y, ny = f > 0 ? d.x : -d.x
+      cx = b.x + gx * c - gy * sn + d.x * mz.ox + nx * mz.oy
+      cy = b.y + gx * sn + gy * c + d.y * mz.ox + ny * mz.oy
+    } else if (a) {   // xe chưa có đầu nòng (Rùa Thành): lấy gốc nòng; khung xe có pivot (0, radius)
+      const rot = -b.tilt, sx = b.facing * a.flip, c = Math.cos(rot), sn = Math.sin(rot)
+      const lx = a.barrelX * sx, ly = a.barrelY - a.radius
+      cx = b.x + lx * c - ly * sn - a.radius * sn
+      cy = b.y + lx * sn + ly * c + a.radius * c
+    }
     const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
-    g.moveTo(cx, cy)
-    for (let a = r.min; ; a = Math.min(a + 5, r.max)) {
-      const d = aimDir(this.tmp, a, b.facing)
-      g.lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
-      if (a >= r.max) break
+    const mid = (RING_IN + RING_OUT) / 2, w = RING_OUT - RING_IN
+    // chỉ vẽ cung: dải góc cho phép + EXTEND mỗi đầu (góc a so với phương ngang → góc màn hình: phải = -a, trái = π + a)
+    const ext = (r.max - r.min) * ARC_EXTEND
+    const scr = (deg: number): number => b.facing > 0 ? -deg * DEG : Math.PI + deg * DEG
+    // cung chia thành các dải đồng tâm, đục dần từ trong ra ngoài (trong nhạt/trong suốt, ngoài đậm) để có hiệu ứng gradient mà không tạo object mỗi frame
+    const arc = (lo: number, hi: number, color: number, aMax: number): void => {
+      const s0 = scr(b.facing > 0 ? hi : lo), s1 = scr(b.facing > 0 ? lo : hi), bw = w / ARC_BANDS
+      for (let k = 0; k < ARC_BANDS; k++) {
+        const rr = RING_IN + (k + 0.5) * bw, t = (k + 1) / ARC_BANDS
+        g.moveTo(cx + Math.cos(s0) * rr, cy + Math.sin(s0) * rr)
+        g.arc(cx, cy, rr, s0, s1).stroke({ color, width: bw + 0.6, alpha: aMax * t })
+      }
     }
-    g.closePath().fill({ color: 0xffffff, alpha: 0.2 }).stroke({ color: 0x3a2412, width: 1.5, alpha: 0.55 })
-    // vạch thước: mỗi 5° một vạch ngắn, mỗi 15° vạch dài hơn (tính theo góc so với phương ngang)
-    for (let a = Math.ceil(r.min / 5) * 5; a <= r.max; a += 5) {
-      const d = aimDir(this.tmp, a, b.facing)
-      const len = a % 15 === 0 ? FAN_TICK_LONG : FAN_TICK
-      g.moveTo(cx + d.x * (FAN_RADIUS - len), cy + d.y * (FAN_RADIUS - len)).lineTo(cx + d.x * FAN_RADIUS, cy + d.y * FAN_RADIUS)
+    const ext2 = ext + (r.max - r.min) * ARC_EXTEND2   // thêm 20% nữa, mờ bằng nửa phần 30%
+    arc(r.min - ext2, r.max + ext2, 0xffffff, 0.15)
+    arc(r.min - ext, r.max + ext, 0xffffff, 0.3)
+    arc(r.min, r.max, ARC_GREEN, 0.4)
+    for (let ang = Math.ceil(r.min / 15) * 15; ang <= r.max; ang += 15) {
+      const d = aimDir(this.tmp, ang, b.facing)
+      g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })
     }
-    g.stroke({ color: 0x3a2412, width: 1.5, alpha: 0.8 })
-    // kim ngắm: tam giác thon từ tâm tới quá vòng cung một chút
+    const lowEnd = scr(r.min - ext)   // số độ nằm dưới đầu thấp của cung
+    // kim ngắm: ảnh mũi tên (assets/ui/aim-needle.png, vẽ chĩa sang phải), mũi chạm giữa cung; chưa tải xong thì dùng mũi tên vẽ bằng code
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
-    const nx = -d.y, ny = d.x, tip = FAN_RADIUS + NEEDLE_OVER
-    g.moveTo(cx + nx * NEEDLE_BASE, cy + ny * NEEDLE_BASE)
-      .lineTo(cx + d.x * tip, cy + d.y * tip)
-      .lineTo(cx - nx * NEEDLE_BASE, cy - ny * NEEDLE_BASE)
-      .closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
-    g.circle(cx, cy, NEEDLE_BASE + 1).fill({ color: NEEDLE_COLOR }).stroke({ color: 0x5a1a00, width: 1.2 })
+    const tx = cx + d.x * (mid + 6), ty = cy + d.y * (mid + 6)
+    if (needleTex) {
+      const n = this.needle
+      if (!n.texture || n.texture !== needleTex) { n.texture = needleTex; n.anchor.set(NEEDLE_ANCHOR_X, NEEDLE_ANCHOR_Y); n.scale.set(NEEDLE_W / needleTex.width) }
+      n.alpha = NEEDLE_ALPHA; n.position.set(tx, ty); n.rotation = Math.atan2(d.y, d.x); n.visible = true
+    } else {
+      for (let i = 0; i < NEEDLE.length; i += 2) {
+        const u = NEEDLE[i]!, w2 = NEEDLE[i + 1]!   // u: lùi dọc theo kim, w2: lệch ngang
+        const px = tx - d.x * u - d.y * w2, py = ty - d.y * u + d.x * w2
+        if (i === 0) g.moveTo(px, py); else g.lineTo(px, py)
+      }
+      g.closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0xffffff, width: 2 })
+    }
+    this.angleText.text = `${p.aimAngle}°`
+    this.angleText.position.set(cx + Math.cos(lowEnd) * mid, cy + Math.sin(lowEnd) * mid + w / 2 + 4)
+    this.angleText.visible = true
   }
 
   /** Hồn thoát xác: bản sao mờ của phi công (xe không có phi công thì của thân xe) bay lên, lắc lư, rồi vỡ thành tia sáng. */

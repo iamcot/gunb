@@ -100,18 +100,18 @@
   {
     "file": "mobiles/bo-loi/body.png",
     "author": "IamCoT (tạo bằng ChatGPT)",
-    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "source": "Ảnh AI do người dùng cung cấp trong thread (ChatGPT)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+    "modified": "Ảnh mới \"Whimsical Electric Beetle Mech\" (đuôi bọ cạp mang cầu sét): xoá nền trắng, tách đuôi + cầu sét thành nòng xoay quanh khớp tròn vàng (nòng vẽ sau thân), thu về 342×288 px"
   },
   {
     "file": "mobiles/bo-loi/barrel.png",
     "author": "IamCoT (tạo bằng ChatGPT)",
-    "source": "Ảnh AI tạo từ assets/source/prompts/xe-bo-loi.txt",
+    "source": "Ảnh AI do người dùng cung cấp trong thread (ChatGPT)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Xoá nền, tách cốc phóng sét ở đít thành bộ phận xoay (chốt ở khớp tròn vàng), lật ngang cho nòng chĩa +x, thu về 192 px (thân)"
+    "modified": "Ảnh mới \"Whimsical Electric Beetle Mech\" (đuôi bọ cạp mang cầu sét): xoá nền trắng, tách đuôi + cầu sét thành nòng xoay quanh khớp tròn vàng (nòng vẽ sau thân), thu về 342×288 px"
   },
   {
     "file": "mobiles/bo-loi/rig.json",
@@ -434,7 +434,7 @@
     "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 4)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+    "modified": "Đạn 2 (cua nhỏ lăn/bò, sau này là mìn): dùng lại ảnh thân xe body.png (con cua), cắt sát viền. Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
   },
   {
     "file": "mobiles/cua-lan/shot-3.png",
@@ -442,7 +442,7 @@
     "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 4)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Ảnh \"Mossy Barnacle Boulder Trio\": xoá nền, cắt riêng từng viên, thu nhỏ"
+    "modified": "SS Cua khổng lồ: dùng lại ảnh thân xe body.png (con cua), cắt sát viền"
   },
   {
     "file": "mobiles/cua-lan/shots.json",
@@ -527,7 +527,15 @@
     "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
     "license": "AI (ChatGPT, OpenAI)",
     "url": "",
-    "modified": "Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+    "modified": "Đạn 2 dùng lại quả đèn đơn của shot-1.png. Ảnh \"Glowing Steampunk Jellyfish Lamps\": xoá nền, cắt riêng từng viên, thu nhỏ"
+  },
+  {
+    "file": "mobiles/sua-den/shot-2b.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ plan/09-prompt-dan.md (mục 7)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Bản xanh ngọc (xoay tông màu) của shot-1.png"
   },
   {
     "file": "mobiles/sua-den/shot-3.png",
@@ -1079,6 +1087,22 @@
     "modified": "Lấy đoạn 0.06–1.2 s của bản gốc 2.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
   },
   {
+    "file": "audio/aim.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs theo prompt tụ lực (hội thoại với Claude): tiếng tụ lực tăng dần ~2 s",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Chuyển MP3 sang OGG Vorbis (q4)"
+  },
+  {
+    "file": "audio/aim_loop.ogg",
+    "author": "IamCoT (tạo bằng ElevenLabs)",
+    "source": "Hiệu ứng AI tạo trên ElevenLabs theo prompt tụ lực (hội thoại với Claude): tiếng tụ lực lặp (giữ ở mức đầy) ~1 s",
+    "license": "AI (ElevenLabs, gói Premium)",
+    "url": "",
+    "modified": "Chuyển MP3 sang OGG Vorbis (q4)"
+  },
+  {
     "file": "mobiles/sua-den/boom-1.ogg",
     "author": "IamCoT (tạo bằng ElevenLabs)",
     "source": "Hiệu ứng AI tạo trên ElevenLabs từ prompt sua-den_boom-1 trong plan/11-prompt-am-thanh.md",
@@ -1595,5 +1619,61 @@
     "license": "AI (ElevenLabs, gói Premium)",
     "url": "",
     "modified": "Lấy đoạn 0.00–3.00 s của bản gốc 6.0 s, fade, chuẩn hoá đỉnh −1 dBFS, mono OGG Vorbis"
+  },
+  {
+    "file": "ui/aim-needle.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt mũi tên kim ngắm (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Bản con trỏ xanh viền nâu (ChatGPT): xoá nền trắng, xoay để mũi chỉ sang phải, cắt sát, thu bề rộng về 96 px"
+  },
+  {
+    "file": "mobiles/oc-thiet-giap/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Ốc (xoắn ốc san hô) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/cu-thien-van/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Cú Thiên Văn (sao tím) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/nhim-chum/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Nhím Chùm (gai xanh) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/dieu-hau-giay/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Diều Hâu Giấy (lông vàng) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/bo-loi/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Bọ Lôi (sét xanh) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
+  },
+  {
+    "file": "mobiles/chui-khoan/ss-fx.png",
+    "author": "IamCoT (tạo bằng ChatGPT)",
+    "source": "Ảnh AI tạo từ prompt hiệu ứng SS Chũi Khoan (lửa cam) (hội thoại với Claude)",
+    "license": "AI (ChatGPT, OpenAI)",
+    "url": "",
+    "modified": "Cắt sát phần có ảnh, thu bề rộng về 512 px"
   }
 ]

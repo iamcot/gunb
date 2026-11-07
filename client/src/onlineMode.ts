@@ -26,6 +26,9 @@ const RESULTS_AUTO_BACK_S = 15 // bảng kết quả: tự về phòng chờ sau
  * Chế độ online: server giữ trận thật; client giữ một bản sao (MatchState) cập nhật bằng Snapshot, phát lại Shot,
  * và chỉ gửi ý định (Input/Fire). Không dự đoán phía client: vị trí xe người khác và của mình đều đến từ snapshot (làm mượt khi vẽ).
  */
+/** Còn chừng này giây mà vẫn đang tụ lực thì bắn luôn (bù độ trễ mạng). */
+const END_FIRE_S = 0.25
+
 export class OnlineMode implements Mode {
   readonly match: MatchState
   private readonly aim = new AimInput(true)
@@ -110,7 +113,7 @@ export class OnlineMode implements Mode {
     const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
+      onDamage: (id, amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id); this.damagePop(id, amount) },
     }, item === 'teleport' ? null : getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 
@@ -151,6 +154,12 @@ export class OnlineMode implements Mode {
     this.net.send({ t: MsgType.Fire, angle, power, slot })
   }
 
+  /** Số sát thương nhảy lên trên đầu xe `id` (mỗi phát trúng một số). */
+  private damagePop(id: number, amount: number): void {
+    const p = this.match.players[id]
+    if (p) this.ctx.fx.damageText(p.body.x, p.body.y - p.body.radius - 36, amount)
+  }
+
   update(dt: number): void {
     const { match: m, ctx, aim } = this
     if (!this.gotSnapshot) return
@@ -172,6 +181,7 @@ export class OnlineMode implements Mode {
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
       p.aimAngle = aim.angle
+      if (aim.charging && m.turnTimeLeft <= END_FIRE_S) aim.release()   // sắp hết giờ khi đang tụ lực: bắn luôn (server tính giờ nên bắn sớm một chút)
       this.sendInput(dt)
       ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     } else {
@@ -189,6 +199,7 @@ export class OnlineMode implements Mode {
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
     ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
+    this.vehicles.setCharge(this.aim.charging && m.phase === 'aiming' ? m.turnPlayerId : -1, this.aim.power / 100)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const me = m.players[this.start.youId]

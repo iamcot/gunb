@@ -4,8 +4,16 @@ import { audio, type ShotSfx } from './audio'
 /** `assets/mobiles/<id>/shots.json`: ảnh 3 loại đạn (vẽ nằm ngang, đầu chĩa sang phải), `length` = chiều dài khi vẽ (px bản đồ),
  *  `upright` = không xoay theo đường bay, chỉ lật trái/phải theo hướng bay (đạn có "đầu trên" như cục đất có lâu đài).
  *  `fire` / `boom` / `bolt` / `beam` (tuỳ chọn) = file âm thanh lúc bắn / lúc nổ / lúc sét giáng / lúc vệ tinh bắn laser; thiếu thì dùng tiếng tạo bằng code. */
-interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string; beam?: string }[] }
-export interface ShotArt { tex: Texture; length: number; upright: boolean }
+interface ShotsFile { shots: { file: string; length: number; upright?: boolean; fire?: string; boom?: string; bolt?: string; beam?: string; trail?: 'smoke'; arcs?: number; dig?: string; streak?: string; streakScale?: number; wobble?: boolean; ribbon?: string; alt?: string; ribbonAlt?: string; ribbonW?: number; grow?: GrowFile }[] }
+/** `trail: "smoke"` = đạn xả khói + lửa ở đuôi khi bay.
+ *  `arcs` = số tia điện (vân sét) nhoáng quanh viên đạn mỗi frame (đạn sét; càng lớn càng nhiều).
+ *  `dig` (Chũi Khoan đạn 2/SS) = tên file âm thanh phát lặp khi đạn chui xuyên đất (lúc đó đạn còn vẽ tối + nhòe + rung, bụi đất bắn ra).
+ *  `streak` (đạn SS) = tên ảnh hiệu ứng (đầu chĩa sang phải) vẽ phía sau viên đạn, xoay theo hướng bay và động đậy; có thì bỏ lửa đuôi, chỉ để khói.
+ *  `streakScale` = hệ số thu/phóng ảnh `streak` (mặc định 1; đạn bắn nhiều quả như Nhím thì thu nhỏ cho đỡ dày).
+ *  `grow` (đạn airGrow, Ốc / Diều SS) = dạng sau khi "lớn lên": ảnh riêng `file` (+ `length`) nếu có, không thì dùng lại ảnh cũ phóng `scale` lần và nhuộm `tint` (#rrggbb). */
+interface GrowFile { file?: string; length?: number; scale?: number; tint?: string }
+export interface GrowArt { tex: Texture | null; length: number; scale: number; tint: number }
+export interface ShotArt { tex: Texture; length: number; upright: boolean; trail: boolean; arcs: number; dig: boolean; streak: Texture | null; streakScale: number; wobble: boolean; ribbon: number; ribbonAlt: number; alt: Texture | null; ribbonW: number; grow: GrowArt | null }
 
 /** Phóng to ảnh đạn khi vẽ (chỉ là hình, va chạm vẫn theo shared/). */
 const SHOT_ART_SCALE = 2
@@ -29,13 +37,28 @@ export function preloadShotArt(mobileId: string): void {
       if (s.boom) audio.load(sfx.boom = base + s.boom)
       if (s.bolt) audio.load(sfx.bolt = base + s.bolt)
       if (s.beam) audio.load(sfx.beam = base + s.beam)
+      if (s.dig) audio.load(sfx.dig = base + s.dig)
       return sfx
     }))
     const arts = await Promise.all(f.shots.map(async s => {
       const img = new Image()
       img.src = base + s.file
       await img.decode()
-      return { tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true }
+      let grow: GrowArt | null = null
+      if (s.grow) {
+        let gtex: Texture | null = null
+        if (s.grow.file) {
+          const gi = new Image()
+          gi.src = base + s.grow.file
+          try { await gi.decode(); gtex = Texture.from(gi) } catch { gtex = null }   // thiếu ảnh thì dùng lại ảnh cũ
+        }
+        grow = { tex: gtex, length: (s.grow.length ?? s.length) * SHOT_ART_SCALE, scale: gtex ? 1 : (s.grow.scale ?? 1.4), tint: s.grow.tint ? parseInt(s.grow.tint.replace('#', ''), 16) : 0xffffff }
+      }
+      let streak: Texture | null = null
+      if (s.streak) { try { const si = new Image(); si.src = base + s.streak; await si.decode(); streak = Texture.from(si) } catch { streak = null } }
+      let alt: Texture | null = null
+      if (s.alt) { try { const ai = new Image(); ai.src = base + s.alt; await ai.decode(); alt = Texture.from(ai) } catch { alt = null } }
+      return { wobble: s.wobble === true, alt, ribbonAlt: s.ribbonAlt ? parseInt(s.ribbonAlt.replace('#', ''), 16) : -1, ribbon: s.ribbon ? parseInt(s.ribbon.replace('#', ''), 16) : -1, ribbonW: s.ribbonW ?? 14, streakScale: s.streakScale ?? 1, tex: Texture.from(img), length: s.length * SHOT_ART_SCALE, upright: s.upright === true, trail: s.trail === 'smoke', arcs: s.arcs ?? 0, dig: !!s.dig, streak, grow }
     }))
     cache.set(mobileId, arts)
   })().catch(() => cache.set(mobileId, [])).finally(() => loading.delete(mobileId))

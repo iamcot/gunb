@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
+import { snapshotOf, applySnapshot } from './netState'
 import { applyAction, createMatch, windForRound, currentPlayer, effectiveArmor, isSettled, type MatchState } from './match'
-import { createDefaultTuning } from './tuning'
+import { TUNING, createDefaultTuning } from './tuning'
 
 const W = 2400, H = 1200, G = 800
 function flat(): TerrainMask {
@@ -227,8 +228,11 @@ describe('3 pháo + thanh SS', () => {
     expect(s.players[1]!.ss).toBeCloseTo(before + createDefaultTuning().ss.perTurn, 5)
   })
 
-  it('đạn điện giảm giáp mục tiêu 2 lượt của chính nó rồi hết', () => {
-    const { s, mask } = aimAtOpponent('bo-loi', 0)
+  it('đạn có armorBreak giảm giáp mục tiêu 2 lượt của chính nó rồi hết', () => {
+    const shot = TUNING.mobiles['oc-thiet-giap']!.shots[0]
+    shot.armorBreak = { turns: 2, amount: 0.25 }
+    try {
+    const { s, mask } = aimAtOpponent('oc-thiet-giap', 0)
     const target = s.players[1]!
     const base = effectiveArmor(target)
     applyAction(s, { t: 'fire', id: 0, angle: 50, power: 70, slot: 0 }, { mask })
@@ -241,13 +245,104 @@ describe('3 pháo + thanh SS', () => {
     applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask }); applyAction(s, { t: 'endTurn' }, { mask })
     expect(target.armorDebuff.turns).toBe(0)
     expect(effectiveArmor(target)).toBeCloseTo(base, 5)
+    } finally { delete shot.armorBreak }
   })
 
   it('góc ngắm kẹp theo dải góc của từng pháo', () => {
     const { s, mask } = duel('bo-loi', 'chui-khoan')
     applyAction(s, { t: 'aim', id: 0, angle: 0 }, { mask })
-    expect(s.players[0]!.aimAngle).toBe(20)
+    expect(s.players[0]!.aimAngle).toBe(10)
     applyAction(s, { t: 'aim', id: 0, angle: 200 }, { mask })
-    expect(s.players[0]!.aimAngle).toBe(45)   // Bọ Lôi đứng đất bằng: cốc chỉ nâng tới 45°
+    expect(s.players[0]!.aimAngle).toBe(85)
+  })
+})
+
+describe('A2: delay theo giây suy nghĩ', () => {
+  it('bắn muộn thì bị cộng thêm delay; Rùa Thành nhân 1,2', () => {
+    const t = createDefaultTuning()
+    const delayAfter = (mobileId: string, waitS: number): number => {
+      const mask = flat()
+      const players = [0, 1].map(i => ({ name: `P${i}`, team: i as 0 | 1, mobileId }))
+      const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+      s.turnTimeLeft = t.turn.timeS - waitS
+      const p = currentPlayer(s)
+      const before = p.delay
+      expect(applyAction(s, { t: 'fire', id: p.id, angle: 45, power: 50, slot: 0 }, { mask, tuning: t }).ok).toBe(true)
+      return p.delay - before - t.mobiles[mobileId]!.shots[0].delay
+    }
+    expect(delayAfter('oc-thiet-giap', 0)).toBeCloseTo(0, 5)
+    expect(delayAfter('oc-thiet-giap', 10)).toBeCloseTo(10 * t.turn.delayPerSecond, 5)
+    expect(delayAfter('rua-thanh', 10)).toBeCloseTo(10 * t.turn.delayPerSecond * 1.2, 5)
+  })
+})
+
+describe('C1: khiên', () => {
+  it('Sứa Đèn bắt đầu với khiên đầy, hồi mỗi khi sang vòng mới (không vượt tối đa), snapshot mang theo', () => {
+    const t = createDefaultTuning()
+    const mask = flat()
+    const players = [0, 1].map(i => ({ name: `P${i}`, team: i as 0 | 1, mobileId: i === 0 ? 'sua-den' : 'oc-thiet-giap' }))
+    const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+    const sh = t.mobiles['sua-den']!.shield!
+    expect(s.players[0]!.shield).toBe(sh.max)
+    expect(s.players[1]!.shield).toBe(0)
+    s.players[0]!.shield = 10
+    // kết thúc 2 lượt = sang vòng mới
+    for (let k = 0; k < 2; k++) { applyAction(s, { t: 'skip', id: s.turnPlayerId }, { mask, tuning: t }); applyAction(s, { t: 'endTurn' }, { mask, tuning: t }) }
+    expect(s.roundNo).toBe(2)
+    expect(s.players[0]!.shield).toBe(Math.min(sh.max, 10 + sh.regen))
+    const snap = snapshotOf(s)
+    s.players[0]!.shield = 0
+    applySnapshot(s, snap)
+    expect(s.players[0]!.shield).toBe(Math.min(sh.max, 10 + sh.regen))
+  })
+})
+
+describe('C3: mìn Cua Lăn', () => {
+  const setup = () => {
+    const t = createDefaultTuning()
+    const mask = flat()
+    const players = [{ name: 'A', team: 0 as const, mobileId: 'cua-lan' }, { name: 'B', team: 1 as const, mobileId: 'oc-thiet-giap' }]
+    const s = createMatch({ seed: 7, mask, spawnZones: zones, players, tuning: t })
+    return { t, mask, s, env: { mask, tuning: t } }
+  }
+  it('đạn 2 thả 2 mìn nằm lại ở chỗ chạm đất, không nổ; snapshot mang theo mìn', () => {
+    const { s, env } = setup()
+    const me = s.players[0]!
+    const r = applyAction(s, { t: 'fire', id: me.id, angle: 35, power: 45, slot: 1 }, env)
+    expect(r.ok).toBe(true)
+    expect(r.shot!.events.filter(e => e.kind === 'mineDrop')).toHaveLength(2)
+    expect(r.shot!.events.filter(e => e.kind === 'explode')).toHaveLength(0)
+    expect(s.mines).toHaveLength(2)
+    expect(s.mines.every(m => m.owner === me.id)).toBe(true)
+    const snap = snapshotOf(s)
+    s.mines = []
+    applySnapshot(s, snap)
+    expect(s.mines).toHaveLength(2)
+  })
+  it('lần bắn sau của chủ mìn: mìn bò về phía địch; chạm xe địch thì nổ, trừ máu', () => {
+    const { s, env, mask } = setup()
+    const me = s.players[0]!, foe = s.players[1]!
+    // mìn nằm sẵn cạnh xe địch
+    s.mines.push({ id: 0, owner: me.id, team: 0, x: foe.body.x - 60, y: foe.body.y + foe.body.radius - 3, crawlPx: 110, detect: 220, damage: 380, blastRadius: 70, carveRadius: 40 })
+    s.nextMineId = 1
+    const hp0 = foe.hp
+    const before = mask.countSolid()
+    const r = applyAction(s, { t: 'fire', id: me.id, angle: 80, power: 10, slot: 0 }, env)
+    expect(r.ok).toBe(true)
+    expect(r.shot!.events.some(e => e.kind === 'mineGone')).toBe(true)
+    expect(foe.hp).toBeLessThan(hp0)
+    expect(s.mines).toHaveLength(0)
+    expect(mask.countSolid()).toBeLessThan(before)
+  })
+  it('mìn bò theo hướng địch nhưng chưa tới thì còn lại với vị trí mới', () => {
+    const { s, env } = setup()
+    const me = s.players[0]!, foe = s.players[1]!
+    s.mines.push({ id: 0, owner: me.id, team: 0, x: me.body.x + 40, y: me.body.y + me.body.radius - 3, crawlPx: 110, detect: 220, damage: 380, blastRadius: 70, carveRadius: 40 })
+    s.nextMineId = 1
+    const x0 = s.mines[0]!.x
+    applyAction(s, { t: 'fire', id: me.id, angle: 25, power: 100, slot: 0 }, env)
+    expect(s.mines).toHaveLength(1)
+    expect(Math.sign(s.mines[0]!.x - x0)).toBe(Math.sign(foe.body.x - x0))
+    expect(Math.abs(s.mines[0]!.x - x0)).toBeGreaterThan(50)
   })
 })

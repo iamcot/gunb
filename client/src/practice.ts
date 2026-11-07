@@ -22,11 +22,11 @@ export class Practice {
     for (let x = 0; x < mask.width; x += 10) if (groundYBelow(mask, x, 0) >= 0) { if (left < 0) left = x; right = x }
     if (left < 0) { left = 0; right = mask.width - 1 }
     const sx = this.flattestX(Math.min(left + 60, right), Math.min(left + 450, right))
-    this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 100, armor: 0 }
+    this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 1000, armor: 0 }
     this.vehicles = [this.shooter]
     ;[450, 800, 1200].forEach((dx, i) => {
       const x = this.nearestGroundX(Math.min(sx + dx, right - TARGET_R))
-      const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 100, armor: 0 }
+      const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 1000, armor: 0 }
       const g = new Graphics()
       const label = new Text({ text: '100', style: { fill: 0xffffff, fontSize: 14, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
       label.anchor.set(0.5, 1)
@@ -78,7 +78,7 @@ export class Practice {
   }
 
   resetHp(): void {
-    for (const v of this.vehicles) v.hp = 100
+    for (const v of this.vehicles) v.hp = 1000
     this.drawTargets()
   }
 

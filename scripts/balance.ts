@@ -2,7 +2,7 @@
 // Chạy: npm run balance -- --games 200 --level hard --map dao-noi [--seed 1] [--out plan/balance-report.md]
 import { writeFileSync } from 'node:fs'
 import {
-  BotDriver, MAX_TURNS, MOBILE_IDS, TUNING, applyAction, createMatch, currentPlayer, isSettled,
+  ALL_MOBILE_IDS, BotDriver, MAX_TURNS, TUNING, applyAction, createMatch, currentPlayer, isSettled,
   type BotCmd, type BotLevel,
 } from '@gunb/shared'
 import { loadMap } from '../server/src/mapLoader'
@@ -43,7 +43,7 @@ function play(seed: number, a: string, b: string): Result {
   return { winner: (s.winner ?? -1) as -1 | 0 | 1, turns: Math.min(s.turnNo, MAX_TURNS) }
 }
 
-const ids = [...MOBILE_IDS] as string[]
+const ids = [...ALL_MOBILE_IDS] as string[]
 const pairs: [string, string][] = []
 for (const a of ids) for (const b of ids) pairs.push([a, b])
 const stat = new Map(ids.map(id => [id, { games: 0, wins: 0, draws: 0 }]))
@@ -51,7 +51,7 @@ const matrix = new Map<string, { wins: number; games: number }>()
 let team0Wins = 0, decided = 0, turnsSum = 0
 const t0 = Date.now()
 for (let g = 0; g < GAMES; g++) {
-  const [a, b] = pairs[(g * 37) % pairs.length]!   // bước 37 nguyên tố cùng nhau với 64: ván nào cũng phủ đều các cặp
+  const [a, b] = pairs[(g * 37) % pairs.length]!   // bước 37 nguyên tố cùng nhau với số cặp: ván nào cũng phủ đều các cặp
   const r = play(SEED * 100003 + g, a, b)
   turnsSum += r.turns
   const sa = stat.get(a)!, sb = stat.get(b)!

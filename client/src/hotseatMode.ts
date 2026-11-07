@@ -110,8 +110,14 @@ export class HotseatMode implements Mode {
     this.aim.locked = true
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
+      onDamage: (id, amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id); this.damagePop(id, amount) },
     }, m.turnItem === 'teleport' ? null : getShotArt(p.mobileId, slot), getShotSfx(p.mobileId, slot))
+  }
+
+  /** Số sát thương nhảy lên trên đầu xe `id` (mỗi phát trúng một số). */
+  private damagePop(id: number, amount: number): void {
+    const p = this.match.players[id]
+    if (p) this.ctx.fx.damageText(p.body.x, p.body.y - p.body.radius - 36, amount)
   }
 
   update(dt: number): void {
@@ -137,6 +143,7 @@ export class HotseatMode implements Mode {
       }
       if (aim.moveDir !== 0) applyAction(m, { t: 'move', id: p.id, dir: aim.moveDir, dt }, { mask: this.mask })
       applyAction(m, { t: 'aim', id: p.id, angle: aim.angle }, { mask: this.mask })
+      if (aim.charging && m.turnTimeLeft - dt <= 0) { aim.release(); return }   // hết giờ khi đang tụ lực: bắn luôn
       const r = applyAction(m, { t: 'tick', dt }, { mask: this.mask })
       if (r.timedOut) aim.cancel()
       ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
@@ -165,6 +172,7 @@ export class HotseatMode implements Mode {
     this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
     ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
+    this.vehicles.setCharge(this.aim.charging && m.phase === 'aiming' ? m.turnPlayerId : -1, this.aim.power / 100)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const cur = currentPlayer(m)

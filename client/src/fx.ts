@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture } from 'pixi.js'
+import { BlurFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js'
 import type { ShotArt } from './shotArt'
 
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
@@ -18,7 +18,11 @@ const P_DEBRIS = 0, P_SPARK = 1, P_SMOKE = 2, P_FIRE = 3, P_DUST = 4, P_EMBER = 
 const BOOM_S = 0.4          // phần "lõi" vụ nổ: playback chờ hết phần này mới chuyển lượt
 const BOOM_LIFE = 0.6       // chớp sáng + sóng xung kích tắt hẳn
 const FLASH_S = 0.12
-const BOLT_S = 0.3
+const BOLT_S = 0.42
+/** Đạn xuyên đất dưới đất: màu tối, độ mờ, độ nhòe, biên độ rung (px). Đạn SS: số vệt xé gió, số đoạn mỗi vệt. */
+/** Quầng lửa SS: dài = FLAME_LEN × chiều dài đạn; điểm gắn (đầu lửa) trên ảnh. */
+const FLAME_LEN = 4.2, FLAME_AX = 0.86, FLAME_AY = 0.48
+const DIG_TINT = 0x4a3326, DIG_ALPHA = 0.7, DIG_BLUR = 3, DIG_SHAKE = 2.2
 const BOLT_HEIGHT = 900
 const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
@@ -62,6 +66,13 @@ const IMPACT_SIZE = 56, IMPACT_S = 0.3, IMPACT_BITS = 6
 /** Lửa đầu nòng: dài MUZZLE_LEN px, sống MUZZLE_S s. */
 const MUZZLE_LEN = 40, MUZZLE_S = 0.12
 
+/** Khói đuôi đạn (Ốc Thiết Giáp...): nhả một đám khói + một đốm lửa mỗi TRAIL_STEP px bay được. */
+const RIBBON_LAYERS = 4, RIBBON_W = [1.6, 0.9, 0.45, 0.16], RIBBON_A = [0.16, 0.35, 0.9, 1]
+const RIBBON_N = 420, RIBBON_STEP = 7, RIBBON_CHUNK = 8   // số điểm / khoảng cách giữa các điểm của dòng ánh sáng (px)
+const TRAIL_STEP = 6, TRAIL_MAX_PER_CALL = 6, TRAIL_SMOKE = 0x8a7b6c
+/** Số sát thương nhảy lên khi trúng: mỗi phát một số (không cộng dồn), bay lên POP_RISE px trong POP_S s. */
+const POP_POOL = 16, POP_S = 1.1, POP_RISE = 56, POP_STACK = 28
+
 const FIRE_HOT = 0xfff3b0, FIRE_MID = 0xff8a20, FIRE_COOL = 0xa8280e
 
 function lerpColor(a: number, b: number, k: number): number {
@@ -104,11 +115,31 @@ export class Fx {
   private readonly shells: Graphics[] = []
   private readonly shellSprites: Sprite[] = []
   private shellArt: ShotArt | null = null
+  /** Dòng ánh sáng sau đạn (`ribbon` trong shots.json): mỗi viên giữ tối đa RIBBON_N điểm đã đi qua (mảng cố định, không cấp phát mỗi frame). */
+  private readonly ribbonPts: Float32Array[] = []
+  private readonly ribbonN: number[] = []
   private readonly shellPos: { x: number; y: number; visible: boolean }[] = []
+  private readonly shellGrown: boolean[] = []
+  private readonly trailD: number[] = []
+  private readonly shellRot: number[] = []
+  private readonly shellDig: boolean[] = []   // đạn xuyên đất đang ở dưới đất
+  private readonly shellBlur: BlurFilter[] = []
+  private readonly flames: Sprite[] = []      // đạn SS: ảnh quầng lửa phía sau (2 lớp lệch pha cho "động đậy")
+  private readonly flames2: Sprite[] = []
+  private readonly popArt = new Container()
+  private readonly pops: { text: Text; age: number; alive: boolean; baseY: number; k: number }[] = []
+  private nextPop = 0
 
   constructor() {
     this.glow.blendMode = 'add'
-    this.container.addChild(this.back, this.backArt, this.fire, this.fireArt, this.glow, this.glowArt, this.topArt)
+    this.container.addChild(this.back, this.backArt, this.fire, this.fireArt, this.glow, this.glowArt, this.topArt, this.popArt)
+    for (let i = 0; i < POP_POOL; i++) {
+      const text = new Text({ text: '', style: { fontFamily: 'Nunito, Trebuchet MS, sans-serif', fontSize: 30, fontWeight: '900', fill: 0xffb52e, stroke: { color: 0x3a1200, width: 6, join: 'round' } } })
+      text.anchor.set(0.5)
+      text.visible = false
+      this.popArt.addChild(text)
+      this.pops.push({ text, age: 0, alive: false, baseY: 0, k: 1 })
+    }
     for (let i = 0; i < MAX_PARTICLES; i++) {
       this.parts.push({ kind: 0, x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 1, size: 1, color: 0, alive: false, rot: 0, vr: 0, spr: false })
       this.psprites.push(null)
@@ -149,7 +180,12 @@ export class Fx {
   /** Ảnh đạn cho phát bắn sắp phát lại (null = đạn tròn mặc định). */
   setShellArt(art: ShotArt | null): void {
     this.shellArt = art
-    for (const s of this.shellSprites) if (art) { s.texture = art.tex; s.scale.set(art.length / art.tex.width) }
+    for (let i = 0; i < this.shellSprites.length; i++) {
+      const s = this.shellSprites[i]!
+      this.shellGrown[i] = false
+      s.tint = 0xffffff
+      if (art) { s.texture = i % 2 === 1 && art.alt ? art.alt : art.tex; s.scale.set(art.length / art.tex.width) }
+    }
   }
 
   /** Đặt vị trí/hiện-ẩn viên đạn thứ `i` (tạo mới nếu chưa có); `rot` = hướng bay (radian, theo trục màn hình). */
@@ -162,10 +198,16 @@ export class Fx {
       const s = new Sprite()
       s.anchor.set(0.5)
       s.visible = false
-      if (this.shellArt) { s.texture = this.shellArt.tex; s.scale.set(this.shellArt.length / this.shellArt.tex.width) }
+      if (this.shellArt) { s.texture = i % 2 === 1 && this.shellArt.alt ? this.shellArt.alt : this.shellArt.tex; s.scale.set(this.shellArt.length / this.shellArt.tex.width) }
       this.container.addChild(s)
       this.shellSprites.push(s)
       this.shellPos.push({ x: 0, y: 0, visible: false })
+      this.ribbonPts.push(new Float32Array(RIBBON_N * 2)); this.ribbonN.push(0)
+      this.shellGrown.push(false)
+      this.trailD.push(0)
+      this.shellRot.push(0); this.shellDig.push(false)
+      this.shellBlur.push(new BlurFilter({ strength: DIG_BLUR }))
+      for (const arr of [this.flames, this.flames2]) { const f = new Sprite(); f.anchor.set(FLAME_AX, FLAME_AY); f.visible = false; this.fireArt.addChild(f); arr.push(f) }
     }
     const g = this.shells[i]!, s = this.shellSprites[i]!, p = this.shellPos[i]!
     const art = this.shellArt !== null
@@ -174,21 +216,155 @@ export class Fx {
     g.position.set(x, y)
     s.position.set(x, y)
     const a = this.shellArt
+    const grown = this.shellGrown[i] === true && a?.grow != null
+    const ga = grown ? a!.grow! : null
+    if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
+    this.shellRot[i] = rot
+    this.ribbonPush(i, x, y, visible && a !== null && a.ribbon >= 0)
+    this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, (a?.length ?? 0) * (a?.streakScale ?? 1))
+    if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail, a.streakScale >= 1)
+    // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
+    const under = visible && this.shellDig[i] === true
+    s.filters = under ? [this.shellBlur[i]!] : []
+    if (under) { s.tint = DIG_TINT; s.alpha = DIG_ALPHA; s.position.set(x + rnd(-DIG_SHAKE, DIG_SHAKE), y + rnd(-DIG_SHAKE, DIG_SHAKE)) } else s.alpha = 1
     if (a && a.upright) {
-      const k = a.length / a.tex.width
+      const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = 0
       s.scale.set(Math.cos(rot) < 0 ? -k : k, k)
+      if (a.wobble) {   // con vật bò (Cua SS): lắc nhẹ, nhún lên xuống theo nhịp bước
+        const tw = performance.now() / 1000
+        s.rotation = Math.sin(tw * 16 + i) * 0.07
+        s.position.y = y - Math.abs(Math.sin(tw * 10 + i)) * 4
+        s.scale.y = k * (1 + 0.04 * Math.sin(tw * 20 + i))
+      }
     } else if (a) {
       // xoay theo hướng bay; bay sang trái thì lật dọc để ảnh không bị lộn ngược
-      const k = a.length / a.tex.width
+      const k = (ga?.tex ? ga.length / ga.tex.width : a.length / a.tex.width) * (ga?.scale ?? 1)
       s.rotation = rot
       s.scale.set(k, Math.cos(rot) < 0 ? -k : k)
     } else s.rotation = rot
+    if (under) s.rotation += rnd(-0.12, 0.12)
+    if (!visible) this.trailD[i] = 0
     p.x = x; p.y = y; p.visible = visible
   }
 
+  /** Nhả khói + lửa ở đuôi viên đạn `i` theo quãng đã bay kể từ lần trước (p = vị trí cũ, chưa cập nhật). */
+  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean, smoke: boolean, thick: boolean): void {
+    if (!p.visible) { this.trailD[i] = 0; return }
+    if (streak && !smoke) return   // ảnh hiệu ứng SS tự có đuôi, không thêm khói/lửa
+    let d = this.trailD[i]! + Math.hypot(x - p.x, y - p.y)
+    const cx = Math.cos(rot), cy = Math.sin(rot)
+    for (let n = 0; d >= TRAIL_STEP && n < TRAIL_MAX_PER_CALL; n++, d -= TRAIL_STEP) {
+      const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
+      this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
+      if (!streak) this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)   // đạn có quầng lửa SS thì bỏ lửa đuôi, chỉ để khói
+      if (streak && smoke && thick) {   // đạn SS có `trail: smoke` (đạn đơn, ảnh không thu nhỏ): thêm khói tối dày sau đuôi
+        this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
+      }
+    }
+    this.trailD[i] = d >= TRAIL_STEP ? 0 : d
+  }
+
+  /** Ghi điểm mới cho dòng ánh sáng của đạn `i` (cách điểm trước ≥ RIBBON_STEP px); `on` = false thì xoá dòng. */
+  private ribbonPush(i: number, x: number, y: number, on: boolean): void {
+    const pts = this.ribbonPts[i]!
+    let n = this.ribbonN[i]!
+    if (!on) { this.ribbonN[i] = 0; return }
+    if (n > 0 && Math.hypot(x - pts[(n - 1) * 2]!, y - pts[(n - 1) * 2 + 1]!) < RIBBON_STEP) return
+    if (n === RIBBON_N) { pts.copyWithin(0, 2); n-- }
+    pts[n * 2] = x; pts[n * 2 + 1] = y
+    this.ribbonN[i] = n + 1
+  }
+
+  /** Vẽ dòng ánh sáng neon từ nòng tới tận viên đạn (mất khi đạn nổ): mỗi lớp là MỘT nét liền (không chia đoạn nên không bị đứt nét ở chỗ nối), từ quầng rộng mờ tới lõi trắng mảnh, cộng quầng sáng quanh viên đạn. Viên lẻ dùng màu `ribbonAlt`. */
+  private drawRibbons(g: Graphics): void {
+    const a = this.shellArt
+    if (!a || a.ribbon < 0) return
+    const w = a.ribbonW
+    for (let i = 0; i < this.shellPos.length; i++) {
+      const p = this.shellPos[i]!, n = this.ribbonN[i]!
+      if (!p.visible || n === 0) continue
+      const col = i % 2 === 1 && a.ribbonAlt >= 0 ? a.ribbonAlt : a.ribbon
+      const pts = this.ribbonPts[i]!
+      for (let l = 0; l < RIBBON_LAYERS; l++) {
+        g.moveTo(pts[0]!, pts[1]!)
+        for (let j = 1; j < n; j++) g.lineTo(pts[j * 2]!, pts[j * 2 + 1]!)
+        g.lineTo(p.x, p.y)
+        g.stroke({ color: l === RIBBON_LAYERS - 1 ? 0xffffff : col, width: w * RIBBON_W[l]!, alpha: RIBBON_A[l]!, cap: 'round', join: 'round' })
+      }
+      for (let l = 0; l < 3; l++) g.circle(p.x, p.y, w * (1.9 - l * 0.55)).fill({ color: l === 2 ? 0xffffff : col, alpha: l === 2 ? 0.5 : 0.16 + l * 0.12 })   // quầng neon quanh viên đạn
+    }
+  }
+
+  /** Vân sét quanh các viên đạn điện (`arcs` trong shots.json): mỗi frame vẽ lại vài tia gấp khúc ngắn toả ra từ viên đạn nên nhìn như điện nhoáng. */
+  private drawShellArcs(glow: Graphics): void {
+    const a = this.shellArt
+    if (!a || a.arcs <= 0) return
+    for (let i = 0; i < this.shellPos.length; i++) {
+      const p = this.shellPos[i]!
+      if (!p.visible) continue
+      for (let n = 0; n < a.arcs; n++) {
+        let ang = Math.random() * Math.PI * 2
+        const rr = a.length * rnd(0.8, 1.5)
+        let cx = p.x + Math.cos(ang) * a.length * 0.2, cy = p.y + Math.sin(ang) * a.length * 0.2
+        glow.moveTo(cx, cy)
+        for (let s = 0; s < 3; s++) {
+          ang += rnd(-0.9, 0.9)
+          cx += Math.cos(ang) * rr / 3; cy += Math.sin(ang) * rr / 3
+          glow.lineTo(cx, cy)
+        }
+        glow.stroke({ color: 0xcfe8ff, width: 2.2, alpha: 0.9, join: 'round' })
+      }
+    }
+  }
+
+  /** Quầng lửa + cung gió (ảnh `streak` của xe, vd. `ss-fx.png`) sau đạn SS, hướng theo đường bay; hai lớp co giãn/lắc lệch pha để lửa luôn "động đậy". */
+  private updateFlame(i: number, x: number, y: number, rot: number, tex: Texture | null, len: number): void {
+    const f1 = this.flames[i]!, f2 = this.flames2[i]!
+    if (!tex) { f1.visible = false; f2.visible = false; return }
+    const tt = performance.now() / 1000, k = (len * FLAME_LEN) / tex.width, flip = Math.cos(rot) < 0 ? -1 : 1
+    f1.texture = f2.texture = tex
+    f1.visible = f2.visible = true
+    f1.position.set(x, y); f2.position.set(x, y)
+    f1.rotation = rot + Math.sin(tt * 31 + i) * 0.05; f2.rotation = rot + Math.sin(tt * 23 + 2 + i) * 0.07
+    f1.scale.set(k * (1 + 0.07 * Math.sin(tt * 38) + rnd(-0.03, 0.03)), k * flip * (1 + 0.14 * Math.sin(tt * 47 + 1)))
+    f2.scale.set(k * 0.9 * (1 + 0.1 * Math.sin(tt * 29 + 2)), -k * flip * 0.85 * (1 + 0.16 * Math.sin(tt * 41)))   // lật dọc, nhỏ hơn: lưỡi lửa lệch nhau
+    f1.alpha = 0.95; f2.alpha = 0.5 + 0.2 * Math.sin(tt * 35)
+  }
+
+  /** Đạn `i` (đạn xuyên đất) đang ở dưới đất hay không (do playback xét theo mask). */
+  setShellDig(i: number, under: boolean): void { if (i < this.shellDig.length) this.shellDig[i] = under }
+
+  /** Đất bụi bắn ra từ đạn xuyên đất đang chui dưới đất. */
+  digPuff(x: number, y: number, color: number | null): void {
+    this.spawn(P_DUST, x + rnd(-4, 4), y + rnd(-4, 4), rnd(-40, 40), rnd(-60, -10), rnd(0.35, 0.6), rnd(3, 6), color ?? DIRT_FALLBACK)
+  }
+
+  /** Viên đạn `i` (airGrow) bay đủ lâu: đổi sang dạng lớn (ảnh `grow` trong shots.json) + chớp sáng nhỏ. */
+  growShell(i: number, x: number, y: number): void {
+    this.shellGrown[i] = true
+    this.explosion(x, y, 22, false, null)
+  }
+
+  /** Số sát thương nhảy lên trên đầu xe tại (x, y). Mỗi phát một số; số tới gần nhau thì xếp chồng lên để không đè. */
+  damageText(x: number, y: number, amount: number): void {
+    const pop = this.pops[this.nextPop]!
+    this.nextPop = (this.nextPop + 1) % POP_POOL
+    let stack = 0
+    for (const o of this.pops) if (o !== pop && o.alive && o.age < 0.6 && Math.abs(o.text.x - x) < 70 && Math.abs(o.baseY - y) < POP_STACK * 4) stack++
+    const t = pop.text
+    t.text = String(amount)
+    pop.k = 0.8 + 0.8 * Math.min(1, amount / 600)
+    pop.baseY = y - stack * POP_STACK
+    pop.age = 0
+    pop.alive = true
+    t.position.set(x, pop.baseY)
+    t.alpha = 1
+    t.visible = true
+  }
+
   hideProjectiles(): void {
-    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false }
+    for (let i = 0; i < this.shells.length; i++) { this.shells[i]!.visible = false; this.shellSprites[i]!.visible = false; this.shellPos[i]!.visible = false; this.shellDig[i] = false; this.shellSprites[i]!.filters = []; this.ribbonN[i] = 0 }
   }
 
   /** Viên đạn đầu tiên đang hiện (camera bám theo), hoặc null. */
@@ -262,16 +438,42 @@ export class Fx {
     for (let i = 0; i < 2; i++) this.spawn(P_DUST, x + rnd(-3, 3), y - rnd(0, 3), -dirX * rnd(10, 35), -rnd(10, 30), rnd(0.35, 0.6), rnd(2.5, 4.5), 0xc9b08a)
   }
 
-  /** Tia sét giáng thẳng xuống (x, y) từ trên cao. */
-  bolt(x: number, y: number): void {
+  /** Tia sét giáng xuống (x, y) từ (x0, y0) (không có thì thẳng từ trên cao): đường gấp khúc dày ba lớp (quầng xanh, thân xanh sáng, lõi trắng) + các nhánh rẽ ra hai bên (vân sét). */
+  bolt(x: number, y: number, x0?: number, y0?: number): void {
     const g = new Graphics()
-    let cx = x + 10
-    g.moveTo(cx, y - BOLT_HEIGHT)
-    for (let i = 1; i <= 12; i++) {
-      cx = i === 12 ? x : x + (((i * 7) % 5) - 2) * 9
-      g.lineTo(cx, y - BOLT_HEIGHT + (BOLT_HEIGHT * i) / 12)
+    const sx = x0 ?? x + 10, sy = y0 ?? y - BOLT_HEIGHT
+    const dx = x - sx, dy = y - sy, len = Math.hypot(dx, dy) || 1
+    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux          // hướng tia và pháp tuyến
+    const segs = Math.max(10, Math.round(len / 45))
+    const px: number[] = [sx], py: number[] = [sy]
+    for (let i = 1; i <= segs; i++) {
+      const k = i / segs, off = i === segs ? 0 : rnd(-16, 16)
+      px.push(sx + dx * k + nx * off); py.push(sy + dy * k + ny * off)
     }
-    g.stroke({ color: 0xcfe8ff, width: 6, join: 'round' })
+    const strokePath = (xs: number[], ys: number[], color: number, width: number, alpha: number): void => {
+      g.moveTo(xs[0]!, ys[0]!)
+      for (let i = 1; i < xs.length; i++) g.lineTo(xs[i]!, ys[i]!)
+      g.stroke({ color, width, join: 'round', cap: 'round', alpha })
+    }
+    // nhánh rẽ: từ các đỉnh gấp khúc, lệch 25–55° so với hướng tia, dài 40–130 px, gấp khúc 3 đoạn, thưa dần về phía chạm
+    const branches: { xs: number[]; ys: number[] }[] = []
+    for (let i = 2; i < segs - 1; i += 2) {
+      if (Math.random() < 0.2) continue
+      const side = Math.random() < 0.5 ? -1 : 1, ang = side * rnd(0.45, 0.95), blen = rnd(40, 130)
+      const ca = Math.cos(ang), sa = Math.sin(ang)
+      const bx = ux * ca - uy * sa, by = ux * sa + uy * ca        // hướng nhánh
+      const xs = [px[i]!], ys = [py[i]!]
+      for (let n = 1; n <= 3; n++) { xs.push(xs[n - 1]! + bx * blen / 3 + rnd(-7, 7) * nx); ys.push(ys[n - 1]! + by * blen / 3 + rnd(-7, 7) * ny) }
+      branches.push({ xs, ys })
+    }
+    for (const b of branches) strokePath(b.xs, b.ys, 0x7fb8ff, 7, 0.35)
+    strokePath(px, py, 0x6fb0ff, 24, 0.28)
+    strokePath(px, py, 0x9fd0ff, 12, 0.6)
+    for (const b of branches) strokePath(b.xs, b.ys, 0xe8f4ff, 2.5, 0.95)
+    strokePath(px, py, 0xffffff, 5.5, 1)
+    // chớp sáng tại điểm chạm
+    g.circle(x, y, 26).fill({ color: 0xbfe0ff, alpha: 0.5 })
+    g.circle(x, y, 11).fill({ color: 0xffffff, alpha: 0.9 })
     this.container.addChild(g)
     this.bolts.push({ g, age: 0 })
     this.shake = Math.max(this.shake, 6)
@@ -387,6 +589,8 @@ export class Fx {
     back.clear()
     fire.clear()
     glow.clear()
+    this.drawShellArcs(glow)
+    this.drawRibbons(fire)
     for (let i = this.booms.length - 1; i >= 0; i--) {
       const b = this.booms[i]!
       b.age += dt
@@ -461,6 +665,16 @@ export class Fx {
       b.age += dt
       if (b.age >= BOLT_S) { b.g.destroy(); this.bolts.splice(i, 1); continue }
       b.g.alpha = 1 - b.age / BOLT_S
+    }
+    for (const o of this.pops) {
+      if (!o.alive) continue
+      o.age += dt
+      if (o.age >= POP_S) { o.alive = false; o.text.visible = false; continue }
+      const k = o.age / POP_S, t = o.text
+      t.y = o.baseY - POP_RISE * (1 - (1 - k) * (1 - k))
+      t.alpha = k < 0.65 ? 1 : (1 - k) / 0.35
+      const pop = o.age < 0.12 ? 1.35 - 0.35 * (o.age / 0.12) : 1       // nảy to lúc mới hiện
+      t.scale.set(o.k * pop)
     }
     this.shake = Math.max(0, this.shake - dt * 30)
     this.shakeX = this.shake > 0 ? (Math.random() * 2 - 1) * this.shake : 0

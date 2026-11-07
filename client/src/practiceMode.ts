@@ -1,4 +1,4 @@
-import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type MatchState, type PlayerState, type ShotSlot, type Wind } from '@gunb/shared'
+import { ALL_MOBILE_IDS as MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type MatchState, type PlayerState, type ShotSlot, type Wind } from '@gunb/shared'
 import { getShotArt, getShotSfx, preloadShotArt } from './shotArt'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
@@ -38,10 +38,10 @@ export class PracticeMode implements Mode {
     ctx.world.addChildAt(this.practice.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     const s = this.practice.shooter
     const player = {
-      id: s.id, name: 'Bạn', team: 0, mobileId: s.mobileId, hp: 100, maxHp: 100, aimAngle: 45,
+      id: s.id, name: 'Bạn', team: 0, mobileId: s.mobileId, hp: 100, maxHp: 100, shield: 0, maxShield: 0, aimAngle: 45,
       body: { x: s.x, y: s.y, radius: s.radius, facing: 1, tilt: 0, alive: true },
     } as unknown as PlayerState
-    this.fakeMatch = { players: [player], turnPlayerId: s.id, phase: 'aiming' } as unknown as MatchState
+    this.fakeMatch = { players: [player], turnPlayerId: s.id, phase: 'aiming', mines: [] } as unknown as MatchState
     ctx.hud.setVisible(true)
     ctx.hud.setHelp(HELP)
     ctx.hud.setWind(this.wind)
@@ -79,7 +79,11 @@ export class PracticeMode implements Mode {
     aim.locked = true
     this.views?.fireAnim(practice.shooter.id)
     this.playback = new ShotPlayback(result, ctx.view, ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => practice.applyDamage(id, hpAfter),
+      onDamage: (id, amount, hpAfter) => {
+        practice.applyDamage(id, hpAfter)
+        const v = practice.vehicles.find(t => t.id === id)
+        if (v) ctx.fx.damageText(v.x, v.y - v.radius - 36, amount)
+      },
     }, getShotArt(MOBILE_IDS[this.mobileIdx]!, slot), getShotSfx(MOBILE_IDS[this.mobileIdx]!, slot))
   }
 
@@ -93,6 +97,7 @@ export class PracticeMode implements Mode {
     const pb = this.fakeMatch.players[0]!
     pb.aimAngle = aim.angle; pb.body.facing = aim.facing; pb.body.tilt = practice.tilt
     pb.hp = practice.shooter.hp
+    this.views?.setCharge(aim.charging ? practice.shooter.id : -1, aim.power / 100)
     this.views?.update(dt, this.fakeMatch, NO_HP)
     ctx.hud.setAim(aim.angle, aim.power, aim.lastPower)
     this.shotBar.update(TUNING.mobiles[MOBILE_IDS[this.mobileIdx]!]!, aim.slot, 100, 100)

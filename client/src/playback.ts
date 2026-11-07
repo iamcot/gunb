@@ -20,9 +20,12 @@ export class ShotPlayback {
   private ahead = 0          // con trỏ nhìn trước sự kiện: vệ tinh hiện ra SAT_LEAD_S s trước tia laser
   private done = false
   private readonly cursor: number[]
+  private readonly art: ShotArt | null
+  private anyDig = false
 
   constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks, art: ShotArt | null = null, private readonly sfx: ShotSfx | null = null) {
     this.cursor = result.paths.map(() => 0)
+    this.art = art
     fx.setShellArt(art)
     audio.fire(sfx?.fire)
     const p0 = result.paths[0]
@@ -47,18 +50,22 @@ export class ShotPlayback {
         case 'carve': this.view.carve(e.x, e.y, e.r); break
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
-        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
+        case 'bolt': this.fx.bolt(e.x, e.y, e.x0, e.y0); audio.bolt(this.sfx?.bolt); break
+        case 'grow': this.fx.growShell(e.shell, e.x, e.y); break
         case 'beam': this.fx.beam(e.x, e.y, e.w, e.sky, e.x0, e.y0); audio.beam(this.sfx?.beam); this.beamT = e.t; break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         case 'teleport': this.fx.soulBurst(e.x, e.y); this.hooks.onTeleport?.(e.x, e.y); break
         default: break
       }
     }
+    this.anyDig = false
     for (let k = 0; k < this.result.paths.length; k++) this.placeShell(k)
+    if (this.art?.dig) audio.digLoopSet(this.anyDig, this.sfx?.dig)
     if (this.t >= this.result.endT && this.ev >= evs.length) {
       this.tail += dt
       if (this.tail >= 0.6 && !this.fx.busy) {
         this.fx.hideProjectiles()
+        audio.digLoopSet(false)
         this.hashMatches = this.view.mask.hash() === this.result.terrainHashAfter
         if (!this.hashMatches) console.warn('[playback] hash mask lệch so với kết quả mô phỏng')
         this.done = true
@@ -80,6 +87,12 @@ export class ShotPlayback {
     const f = t1 > t0 ? (this.t - t0) / (t1 - t0) : 0
     const x0 = path[i * 3 + 1] as number, y0 = path[i * 3 + 2] as number
     const x1 = path[(i + 1) * 3 + 1] as number, y1 = path[(i + 1) * 3 + 2] as number
-    this.fx.setProjectile(k, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, true, Math.atan2(y1 - y0, x1 - x0))
+    const x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f
+    if (this.art?.dig) {   // đạn xuyên đất: đang nằm trong đất thì tối/nhòe/rung + bụi đất
+      const under = this.view.mask.isSolid(x, y)
+      this.fx.setShellDig(k, under)
+      if (under) { this.anyDig = true; if (Math.random() < 0.5) this.fx.digPuff(x, y, this.view.sampleColor(x, y, 6)) }
+    }
+    this.fx.setProjectile(k, x, y, true, Math.atan2(y1 - y0, x1 - x0))
   }
 }

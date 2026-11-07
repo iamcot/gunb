@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TerrainMask } from './terrain/mask'
-import { applyAction, createMatch, currentPlayer, isSettled, type MatchState } from './match'
+import { applyAction, createMatch, currentPlayer, isSettled, windForRound, type MatchState } from './match'
 import { applySnapshot, snapshotOf } from './netState'
 import { createDefaultTuning } from './tuning'
 import { sanitizeItems, type ItemId } from './items'
@@ -62,6 +62,11 @@ describe('item', () => {
     const a = make(['windShield'])
     applyAction(a.s, { t: 'item', id: 0, slot: 0 }, { mask: a.mask })
     expect(a.s.wind).toEqual({ x: 0, y: 0 })
+    // lượt sau (cùng vòng) gió về như cũ của vòng
+    applyAction(a.s, { t: 'skip', id: 0 }, { mask: a.mask })
+    applyAction(a.s, { t: 'endTurn' }, { mask: a.mask })
+    expect(a.s.roundNo).toBe(1)
+    expect(a.s.wind).toEqual(windForRound(a.s.seed, 1))
     const b = make(['fastTurn'])
     const d0 = currentPlayer(b.s).delay
     applyAction(b.s, { t: 'item', id: 0, slot: 0 }, { mask: b.mask })

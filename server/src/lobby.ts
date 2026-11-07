@@ -9,6 +9,7 @@ import { listMapIds, loadMap } from './mapLoader'
 export const LOAD_TIMEOUT_S = 45
 const MAX_NAME = 20
 const MAX_CHAT = 200
+const RESULTS_HOLD_S = 3      // hết trận: phòng giữ trạng thái "Kết thúc" chừng này giây rồi về chờ
 
 /** Cổng gửi nhị phân tối thiểu để test không cần ws thật. */
 export interface Conn { send(data: Uint8Array): void; close(): void }
@@ -316,7 +317,7 @@ export class Lobby {
 
   private onMatchEnd(room: Room): void {
     room.status = 'ended'
-    // cho client xem bảng kết quả vài giây, sau đó đưa cả phòng về sảnh chờ
+    // giữ phòng ở trạng thái 'ended' một lúc (người vào lại vẫn nhận trận), rồi đưa phòng về chờ; client tự giữ bảng kết quả tới khi người chơi bấm Về phòng chờ
     setTimeout(() => {
       if (!this.rooms.has(room.id)) return
       room.runner = null
@@ -327,7 +328,7 @@ export class Lobby {
       if (!room.members.some(m => m.pid === room.hostPid)) room.hostPid = room.members.find(m => !m.bot)!.pid
       this.pushRoom(room)
       this.broadcastList()
-    }, 8000).unref?.()
+    }, RESULTS_HOLD_S * 1000).unref?.()
     this.pushRoom(room)
   }
 

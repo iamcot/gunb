@@ -29,7 +29,7 @@ export interface ShotInput {
   fire: FireCmd
   /** Bỏ tính hash địa hình sau phát bắn (terrainHashAfter = 0). Dành cho bot thử nhiều phát bắn, nơi chỉ cần sát thương. */
   skipHash?: boolean
-  /** Sự kiện thời tiết của lượt này (từ `weatherForTurn`), hoặc không có. */
+  /** Sự kiện thời tiết của vòng này (từ `weatherForRound`), hoặc không có. */
   weather?: Weather | null
   /** Thay đạn của ô `fire.slot` bằng đạn này (item Dịch chuyển). */
   shotDef?: ShotDef

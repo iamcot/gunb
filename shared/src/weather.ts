@@ -1,7 +1,7 @@
 import { hashSeed, mulberry32 } from './math'
 
 /**
- * Sự kiện thời tiết của một lượt: suy ra hoàn toàn từ (seed trận, số lượt, kích thước bản đồ) nên server, client và bot đều tính ra cùng kết quả.
+ * Sự kiện thời tiết của một vòng: suy ra hoàn toàn từ (seed trận, số vòng, kích thước bản đồ) nên server, client và bot đều tính ra cùng kết quả.
  *  - whirl (Cột lốc): đạn đi qua cột (|x - x0| ≤ hw) bị nâng lên (gia tốc lên `power` px/s²)
  *  - storm (Mây giông): đạn đi vào khung mây thì, một lần mỗi phát bắn, có tia sét đánh xuống mặt đất dưới đạn
  *  - mirror (Gương nước): trong dải |x - x0| ≤ hw thành phần gió tác dụng lên đạn bị đảo chiều
@@ -44,8 +44,8 @@ export function defaultWeatherTuning(): WeatherTuning {
   }
 }
 
-export function weatherForTurn(seed: number, turnNo: number, mapW: number, mapH: number, t: WeatherTuning): Weather | null {
-  const rng = mulberry32(hashSeed(`weather:${seed}:${turnNo}`))
+export function weatherForRound(seed: number, roundNo: number, mapW: number, mapH: number, t: WeatherTuning): Weather | null {
+  const rng = mulberry32(hashSeed(`weather:${seed}:${roundNo}`))
   if (rng() >= t.chance) return null
   const kind = WEATHER_KINDS[Math.min(WEATHER_KINDS.length - 1, Math.floor(rng() * WEATHER_KINDS.length))]!
   const between = (a: number, b: number): number => Math.round(a + rng() * (b - a))

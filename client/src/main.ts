@@ -1,4 +1,5 @@
 import { Application, Container } from 'pixi.js'
+import './ui/fonts.css'
 import { GAME_NAME, parseMap, type BotLevel } from '@gunb/shared'
 import { audio } from './audio'
 import { Background } from './background'

@@ -14,7 +14,7 @@
     radial-gradient(ellipse 30% 9% at 80% 14%, #ffffffaa 60%, transparent 62%),
     radial-gradient(ellipse 60% 18% at 50% 108%, var(--grass) 70%, transparent 71%),
     linear-gradient(#5aa4e0, #a9d6f6 70%, #e7f4ff);
-  font: 600 14px/1.35 "Trebuchet MS", "Segoe UI", system-ui, sans-serif; color: var(--ink);
+  font: 600 14px/1.35 "Nunito", "Segoe UI", system-ui, sans-serif; color: var(--ink);
   user-select: none;
 }
 .gs * { box-sizing: border-box; }
@@ -207,6 +207,33 @@ img.empty { display: none; }
   .gs-mid .vs { display: none; }
   .gs-lrows { grid-template-columns: 1fr; }
 }
+
+/* bảng kết quả cuối trận (client/results.ts): nằm trên màn chơi, nền mờ thay cho ảnh sảnh */
+.gs.gs-end { background: #23598c99; z-index: 12; animation: ge-in .25s ease-out; }
+@keyframes ge-in { from { opacity: 0; } to { opacity: 1; } }
+.ge-card { width: min(860px, calc(100vw - 24px)); max-height: calc(100vh - 24px); display: flex; flex-direction: column; background: var(--cream); border: 4px solid var(--earth); border-radius: 18px;
+  box-shadow: 0 8px 0 var(--earth-d), 0 18px 40px #0005; overflow: hidden; animation: ge-pop .35s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes ge-pop { from { transform: scale(.85) translateY(20px); } to { transform: none; } }
+.ge-hd { text-align: center; padding: 10px 16px 8px; border-bottom: 4px solid var(--earth); background: linear-gradient(var(--sky), var(--sky-d)); color: #fff; }
+.ge-card.win .ge-hd { background: linear-gradient(#ffc04d, #f59e0b); }
+.ge-card.lose .ge-hd { background: linear-gradient(#94a3b8, #64748b); }
+.ge-card.t1 .ge-hd { background: linear-gradient(var(--coral), var(--coral-d)); }
+.ge-title { font-size: 36px; font-weight: 900; line-height: 1.1; text-shadow: 0 3px 0 var(--earth), 0 0 12px #0004; }
+.ge-sub { font-size: 14px; font-weight: 800; opacity: .95; text-shadow: 0 1px 0 #0004; }
+.ge-bd { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; overflow-y: auto; }
+.ge-bd .gs-team { overflow: visible; }
+.ge-bd .gs-team.won h4 { box-shadow: 0 0 0 3px #ffe08a; }
+.ge-row { max-height: none; min-height: 84px; }
+.ge-row.dead .pic img { filter: grayscale(.85) brightness(.9); opacity: .75; }
+.ge-row .gs-badge { margin-right: 4px; }
+.ge-mvp { font-style: normal; color: #f59e0b; text-shadow: 0 1px 0 var(--earth); }
+.ge-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 5px; }
+.ge-nums span { background: #ffffffb0; border-radius: 6px; padding: 1px 2px; font-size: 10px; font-weight: 700; color: #6b5440; text-align: center; line-height: 1.2; }
+.ge-nums b { display: block; font-size: 15px; font-weight: 900; color: var(--sky-dd); }
+.ge-ft .gs-btn { font-weight: 900; }
+.ge-ft { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 0 16px 14px; }
+.ge-note { flex: 1; color: var(--earth); font-size: 13px; }
+@media (max-width: 860px) { .ge-bd { grid-template-columns: 1fr; } .ge-title { font-size: 28px; } }
 
 /* ---------- item (phòng chờ): tab thứ hai của ô chọn xe ---------- */
 .gs-ptabs { display: flex; gap: 4px; margin-bottom: 8px; }

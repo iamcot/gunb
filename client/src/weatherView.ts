@@ -99,7 +99,7 @@ export class WeatherView {
     ;(document.getElementById('hud-top') ?? document.body).prepend(this.label)   // nằm trên vòng gió, đẩy vòng gió xuống (hud.ts)
   }
 
-  /** Gọi mỗi frame với thời tiết hiện tại của lượt; chỉ cập nhật chữ khi đổi. */
+  /** Gọi mỗi frame với thời tiết hiện tại của vòng; chỉ cập nhật chữ khi đổi. */
   set(w: Weather | null, key: string): void {
     if (key === this.lastKey) return
     this.lastKey = key

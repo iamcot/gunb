@@ -493,10 +493,13 @@ export class OnlineFlow {
       return
     }
     if (room.status === 'lobby') {
+      // vừa hết trận: để người chơi xem hết bảng kết quả, họ bấm Về phòng chờ (hoặc hết giờ đếm) thì mới chuyển
+      if (this.mode?.holdingResults) { this.mode.roomReady(); return }
       if (this.mode) this.leaveGame()
       if (this.screen !== 'room') this.show('room')
       else this.renderRoom()
     } else if (room.status === 'loading') {
+      if (this.mode) this.leaveGame()   // chủ phòng đã bắt đầu ván mới khi mình còn xem bảng kết quả
       if (this.screen !== 'loading' || this.loadingRoom !== room.id) void this.startLoading(room)
       else this.renderLoading()
     }
@@ -504,7 +507,9 @@ export class OnlineFlow {
   }
 
   private enterGame(start: MatchStartMsg, mask: TerrainMask): void {
-    this.mode = new OnlineMode(this.host.ctx, this.net!, start, mask, () => { this.leaveGame(); this.show('lobby'); this.net?.send({ t: MsgType.ListRooms }) })
+    this.mode = new OnlineMode(this.host.ctx, this.net!, start, mask,
+      () => { this.leaveGame(); this.show('lobby'); this.net?.send({ t: MsgType.ListRooms }) },
+      () => { this.leaveGame(); if (this.room?.status === 'lobby') this.show('room'); else this.show('lobby') })
     this.host.startMode(this.mode)
     this.show('game')
   }

@@ -8,11 +8,11 @@
   --h-gold: #ffd25e;
   --h-ink: #3a2717;
   --tb-h: 58px;
-  --h-font: 700 14px/1.25 "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --h-font: 700 14px/1.25 "Nunito", "Segoe UI", system-ui, sans-serif;
 }
 
 /* ---------- nút góc trên trái (chữ game, Menu, Âm thanh) ---------- */
-#title { font: 900 18px/1 "Trebuchet MS", "Segoe UI", system-ui, sans-serif; color: #fff; letter-spacing: .5px;
+#title { font: 900 18px/1 "Nunito", "Segoe UI", system-ui, sans-serif; color: #fff; letter-spacing: .5px;
   text-shadow: 0 2px 0 var(--h-earth), 0 0 6px #0004; top: 10px; }
 #menubtn { left: 122px !important; }
 #mutebtn { left: 226px !important; }

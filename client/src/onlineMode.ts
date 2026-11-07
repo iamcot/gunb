@@ -8,7 +8,7 @@ import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import type { NetClient } from './net'
-import { resultsHtml } from './results'
+import { RESULTS_DELAY_S, resultsHtml, showResults } from './results'
 import { ShotPlayback } from './playback'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
@@ -20,6 +20,7 @@ const EASE = 25               // độ mượt khi kéo vị trí hiển thị v
 const SNAP_DIST = 150         // lệch hơn mức này thì nhảy thẳng (xe rơi, vào lại)
 const INPUT_MIN_GAP = 0.05    // s giữa hai Input gửi đi
 const INPUT_KEEPALIVE = 0.25
+const RESULTS_AUTO_BACK_S = 15 // bảng kết quả: tự về phòng chờ sau chừng này giây
 
 /**
  * Chế độ online: server giữ trận thật; client giữ một bản sao (MatchState) cập nhật bằng Snapshot, phát lại Shot,
@@ -51,10 +52,14 @@ export class OnlineMode implements Mode {
   private lastDir = -9
   private lastAngle = -9
   private overlay: HTMLElement | null = null
+  private endWait = RESULTS_DELAY_S
+  private backT = RESULTS_AUTO_BACK_S
+  private roomBack = false   // server đã đưa phòng về trạng thái chờ
+  private wantBack = false   // người chơi đã bấm Về phòng chờ, đợi server
   private stats: PlayerStats[] | null = null
   private readonly players: MatchPlayerInfo[]
 
-  constructor(private readonly ctx: GameCtx, private readonly net: NetClient, private readonly start: MatchStartMsg, mask: TerrainMask, private readonly onLeave: () => void) {
+  constructor(private readonly ctx: GameCtx, private readonly net: NetClient, private readonly start: MatchStartMsg, mask: TerrainMask, private readonly onLeave: () => void, private readonly onBack: () => void) {
     this.players = start.players
     this.match = createMatch({
       seed: start.seed, mask: mask.clone(), spawnZones: ctx.map.spawnZones,
@@ -181,8 +186,8 @@ export class OnlineMode implements Mode {
       if (this.pendingMask) { ctx.view.applyMask(this.pendingMask); this.pendingMask = null }
     }
     if (!this.playback) this.shownHp.clear()
-    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
-    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
+    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
@@ -192,7 +197,27 @@ export class OnlineMode implements Mode {
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
     ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
     this.shotBar.setVisible(m.phase !== 'ended')
-    if (m.phase === 'ended' && !this.playback && !this.overlay) this.showEnd()
+    // hết trận: chờ phát bắn cuối + hồn thoát xác bay xong rồi mới bung bảng kết quả
+    if (m.phase === 'ended' && !this.playback && !this.overlay && !this.vehicles.dying && (this.endWait -= dt) <= 0) this.showEnd()
+    if (this.overlay) this.tickBack(dt)
+  }
+
+  /** Đã hết trận và chưa rời màn chơi: phòng về trạng thái chờ thì không kéo người chơi ra ngay mà để họ xem hết bảng kết quả. */
+  get holdingResults(): boolean { return this.match.phase === 'ended' }
+
+  /** Server báo phòng đã về trạng thái chờ. */
+  roomReady(): void {
+    this.roomBack = true
+    if (this.wantBack) this.onBack()
+  }
+
+  private tickBack(dt: number): void {
+    const btn = this.overlay!.querySelector<HTMLButtonElement>('#back')
+    if (!btn) return
+    if (this.wantBack) { btn.textContent = 'Đang về phòng…'; btn.disabled = true; return }
+    this.backT -= dt
+    if (this.backT <= 0) { this.wantBack = true; if (this.roomBack) { this.onBack(); return } }
+    btn.textContent = `Về phòng chờ (${Math.max(0, Math.ceil(this.backT))})`
   }
 
   private sendInput(dt: number): void {
@@ -207,11 +232,14 @@ export class OnlineMode implements Mode {
 
   private showEnd(): void {
     const m = this.match
-    const el = document.createElement('div')
-    el.className = 'overlay'
-    el.innerHTML = `<div class="panel" style="max-width:92vw">${resultsHtml(m, this.stats)}<p>Tự về phòng chờ (giữ nguyên đội) sau vài giây…</p><div class="row"><button id="leave">Rời phòng</button></div></div>`
+    const you = this.start.youId
+    const el = showResults(resultsHtml(m, this.stats, { team: m.players[you]!.team, id: you },
+      [{ id: 'leave', label: 'Rời phòng' }, { id: 'back', label: `Về phòng chờ (${RESULTS_AUTO_BACK_S})`, cls: 'go big' }], 'Giữ nguyên đội và xe khi về phòng'))
     el.querySelector('#leave')!.addEventListener('click', () => { this.net.send({ t: MsgType.LeaveRoom }); this.onLeave() })
-    document.body.appendChild(el)
+    el.querySelector('#back')!.addEventListener('click', () => {
+      this.wantBack = true
+      if (this.roomBack) this.onBack()
+    })
     this.overlay = el
   }
 

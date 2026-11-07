@@ -1,5 +1,5 @@
 import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type ShotSlot, type Wind } from '@gunb/shared'
-import { getShotArt, preloadShotArt } from './shotArt'
+import { getShotArt, getShotSfx, preloadShotArt } from './shotArt'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
@@ -62,7 +62,7 @@ export class PracticeMode implements Mode {
     aim.locked = true
     this.playback = new ShotPlayback(result, ctx.view, ctx.fx, {
       onDamage: (id, _amount, hpAfter) => practice.applyDamage(id, hpAfter),
-    }, getShotArt(MOBILE_IDS[this.mobileIdx]!, slot))
+    }, getShotArt(MOBILE_IDS[this.mobileIdx]!, slot), getShotSfx(MOBILE_IDS[this.mobileIdx]!, slot))
   }
 
   update(dt: number): void {

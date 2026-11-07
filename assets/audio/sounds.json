@@ -1,0 +1,4 @@
+{
+  "music": { "lobby": "lobby.ogg", "battle": "battle.ogg" },
+  "sfx": { "turn": "turn.ogg", "hit": "hit.ogg" }
+}

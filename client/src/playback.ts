@@ -1,5 +1,5 @@
 import type { ShotResult } from '@gunb/shared'
-import { audio } from './audio'
+import { audio, type ShotSfx } from './audio'
 import type { Fx } from './fx'
 import type { ShotArt } from './shotArt'
 import type { TerrainView } from './terrainView'
@@ -17,10 +17,10 @@ export class ShotPlayback {
   private done = false
   private readonly cursor: number[]
 
-  constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks, art: ShotArt | null = null) {
+  constructor(private readonly result: ShotResult, private readonly view: TerrainView, private readonly fx: Fx, private readonly hooks: PlaybackHooks, art: ShotArt | null = null, private readonly sfx: ShotSfx | null = null) {
     this.cursor = result.paths.map(() => 0)
     fx.setShellArt(art)
-    audio.fire()
+    audio.fire(sfx?.fire)
     const p0 = result.paths[0]
     if (p0 && p0.length >= 6) fx.muzzle(p0[1] as number, p0[2] as number, Math.atan2((p0[5] as number) - (p0[2] as number), (p0[4] as number) - (p0[1] as number)))
   }
@@ -35,11 +35,11 @@ export class ShotPlayback {
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
       switch (e.kind) {
-        case 'explode': this.fx.explosion(e.x, e.y, e.r, true, this.view.sampleColor(e.x, e.y, e.r)); audio.explode(e.r); break
+        case 'explode': this.fx.explosion(e.x, e.y, e.r, true, this.view.sampleColor(e.x, e.y, e.r)); audio.explode(e.r, this.sfx?.boom); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
-        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(); break
+        case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         default: break
       }

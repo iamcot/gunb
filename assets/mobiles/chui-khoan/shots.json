@@ -2,15 +2,21 @@
   "shots": [
     {
       "file": "shot-1.png",
-      "length": 14
+      "length": 14,
+      "fire": "fire-1.ogg",
+      "boom": "boom-1.ogg"
     },
     {
       "file": "shot-2.png",
-      "length": 18
+      "length": 18,
+      "fire": "fire-2.ogg",
+      "boom": "boom-2.ogg"
     },
     {
       "file": "shot-3.png",
-      "length": 28
+      "length": 28,
+      "fire": "fire-3.ogg",
+      "boom": "boom-3.ogg"
     }
   ]
 }

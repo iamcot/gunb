@@ -1,4 +1,4 @@
-import { Container, Graphics, Texture, TilingSprite } from 'pixi.js'
+import { Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
 import { WEATHER_KINDS, WEATHER_NAMES, type Weather, type WeatherKind } from '@gunb/shared'
 
 const DESC: Record<WeatherKind, string> = {
@@ -42,6 +42,14 @@ for (const d of Object.values(STRIPS)) {
   img.src = d.url
 }
 
+/** Mây giông + tia sét bằng ảnh (thiếu file thì vẽ bằng code). Mây rộng CLOUD_ART_W × bề ngang khung mây; sét dài BOLT_ART_LEN px. */
+const CLOUD_ART_W = 1.3, BOLT_ART_LEN = 330
+let cloudTex: Texture | null = null, boltTex: Texture | null = null
+{
+  const c = new Image(); c.onload = () => { cloudTex = Texture.from(c) }; c.src = '/ui/weather/storm-cloud.png'
+  const b = new Image(); b.onload = () => { boltTex = Texture.from(b) }; b.onerror = () => { /* chưa có ảnh sét: vẽ bằng code */ }; b.src = '/ui/weather/storm-bolt.png'
+}
+
 const ORANGE = 0xfb923c, PURPLE = 0xa78bfa
 const LIGHTNING_EVERY = 2.4   // s giữa hai tia sét trang trí của Mây giông
 const LIGHTNING_LEN = 0.28    // s mỗi lần loé
@@ -61,6 +69,8 @@ export class WeatherView {
   private readonly g = new Graphics()
   private readonly label: HTMLElement
   private stripArt: TilingSprite | null = null
+  private cloud: Sprite | null = null
+  private bolt: Sprite | null = null
   private w: Weather | null = null
   private t = 0
   private lastKey = ''
@@ -92,6 +102,8 @@ export class WeatherView {
     const g = this.g, w = this.w
     g.clear()
     if (this.stripArt) this.stripArt.visible = false
+    if (this.cloud) this.cloud.visible = false
+    if (this.bolt) this.bolt.visible = false
     if (!w) return
     const strip = STRIPS[w.kind]
     if (strip?.tex) { this.drawStripArt(w, strip, strip.tex); return }
@@ -156,7 +168,15 @@ export class WeatherView {
     const t = this.t, { x, y, hw, hh } = w
     const cycle = Math.floor(t / LIGHTNING_EVERY), inCycle = t - cycle * LIGHTNING_EVERY
     const flash = inCycle < LIGHTNING_LEN ? 1 - inCycle / LIGHTNING_LEN : 0
-    const bottom = y + hh * 0.7
+    let bottom = y + hh * 0.7
+    if (cloudTex) {
+      if (!this.cloud) { this.cloud = new Sprite(cloudTex); this.cloud.anchor.set(0.5, 0.5); this.container.addChild(this.cloud) }
+      const c = this.cloud, cw = hw * 2 * CLOUD_ART_W, k = cw / cloudTex.width
+      c.visible = true
+      c.scale.set(k)
+      c.position.set(x, y + Math.sin(t * 0.9) * 4)
+      bottom = y + cloudTex.height * k * 0.38
+    }
     // mưa
     const RAIN = 46, rainLen = 520
     for (let i = 0; i < RAIN; i++) {
@@ -165,8 +185,15 @@ export class WeatherView {
       const a = 0.45 * (1 - (ry - bottom) / rainLen)
       g.moveTo(rx, ry).lineTo(rx - 4, ry + 16).stroke({ color: 0xbfd9f2, width: 2, alpha: a })
     }
-    // tia sét (đường gấp khúc cố định theo số lần loé)
-    if (flash > 0) {
+    // tia sét: ảnh nếu có, không thì đường gấp khúc cố định theo số lần loé
+    if (flash > 0 && boltTex) {
+      if (!this.bolt) { this.bolt = new Sprite(boltTex); this.bolt.anchor.set(0.5, 0); this.container.addChildAt(this.bolt, 0) }
+      const b = this.bolt, k = BOLT_ART_LEN / boltTex.height
+      b.visible = true
+      b.scale.set(k * (hash01(cycle * 7) < 0.5 ? -1 : 1), k)
+      b.position.set(x + (hash01(cycle) - 0.5) * hw, bottom - 10)
+      b.alpha = flash
+    } else if (flash > 0) {
       let bx = x + (hash01(cycle) - 0.5) * hw, by = bottom
       g.moveTo(bx, by)
       for (let k = 1; k <= BOLT_SEGS; k++) { bx += (hash01(cycle * 31 + k) - 0.5) * 46; by += 26 + hash01(cycle * 17 + k) * 16; g.lineTo(bx, by) }
@@ -176,6 +203,7 @@ export class WeatherView {
       for (let k = 1; k <= BOLT_SEGS; k++) { bx += (hash01(cycle * 31 + k) - 0.5) * 46; by += 26 + hash01(cycle * 17 + k) * 16; g.lineTo(bx, by) }
       g.stroke({ color: 0xffffff, width: 2.5, alpha: flash, join: 'round', cap: 'round' })
     }
+    if (cloudTex) return
     // mây: tầng tối dưới, tầng sáng trên, viền nâu như art của game
     const PUFFS = 7
     for (let i = 0; i < PUFFS; i++) {

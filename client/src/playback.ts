@@ -14,6 +14,7 @@ export class ShotPlayback {
   private t = 0
   private ev = 0
   private tail = 0
+  private beamT = -1         // t của tia laser vừa phát: vụ nổ đáy tia cùng t không phát thêm tiếng boom (tiếng beam đã gồm cả tiếng nổ)
   private ahead = 0          // con trỏ nhìn trước sự kiện: vệ tinh hiện ra SAT_LEAD_S s trước tia laser
   private done = false
   private readonly cursor: number[]
@@ -40,12 +41,12 @@ export class ShotPlayback {
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
       switch (e.kind) {
-        case 'explode': this.fx.explosion(e.x, e.y, e.r, true, this.view.sampleColor(e.x, e.y, e.r)); audio.explode(e.r, this.sfx?.boom); break
+        case 'explode': this.fx.explosion(e.x, e.y, e.r, true, this.view.sampleColor(e.x, e.y, e.r)); if (e.t !== this.beamT) audio.explode(e.r, this.sfx?.boom); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
         case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
-        case 'beam': this.fx.beam(e.x, e.y, e.w); audio.beam(this.sfx?.beam); break
+        case 'beam': this.fx.beam(e.x, e.y, e.w); audio.beam(this.sfx?.beam); this.beamT = e.t; break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         default: break
       }

@@ -62,7 +62,7 @@ export class OnlineMode implements Mode {
     const n = this.match.players.length
     this.tx = new Float64Array(n); this.ty = new Float64Array(n); this.tt = new Float64Array(n)
     ctx.view.applyMask(mask)
-    this.vehicles = new VehicleViews(this.match)
+    this.vehicles = new VehicleViews(this.match, ctx.fx)
     this.weather = new WeatherView(ctx.map.height)
     ctx.world.addChildAt(this.weather.container, ctx.world.getChildIndex(ctx.view.sprite) + 1)
     ctx.world.addChildAt(this.vehicles.container, ctx.world.getChildIndex(ctx.view.sprite) + 2)
@@ -99,7 +99,7 @@ export class OnlineMode implements Mode {
     const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
-      onDamage: (id, _amount, hpAfter) => this.shownHp.set(id, hpAfter),
+      onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
     }, getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 

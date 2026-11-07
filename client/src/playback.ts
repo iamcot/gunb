@@ -21,6 +21,8 @@ export class ShotPlayback {
     this.cursor = result.paths.map(() => 0)
     fx.setShellArt(art)
     audio.fire(sfx?.fire)
+    const p0 = result.paths[0]
+    if (p0 && p0.length >= 6) fx.muzzle(p0[1] as number, p0[2] as number, Math.atan2((p0[5] as number) - (p0[2] as number), (p0[4] as number) - (p0[1] as number)))
   }
 
   get finished(): boolean { return this.done }
@@ -33,7 +35,7 @@ export class ShotPlayback {
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
       switch (e.kind) {
-        case 'explode': this.fx.explosion(e.x, e.y, e.r); audio.explode(e.r, this.sfx?.boom); break
+        case 'explode': this.fx.explosion(e.x, e.y, e.r, true, this.view.sampleColor(e.x, e.y, e.r)); audio.explode(e.r, this.sfx?.boom); break
         case 'carve': this.view.carve(e.x, e.y, e.r); break
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break

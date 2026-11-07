@@ -7,9 +7,9 @@ export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
 const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
 const ARC_GREEN = 0x4fb35a, ARC_BANDS = 16   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
-const ARC_EXTEND = 0.2, DEG = Math.PI / 180   // cung vẽ thêm 20% bề rộng dải góc ở mỗi đầu
+const ARC_EXTEND = 0.3, DEG = Math.PI / 180   // cung vẽ thêm 30% bề rộng dải góc ở mỗi đầu
 const NEEDLE_W = 46, NEEDLE_ANCHOR_X = 0.936, NEEDLE_ANCHOR_Y = 0.46   // ảnh kim: bề rộng khi vẽ (px) và toạ độ mũi trên ảnh (0..1)
-const NEEDLE_ALPHA = 0.85   // kim hơi trong suốt cho đỡ thô
+const NEEDLE_ALPHA = 0.7   // kim hơi trong suốt cho đỡ thô
 let needleTex: Texture | null = null
 void loadImage('/ui/aim-needle.png').then(img => { needleTex = Texture.from(img) }).catch(() => { /* dùng mũi tên vẽ bằng code */ })
 const NEEDLE_COLOR = 0x5ec4ff
@@ -374,8 +374,8 @@ export class VehicleViews {
         g.arc(cx, cy, rr, s0, s1).stroke({ color, width: bw + 0.6, alpha: aMax * t })
       }
     }
-    arc(r.min - ext, r.max + ext, 0xffffff, 0.5)
-    arc(r.min, r.max, ARC_GREEN, 0.6)
+    arc(r.min - ext, r.max + ext, 0xffffff, 0.3)
+    arc(r.min, r.max, ARC_GREEN, 0.4)
     for (let ang = Math.ceil(r.min / 15) * 15; ang <= r.max; ang += 15) {
       const d = aimDir(this.tmp, ang, b.facing)
       g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })

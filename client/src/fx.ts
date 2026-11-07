@@ -215,7 +215,7 @@ export class Fx {
     if (a && ga) { s.tint = ga.tint; if (ga.tex && s.texture !== ga.tex) s.texture = ga.tex }
     this.shellRot[i] = rot
     this.updateFlame(i, x, y, rot, visible ? a?.streak ?? null : null, (a?.length ?? 0) * (a?.streakScale ?? 1))
-    if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail)
+    if (a && (a.trail || a.streak !== null) && visible) this.trail(i, p, x, y, rot, a.length, a.streak !== null, a.trail, a.streakScale >= 1)
     // đạn xuyên đất đang ở dưới đất: tối, nhòe, rung
     const under = visible && this.shellDig[i] === true
     s.filters = under ? [this.shellBlur[i]!] : []
@@ -236,7 +236,7 @@ export class Fx {
   }
 
   /** Nhả khói + lửa ở đuôi viên đạn `i` theo quãng đã bay kể từ lần trước (p = vị trí cũ, chưa cập nhật). */
-  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean, smoke: boolean): void {
+  private trail(i: number, p: { x: number; y: number; visible: boolean }, x: number, y: number, rot: number, length: number, streak: boolean, smoke: boolean, thick: boolean): void {
     if (!p.visible) { this.trailD[i] = 0; return }
     if (streak && !smoke) return   // ảnh hiệu ứng SS tự có đuôi, không thêm khói/lửa
     let d = this.trailD[i]! + Math.hypot(x - p.x, y - p.y)
@@ -245,7 +245,7 @@ export class Fx {
       const tx = x - cx * length * 0.5, ty = y - cy * length * 0.5
       this.spawn(P_SMOKE, tx + rnd(-3, 3), ty + rnd(-3, 3), rnd(-8, 8) - cx * 20, rnd(-8, 8) - cy * 20, rnd(1.0, 1.5), rnd(8, 12), TRAIL_SMOKE)
       if (!streak) this.spawn(P_FIRE, tx, ty, -cx * 30, -cy * 30, 0.18, 9, FIRE_HOT)   // đạn có quầng lửa SS thì bỏ lửa đuôi, chỉ để khói
-      if (streak && smoke) {   // đạn SS có `trail: smoke`: khói tối dày sau đuôi
+      if (streak && smoke && thick) {   // đạn SS có `trail: smoke` (đạn đơn, ảnh không thu nhỏ): thêm khói tối dày sau đuôi
         this.spawn(P_SMOKE, tx - cx * 10, ty - cy * 10, -cx * 25 + rnd(-15, 15), -cy * 25 + rnd(-15, 15), rnd(0.9, 1.5), rnd(14, 22), 0x2e2822)   // khói tối dày sau đuôi
       }
     }

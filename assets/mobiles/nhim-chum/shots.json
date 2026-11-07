@@ -20,7 +20,8 @@
       "fire": "fire-3.ogg",
       "boom": "boom-3.ogg",
       "streak": "ss-fx.png",
-      "streakScale": 0.5
+      "streakScale": 0.5,
+      "trail": "smoke"
     }
   ]
 }

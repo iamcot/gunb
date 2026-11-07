@@ -169,9 +169,11 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 - Tia xoắn và boomerang tốn tick va chạm hơn; cần giữ `simulateShot` dưới 100 ms (test bot hiện có).
 - Mìn qua lượt đổi giao thức online và việc phát lại Shot nên làm sau cùng.
 
-## 6. Cần người dùng quyết
+## 6. Đã chốt (người dùng đồng ý ngày 2026-11-07)
 
-1. Đồng ý đổi kiểu dữ liệu trong `shared/` theo từng đợt (B, C) chứ?
-2. Đồng ý nhân HP/sát thương ×10 và delay ×2,5 (A0) trước mọi việc khác chứ?
-3. Bọ Lôi đổi sang xe thường, nòng phía trước; chấp nhận vẽ lại ảnh nếu rig cũ không hợp?
-4. Làm mìn nằm chờ (C3) ở cuối cùng, được không, hay muốn lên sớm?
+1. Được đổi kiểu dữ liệu trong `shared/` cho các task ⚠️ ở đợt B, C (vẫn làm từng task một, mỗi task một PR, ghi rõ kiểu nào đổi trong PR).
+2. Làm A0 (nhân HP/sát thương ×10, delay ×2,5) trước mọi việc khác.
+3. Bọ Lôi thành xe thường, nòng phía trước; vẽ lại ảnh nếu rig cũ không hợp.
+4. Mìn nằm chờ (C3) làm cuối cùng.
+
+Việc code bắt đầu từ A0, thực hiện ở thread/PR riêng, không gộp vào PR plan này.

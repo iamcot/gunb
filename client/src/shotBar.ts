@@ -43,7 +43,7 @@ export class ShotBar {
   /** Icon đạn; đạn `twin` hiện `n` viên cạnh nhau (viên thứ 2 dùng `shot-Nb.png` nếu có, không thì dùng lại ảnh chính). */
   private icon(id: string, i: number, name: string, n: number): string {
     const base = `/mobiles/${encodeURIComponent(id)}/shot-${i + 1}`
-    if (n <= 1) return `<img class="sb-icon" src="${base}.png" alt="${name}" draggable="false">`
+    if (n <= 1) return `<img class="sb-icon" src="${base}.png" alt="${name}" draggable="false" onerror="this.style.display='none'">`   // chưa có ảnh thì ẩn icon (còn tên + delay)
     let h = '<span class="sb-icons">'
     for (let k = 0; k < n; k++) h += `<img class="sb-icon" src="${base}${k === 1 ? 'b' : ''}.png" alt="${name}" draggable="false"${k === 1 ? ` onerror="this.onerror=null;this.src='${base}.png'"` : ''}>`
     return h + '</span>'

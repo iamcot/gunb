@@ -1,4 +1,4 @@
-import { MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type MatchState, type PlayerState, type ShotSlot, type Wind } from '@gunb/shared'
+import { ALL_MOBILE_IDS as MOBILE_IDS, TUNING, aimRange, type AimRange, hashSeed, makeWind, mulberry32, simulateShot, windMagnitude, type MatchState, type PlayerState, type ShotSlot, type Wind } from '@gunb/shared'
 import { getShotArt, getShotSfx, preloadShotArt } from './shotArt'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'

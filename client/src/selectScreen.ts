@@ -17,7 +17,7 @@ export class SelectScreen {
     const render = (): void => {
       const rows = picks.map((pick, i) => {
         const team = (i % 2) as Team
-        const cards = MOBILE_IDS.map((id, k) => {
+        const cards = (single ? ALL_MOBILE_IDS : MOBILE_IDS).map((id, k) => {
           const d = TUNING.mobiles[id]!
           return `<div class="card${k === pick ? ' sel' : ''}" data-p="${i}" data-k="${k}"><b>${d.name}</b><div style="opacity:.7;margin-bottom:4px">${d.role}</div>
             <div>Máu ${d.hp}</div>${bar(d.hp / 1200)}<div>Giáp ${Math.round(d.armor * 100)}%</div>${bar(d.armor / 0.2)}<div>Cơ động</div>${bar((d.fuel * d.speedMul) / 160)}

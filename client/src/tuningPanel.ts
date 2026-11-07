@@ -1,4 +1,4 @@
-import { MOBILE_IDS, TUNING, resetTuning, type ShotDef } from '@gunb/shared'
+import { ALL_MOBILE_IDS, MOBILE_IDS, TUNING, resetTuning, type ShotDef } from '@gunb/shared'
 
 interface Row { label: string; get: () => number; set: (v: number) => void; step: number }
 
@@ -18,7 +18,7 @@ export class TuningPanel {
     this.el.innerHTML = '<div class="tuning-title">Chỉnh số (F6)</div>'
     const sel = document.createElement('div')
     const mSel = document.createElement('select')
-    for (const id of MOBILE_IDS) mSel.add(new Option(TUNING.mobiles[id]!.name, id))
+    for (const id of ALL_MOBILE_IDS) mSel.add(new Option(TUNING.mobiles[id]!.name, id))
     const sSel = document.createElement('select')
     SLOT_NAMES.forEach((n, i) => sSel.add(new Option(n, String(i))))
     mSel.addEventListener('change', () => { this.mobileId = mSel.value; this.build() })

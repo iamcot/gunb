@@ -55,6 +55,8 @@
 
 - [x] Sửa tập bắn: xe đặt trên phần có đất (bản đồ đảo nổi trước đây đặt xe ở x 150–600 là khoảng trời nên xe rơi xuống đáy), bia không có đất thì dời về cột có đất gần nhất; xe bắn vẽ bằng VehicleViews (đúng ảnh xe đã chọn, đổi bằng M), thay cho khối xanh cũ
 
+- [x] Cú Thiên Văn đạn 1, 2: vệ tinh hiện trên đầu xe bắn (`from: 'shooter'`, `altitude` 260) và bắn tia chéo mảnh tới điểm nhắm, đốt xuyên đất dọc theo tia; SS giữ tia thẳng đứng từ trời (`from: 'sky'`). Event `beam` thêm `sky`, `x0`, `y0`. Cân bằng chạy lại: Cú Thiên Văn 35% (trước 43%)
+
 ## Phase 7–9
 Chưa tách task chi tiết; xem `02-phases.md`.
 - [ ] Ảnh xe (plan/06-prompt-xe.md): client vẽ sprite nếu có `assets/mobiles/<id>/rig.json` (thân + nòng xoay theo góc, lật theo hướng, nghiêng theo dốc), không có thì vẫn vẽ hình khối. Đã có: oc-thiet-giap (ChatGPT, nòng vẽ sau bệ `barrelBehind`), bo-loi (ChatGPT, `reverse`: quay đít bắn bằng đuôi, cốc 20–45° so với thân), chui-khoan (ChatGPT, cả đầu + mũi khoan ngóc lên theo góc), cua-lan (ChatGPT, tay kìm cầm đá xoay quanh đĩa vai), dieu-hau-giay (ChatGPT, đầu chim + nỏ ngóc theo góc), nhim-chum (ChatGPT, quạt 5 ống xoay quanh đĩa), sua-den (ChatGPT, cần đèn lồng xoay quanh đĩa), rua-thanh (ChatGPT, máy bắn đá: ngắm chỉ xoay tia, bắn thì cần vung `catapult`), long-ngu-co và ky-lan-sat (ChatGPT, đầu xoay theo góc; chưa có MobileDef nên chưa vào trận). Phi công nam (`assets/pilots/nam/`, ChatGPT) ngồi vào ghế mọi xe theo `pilot` trong rig. Chưa: phi công nữ, chọn nhân vật, item – prompt ở `plan/08-prompt-nhan-vat.md`

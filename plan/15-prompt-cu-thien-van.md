@@ -1,6 +1,6 @@
 # 15 – Xe mới Cú Thiên Văn (`cu-thien-van`): prompt ảnh + âm thanh
 
-Xe bắn **cầu sáng**; chạm đâu thì một **vệ tinh** hiện ra trên trời, ngắm rồi bắn **tia laser thẳng đứng** xuống đúng cột đó. Tia hẹp nhưng đốt xuyên đất và trúng mọi xe trong cột (kể cả xe nấp dưới mái đất mỏng).
+Xe bắn **cầu sáng**; chạm đâu thì một **vệ tinh** hiện ra, ngắm rồi bắn **tia laser** vào đó. Đạn 1, 2: vệ tinh ở trên đầu xe bắn, tia **chéo, mảnh** từ đó tới điểm chạm. SS: vệ tinh ở tận trời, tia **thẳng đứng, to**. Tia đốt xuyên đất và trúng mọi xe nằm trên tia (SS trúng cả xe nấp dưới mái đất mỏng).
 Thiết kế riêng của game: tên, hình, chỉ số không lấy từ game nào.
 
 Gameplay đã chạy được khi chưa có ảnh: xe vẽ bằng hình khối, đạn là chấm tròn, vệ tinh và tia laser vẽ bằng code, tiếng tạo bằng code. Có ảnh/tiếng nào thì gửi vào thread, mình gắn vào.
@@ -10,11 +10,11 @@ Gameplay đã chạy được khi chưa có ảnh: xe vẽ bằng hình khối, 
 | | Đạn 1 – Đốm sáng | Đạn 2 – Ba tia | SS – Cột sáng |
 |---|---|---|---|
 | Cầu sáng nổ | 12 sát thương, bán kính 40 | 8, bán kính 35 | 15, bán kính 50 |
-| Laser | 1 tia, rộng 24 px, 30 sát thương, đốt sâu 30 px | 3 tia (giữa, phải, trái cách 30 px, nối nhau 0.15 s), rộng 22 px, 20 mỗi tia, sâu 26 px | 1 tia to, rộng 52 px, 75 sát thương, đốt sâu 110 px |
+| Laser | 1 tia chéo từ trên đầu xe (cao 260 px), rộng 16 px, 30 sát thương, đốt sâu 30 px | 3 tia chéo (nhắm giữa, phải, trái cách 30 px, nối nhau 0.15 s), rộng 14 px, 20 mỗi tia, sâu 26 px | 1 tia thẳng đứng từ trời, rộng 52 px, 75 sát thương, đốt sâu 110 px |
 | Vệ tinh bắn sau | 0.5 s | 0.5 s | 0.6 s |
 | Delay | 115 | 160 | 230 |
 
-Xe: máu 96, giáp 0.08, góc 10–80°, nhiên liệu 110. Laser chỉ tính khoảng cách **ngang** tới cột tia: trúng thẳng thì gần như đủ sát thương dù xe ở cao hay thấp, lệch ra ngoài bề rộng tia là trượt hẳn.
+Xe: máu 96, giáp 0.08, góc 10–80°, nhiên liệu 110. Laser tính khoảng cách từ xe tới **đường tia**: nằm trên tia thì gần như đủ sát thương, lệch ra ngoài bề rộng tia là trượt hẳn.
 
 ---
 

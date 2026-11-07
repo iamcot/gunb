@@ -4,7 +4,7 @@ import type { ShotArt } from './shotArt'
 interface Boom { x: number; y: number; age: number; r: number; core: Sprite | null; ring: Sprite | null }
 interface Bolt { g: Graphics; age: number }
 /** Vệ tinh Cú Thiên Văn: hiện trên cao trước tia laser, ngắm, bắn, rồi bay mất. `beam` < 0 = đang ngắm; `idle` = thời gian từ lúc tia cuối tắt. */
-interface Sat { x: number; tx: number; y: number; ty: number; w: number; age: number; charge: number; beam: number; beamY: number; idle: number; spr: Sprite | null }
+interface Sat { x: number; y: number; tx: number; ty: number; ax: number; ay: number; w: number; age: number; charge: number; beam: number; idle: number; spr: Sprite | null }
 
 /** Một hạt hiệu ứng (tái sử dụng trong vùng nhớ cố định, không cấp phát mỗi frame). */
 interface Particle { kind: number; x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; color: number; alive: boolean
@@ -22,7 +22,7 @@ const MAX_PARTICLES = 700
 const GRAVITY = 900         // px/s² cho mảnh đất, tia lửa
 const SMOKE_RISE = 40       // px/s khói bay lên
 const DIRT_FALLBACK = 0x8a5a36
-/** Vệ tinh: bay ở độ cao SAT_ALT px trên điểm laser chạm, hiện ra SAT_LEAD_S s trước tia, tia sáng BEAM_S s, tắt tia SAT_OUT_S s sau thì bay mất. */
+/** Vệ tinh: tia từ trời thì bay ở độ cao SAT_ALT px trên điểm laser chạm (tia chéo thì ở chỗ shared/ báo), hiện ra SAT_LEAD_S s trước tia, tia sáng BEAM_S s, tắt tia SAT_OUT_S s sau thì bay mất. */
 const SAT_ALT = 300, BEAM_S = 0.45, SAT_OUT_S = 0.35, SAT_SIZE = 96
 /** Mắt kính trên ảnh vệ tinh nằm dưới tâm ảnh SAT_LENS × chiều cao ảnh (tia laser bắt đầu từ đó). */
 const SAT_LENS = 0.33
@@ -271,29 +271,38 @@ export class Fx {
     this.shake = Math.max(this.shake, 6)
   }
 
-  /** Vệ tinh hiện ra (hoặc vệ tinh đang có gần đó dời tới) để chuẩn bị bắn laser xuống (x, y). Gọi trước tia SAT_LEAD_S s. */
-  satCharge(x: number, y: number, w: number): void {
+  /** Vệ tinh hiện ra (hoặc vệ tinh đang có gần đó dời tới) để chuẩn bị bắn laser tới (x, y). `sky` = từ tận trời thẳng xuống (vệ tinh
+   *  đặt SAT_ALT px phía trên), không thì vệ tinh ở (x0, y0). Gọi trước tia SAT_LEAD_S s. */
+  satCharge(x: number, y: number, w: number, sky: boolean, x0: number, y0: number): void {
+    const sx = sky ? x : x0, sy = sky ? y - SAT_ALT : y0
     let s: Sat | undefined
-    for (const q of this.sats) if (q.idle < SAT_OUT_S && Math.abs(q.tx - x) < 160) s = q
+    for (const q of this.sats) if (q.idle < SAT_OUT_S && Math.abs(q.tx - sx) < 160 && Math.abs(q.ty - sy) < 160) s = q
     if (!s) {
-      s = { x, tx: x, y: y - SAT_ALT, ty: y, w, age: 0, charge: 0, beam: -1, beamY: y, idle: 0, spr: null }
+      s = { x: sx, y: sy, tx: sx, ty: sy, ax: x, ay: y, w, age: 0, charge: 0, beam: -1, idle: 0, spr: null }
       if (ART.satellite) { s.spr = new Sprite(ART.satellite); s.spr.anchor.set(0.5); s.spr.scale.set(SAT_SIZE / ART.satellite.width); this.topArt.addChild(s.spr) }
       this.sats.push(s)
     }
-    s.tx = x; s.ty = y; s.w = w; s.charge = 0; s.beam = -1; s.idle = 0
+    s.tx = sx; s.ty = sy; s.ax = x; s.ay = y; s.w = w; s.charge = 0; s.beam = -1; s.idle = 0
   }
 
-  /** Tia laser vệ tinh giáng thẳng xuống (x, y), nửa bề rộng `w`. */
-  beam(x: number, y: number, w: number): void {
+  /** Tia laser vệ tinh bắn tới (x, y), nửa bề rộng `w` (tham số như satCharge). */
+  beam(x: number, y: number, w: number, sky: boolean, x0: number, y0: number): void {
+    const sx = sky ? x : x0, sy = sky ? y - SAT_ALT : y0
     let s: Sat | undefined
-    for (const q of this.sats) if (!s || Math.abs(q.tx - x) < Math.abs(s.tx - x)) s = q
-    if (!s) { this.satCharge(x, y, w); s = this.sats[this.sats.length - 1]! }
-    s.x = s.tx = x; s.beamY = y; s.w = w; s.beam = 0; s.idle = 0
+    for (const q of this.sats) if (!s || Math.hypot(q.tx - sx, q.ty - sy) < Math.hypot(s.tx - sx, s.ty - sy)) s = q
+    if (!s) { this.satCharge(x, y, w, sky, x0, y0); s = this.sats[this.sats.length - 1]! }
+    s.tx = sx; s.ty = sy; s.ax = x; s.ay = y; s.w = w; s.beam = 0; s.idle = 0
     this.shake = Math.max(this.shake, 4 + w / 5)
     for (let i = 0; i < 10 + w; i++) {
       const a = -Math.PI * rnd(0.05, 0.95), sp = rnd(160, 420)
       this.spawn(P_SPARK, x + rnd(-w, w) * 0.5, y, Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.25, 0.5), rnd(1.2, 2.2), Math.random() < 0.5 ? BEAM_OUTER : BEAM_CORE)
     }
+  }
+
+  /** Dải sáng thẳng từ (x0, y0) tới (x1, y1), rộng `ww` (vẽ đường kín, không cấp phát mảng). */
+  private beamQuad(x0: number, y0: number, x1: number, y1: number, ww: number, color: number, alpha: number): void {
+    const n = Math.hypot(x1 - x0, y1 - y0) || 1, nx = -(y1 - y0) / n * ww / 2, ny = (x1 - x0) / n * ww / 2
+    this.glow.moveTo(x0 + nx, y0 + ny).lineTo(x1 + nx, y1 + ny).lineTo(x1 - nx, y1 - ny).lineTo(x0 - nx, y0 - ny).closePath().fill({ color, alpha })
   }
 
   /** Vẽ vệ tinh + tia laser (gọi trong update, vẽ lên lớp đã clear đầu frame). */
@@ -309,6 +318,7 @@ export class Fx {
       }
       if (s.idle >= SAT_OUT_S) { s.spr?.destroy(); this.sats.splice(i, 1); continue }
       s.x += (s.tx - s.x) * Math.min(1, dt * 10)
+      s.y += (s.ty - s.y) * Math.min(1, dt * 10)
       const alpha = Math.min(1, s.age / 0.2) * (1 - s.idle / SAT_OUT_S)
       const by = s.y + Math.sin(s.age * 4) * 3 - s.idle * 220    // nhấp nhô; xong thì bay vút lên
       // thân vệ tinh (ảnh assets/fx/satellite.png nếu có, không thì vẽ khối)
@@ -322,17 +332,16 @@ export class Fx {
       const ch = Math.min(1, s.charge / SAT_LEAD_S)
       const ly = by + (s.spr ? s.spr.height * SAT_LENS : 8)
       glow.circle(s.x, ly, 4 + 8 * ch).fill({ color: BEAM_OUTER, alpha: (0.3 + 0.6 * ch) * alpha })
-      if (s.beam < 0) glow.rect(s.x - 1, ly + 2, 2, s.ty - ly - 2).fill({ color: BEAM_OUTER, alpha: 0.25 * ch * alpha })
+      if (s.beam < 0) this.beamQuad(s.x, ly + 2, s.ax, s.ay, 2, BEAM_OUTER, 0.25 * ch * alpha)
       // tia laser: bùng to nhanh rồi thu nhỏ dần
       if (s.beam >= 0 && s.beam < BEAM_S) {
         const k = s.beam / BEAM_S
         const wk = k < 0.15 ? k / 0.15 : 1 - ((k - 0.15) / 0.85) * 0.8
         const ww = 2 * s.w * wk * (0.92 + 0.08 * Math.sin(s.beam * 80))
-        const top = ly, h = s.beamY - top
-        glow.rect(s.x - ww * 0.8, top, ww * 1.6, h).fill({ color: BEAM_OUTER, alpha: 0.25 * (1 - k) })
-        glow.rect(s.x - ww / 2, top, ww, h).fill({ color: BEAM_OUTER, alpha: 0.6 * (1 - k * 0.5) })
-        glow.rect(s.x - ww * 0.18, top, ww * 0.36, h).fill({ color: BEAM_CORE, alpha: 0.95 })
-        glow.circle(s.x, s.beamY, s.w * 1.4 * wk).fill({ color: BEAM_CORE, alpha: 0.7 * (1 - k) })
+        this.beamQuad(s.x, ly, s.ax, s.ay, ww * 1.6, BEAM_OUTER, 0.25 * (1 - k))
+        this.beamQuad(s.x, ly, s.ax, s.ay, ww, BEAM_OUTER, 0.6 * (1 - k * 0.5))
+        this.beamQuad(s.x, ly, s.ax, s.ay, ww * 0.36, BEAM_CORE, 0.95)
+        glow.circle(s.ax, s.ay, s.w * 1.4 * wk).fill({ color: BEAM_CORE, alpha: 0.7 * (1 - k) })
       }
     }
   }

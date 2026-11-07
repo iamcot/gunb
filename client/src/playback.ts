@@ -36,7 +36,7 @@ export class ShotPlayback {
     const evs = this.result.events
     while (this.ahead < evs.length && evs[this.ahead]!.t - SAT_LEAD_S <= this.t) {
       const e = evs[this.ahead++]!
-      if (e.kind === 'beam') this.fx.satCharge(e.x, e.y, e.w)
+      if (e.kind === 'beam') this.fx.satCharge(e.x, e.y, e.w, e.sky, e.x0, e.y0)
     }
     while (this.ev < evs.length && evs[this.ev]!.t <= this.t) {
       const e = evs[this.ev++]!
@@ -46,7 +46,7 @@ export class ShotPlayback {
         case 'fill': this.view.fill(e.x, e.y, e.r); break
         case 'damage': this.hooks.onDamage(e.id, e.amount, e.hpAfter); audio.hit(); break
         case 'bolt': this.fx.bolt(e.x, e.y); audio.bolt(this.sfx?.bolt); break
-        case 'beam': this.fx.beam(e.x, e.y, e.w); audio.beam(this.sfx?.beam); this.beamT = e.t; break
+        case 'beam': this.fx.beam(e.x, e.y, e.w, e.sky, e.x0, e.y0); audio.beam(this.sfx?.beam); this.beamT = e.t; break
         case 'split': this.fx.explosion(e.x, e.y, 16, false); break
         default: break
       }

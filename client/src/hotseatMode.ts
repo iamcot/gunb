@@ -18,7 +18,7 @@ const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đ
 const SETTLE_PAUSE = 0.3
 
 /** `botLevel`: có thì đội Đỏ do máy chơi, đội Xanh là người (chung một bàn phím). */
-export interface HotseatSetup { perTeam: number; mobileIds: string[]; botLevel?: BotLevel }   // mobileIds[i] là pháo của người chơi id i
+export interface HotseatSetup { perTeam: number; mobileIds: string[]; botLevel?: BotLevel; allSkills?: boolean }   // allSkills: trang debug, SS luôn đầy   // mobileIds[i] là pháo của người chơi id i
 
 /** Hotseat: 1v1..4v4 chung một bàn phím. */
 export class HotseatMode implements Mode {
@@ -101,6 +101,7 @@ export class HotseatMode implements Mode {
       const p = currentPlayer(m)
       const isBot = this.bot !== null && p.team === 1
       aim.locked = isBot
+      if (this.setup.allSkills) p.ss = TUNING.ss.max   // debug: bật hết skill
       aim.ssReady = p.ss >= TUNING.ss.max
       const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)

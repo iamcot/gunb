@@ -73,7 +73,8 @@ export class OnlineFlow {
   private botLevel: BotLevel = 'normal'
   private toastTimer = 0
 
-  constructor(private readonly host: OnlineHost, private readonly onBack: () => void) {
+  /** `onBack` null: không có nút Quay lại (trang login là trang đầu tiên). */
+  constructor(private readonly host: OnlineHost, private readonly onBack: (() => void) | null) {
     this.banner = document.createElement('div')
     this.banner.style.cssText = 'position:fixed;top:0;left:0;right:0;padding:6px;text-align:center;background:#b45309;color:#fff;z-index:30;display:none'
     this.banner.textContent = 'Mất kết nối, đang thử nối lại… (giữ chỗ trong 60 giây)'
@@ -134,7 +135,7 @@ export class OnlineFlow {
     const el = this.panel(`<div class="gs-card"><div class="gs-logo"><img src="${LOGO_URL}" alt="${esc(GAME_NAME)}"></div><p>Chơi online · Tên của bạn</p>
       <input id="nm" maxlength="20" value="${esc(saved)}" placeholder="Nhập tên">
       <div class="gs-err">${esc(this.errText)}</div>
-      <div class="row"><button class="gs-btn" id="back">Quay lại</button><button class="gs-btn primary" id="go">Vào sảnh</button></div></div>`)
+      <div class="row">${this.onBack ? '<button class="gs-btn" id="back">Quay lại</button>' : ''}<button class="gs-btn primary" id="go">Vào sảnh</button></div></div>`)
     const input = el.querySelector<HTMLInputElement>('#nm')!
     const go = (): void => {
       const name = input.value.trim() || `Người chơi ${Math.floor(Math.random() * 900 + 100)}`
@@ -144,7 +145,7 @@ export class OnlineFlow {
       this.connect(name)
     }
     el.querySelector('#go')!.addEventListener('click', go)
-    el.querySelector('#back')!.addEventListener('click', () => this.onBack())
+    el.querySelector('#back')?.addEventListener('click', () => this.onBack?.())
     input.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') go() })
     input.focus()
   }

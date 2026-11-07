@@ -5,7 +5,9 @@ import { preloadShotArt } from './shotArt'
 
 export const TEAM_COLORS = [0x3b82f6, 0xef4444] as const
 const TEAM_DARK = [0x0a2a5e, 0x5e0a0a] as const
-const RING_IN = 36, RING_OUT = 70, RING_GAP = 14   // thước ngắm: bán kính trong / ngoài của vòng dày; khoảng trống giữa xe và vòng
+const RING_IN = 62, RING_OUT = 94   // thước ngắm: bán kính trong / ngoài của cung dày (tâm = gốc nòng; trong 62px là khoảng trống quanh xe)
+const ARC_GREEN = 0x4fb35a, ARC_BANDS = 10   // màu cung cho phép (đậm ở mép ngoài); số dải đồng tâm tạo gradient
+const ARC_EXTEND = 0.2, DEG = Math.PI / 180   // cung vẽ thêm 20% bề rộng dải góc ở mỗi đầu
 const NEEDLE_COLOR = 0x5ec4ff
 /** Con trỏ mũi tên: các cặp (lùi dọc kim, lệch ngang) quanh mũi ở (0,0). */
 const NEEDLE: readonly number[] = [0, 0, 24, 11, 17, 3.5, 34, 3.5, 34, -3.5, 17, -3.5, 24, -11]
@@ -337,31 +339,34 @@ export class VehicleViews {
   /** Thước ngắm vòng tròn trong mờ, tách khỏi xe: tâm ở gốc nòng súng, dải góc quay được tô xanh lá nhạt, kim ngắm mũi tên xanh chỉ góc hiện tại, số độ hiện dưới vòng. */
   private drawFan(p: PlayerState): void {
     const b = p.body, g = this.fan, a = this.views.get(p.id)?.art
-    let cx = b.x, cy = b.y - 4, halfW = b.radius
-    if (a) {   // độ cao ngang gốc nòng (không tính lắc/nhún để thước đứng yên)
+    let cx = b.x, cy = b.y - 4
+    if (a) {   // gốc nòng trong toạ độ bản đồ (không tính lắc/nhún để thước đứng yên); khung xe có pivot (0, radius)
       const rot = -b.tilt, sx = b.facing * a.flip, c = Math.cos(rot), sn = Math.sin(rot)
-      const lx = a.barrelX * sx, ly = a.barrelY - a.radius   // khung có pivot (0, radius)
+      const lx = a.barrelX * sx, ly = a.barrelY - a.radius
+      cx = b.x + lx * c - ly * sn - a.radius * sn
       cy = b.y + lx * sn + ly * c + a.radius * c
-      halfW = a.body.width / 2
     }
-    cx = b.x + b.facing * (halfW + RING_GAP + RING_OUT)   // vòng nằm phía trước xe, chừa khoảng trống
     const r = aimRange(this.range, TUNING.mobiles[p.mobileId]!, b.facing, b.tilt)
-    const mid = (RING_IN + RING_OUT) / 2
-    g.circle(cx, cy, mid).stroke({ color: 0xffffff, width: RING_OUT - RING_IN, alpha: 0.4 })
-    // dải góc cho phép: xanh lá nhạt
-    const d0 = aimDir(this.tmp, r.min, b.facing)
-    const s0 = Math.atan2(d0.y, d0.x)
-    const d1 = aimDir(this.tmp, r.max, b.facing)
-    const s1 = Math.atan2(d1.y, d1.x)
-    const from = b.facing > 0 ? s1 : s0
-    let to = b.facing > 0 ? s0 : s1
-    if (to < from) to += Math.PI * 2
-    g.moveTo(cx + Math.cos(from) * mid, cy + Math.sin(from) * mid)
-    g.arc(cx, cy, mid, from, to).stroke({ color: 0x9be8a6, width: RING_OUT - RING_IN, alpha: 0.9 })
+    const mid = (RING_IN + RING_OUT) / 2, w = RING_OUT - RING_IN
+    // chỉ vẽ cung: dải góc cho phép + EXTEND mỗi đầu (góc a so với phương ngang → góc màn hình: phải = -a, trái = π + a)
+    const ext = (r.max - r.min) * ARC_EXTEND
+    const scr = (deg: number): number => b.facing > 0 ? -deg * DEG : Math.PI + deg * DEG
+    // cung chia thành các dải đồng tâm, đục dần từ trong ra ngoài (trong nhạt/trong suốt, ngoài đậm) để có hiệu ứng gradient mà không tạo object mỗi frame
+    const arc = (lo: number, hi: number, color: number, aMax: number): void => {
+      const s0 = scr(b.facing > 0 ? hi : lo), s1 = scr(b.facing > 0 ? lo : hi), bw = w / ARC_BANDS
+      for (let k = 0; k < ARC_BANDS; k++) {
+        const rr = RING_IN + (k + 0.5) * bw, t = (k + 1) / ARC_BANDS
+        g.moveTo(cx + Math.cos(s0) * rr, cy + Math.sin(s0) * rr)
+        g.arc(cx, cy, rr, s0, s1).stroke({ color, width: bw + 0.6, alpha: aMax * t * t })
+      }
+    }
+    arc(r.min - ext, r.max + ext, 0xffffff, 0.55)
+    arc(r.min, r.max, ARC_GREEN, 0.95)
     for (let ang = Math.ceil(r.min / 15) * 15; ang <= r.max; ang += 15) {
       const d = aimDir(this.tmp, ang, b.facing)
       g.circle(cx + d.x * mid, cy + d.y * mid, ang % 45 === 0 ? 2.2 : 1.4).fill({ color: 0xffffff, alpha: 0.95 })
     }
+    const lowEnd = scr(r.min - ext)   // số độ nằm dưới đầu thấp của cung
     // kim ngắm: con trỏ chuột xanh (tự vẽ bằng Graphics), mũi chạm vòng, đuôi hướng về tâm
     const d = aimDir(this.tmp, p.aimAngle, b.facing)
     const tx = cx + d.x * (mid + 6), ty = cy + d.y * (mid + 6)
@@ -372,7 +377,7 @@ export class VehicleViews {
     }
     g.closePath().fill({ color: NEEDLE_COLOR }).stroke({ color: 0xffffff, width: 2 })
     this.angleText.text = `${p.aimAngle}°`
-    this.angleText.position.set(cx, cy + RING_OUT + 4)
+    this.angleText.position.set(cx + Math.cos(lowEnd) * mid, cy + Math.sin(lowEnd) * mid + w / 2 + 4)
     this.angleText.visible = true
   }
 

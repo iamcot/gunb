@@ -88,3 +88,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Thước ngắm mới (vòng tròn mờ tách khỏi xe, tâm ở gốc nòng, dải góc xanh lá, kim mũi tên xanh, số độ dưới vòng) + Bọ Lôi đạn 2: hai tia chéo ±40°, rơi cách nhau 140px (`spread`).
 - Sửa thước ngắm theo mẫu (vòng dày mờ nằm phía trước xe, dải xanh lá, kim con trỏ xanh tự vẽ) + đạn xuất phát từ đầu nòng: thêm `MobileDef.muzzle {px,py,ox,oy}` (tính từ rig.json; Rùa Thành giữ MUZZLE_DIST).
 - Tụ lực bằng chuột trái trên khung game (nhả = bắn); hết giờ lượt khi đang tụ thì bắn luôn với lực hiện tại (hotseat/online). Chưa có file âm thanh tụ lực.
+- Thước ngắm: chỉ vẽ cung (dải góc + 20% mỗi đầu) tâm ở gốc nòng, xanh gradient đậm ngoài/nhạt trong; tụ lực chuột: lực tự tăng, kéo phải +, kéo trái −.

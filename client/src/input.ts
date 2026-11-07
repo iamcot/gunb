@@ -4,9 +4,10 @@ const REPEAT_DELAY = 0.3      // s giữ phím trước khi lặp
 const REPEAT_SLOW = 8         // độ/s lúc mới lặp
 const REPEAT_FAST = 40        // độ/s sau khi giữ lâu
 const REPEAT_RAMP = 1.2       // s để tăng từ chậm lên nhanh
+const POWER_PER_DRAG_PX = 0.25 // tụ lực bằng chuột: mỗi px kéo ngang cộng/trừ bấy nhiêu lực (kéo phải +, kéo trái −)
 
 /**
- * Điều khiển ngắm: ↑↓ góc, giữ Space hoặc chuột trái (bấm trên khung game) tích lực, nhả để bắn; hết giờ lượt khi đang tụ thì mode gọi `release()` để bắn luôn.
+ * Điều khiển ngắm: ↑↓ góc, giữ Space hoặc chuột trái (bấm trên khung game) tích lực, nhả để bắn. Với chuột: lực tự tăng theo thời gian, kéo chuột sang phải tăng thêm, sang trái giảm bớt; hết giờ lượt khi đang tụ thì mode gọi `release()` để bắn luôn.
  * ←→: ở chế độ `moveMode` là đi (đọc `moveDir`), không thì đổi hướng (`facing`).
  */
 export class AimInput {
@@ -33,8 +34,11 @@ export class AimInput {
   private readonly onMouseDown = (e: MouseEvent): void => {
     // chỉ bấm lên khung game (canvas): bấm vào ô đạn, nút HUD... không tụ lực; chuột phải dành cho kéo camera
     if (e.button !== 0 || this.locked || this.charging || !(e.target instanceof HTMLCanvasElement)) return
-    this.charging = true; this.power = 0
+    this.charging = true; this.mouseCharge = true; this.dragX = 0; this.power = 0
   }
+  private dragX = 0   // tổng px chuột kéo ngang từ lần update trước (chỉ cộng dồn khi đang tụ bằng chuột)
+  private mouseCharge = false
+  private readonly onMouseMove = (e: MouseEvent): void => { if (this.mouseCharge) this.dragX += e.movementX }
   private readonly onMouseUp = (e: MouseEvent): void => { if (e.button === 0 && this.charging) this.release() }
 
   constructor(private readonly moveMode = false) {
@@ -43,6 +47,7 @@ export class AimInput {
     window.addEventListener('blur', this.onBlur)
     window.addEventListener('mousedown', this.onMouseDown)
     window.addEventListener('mouseup', this.onMouseUp)
+    window.addEventListener('mousemove', this.onMouseMove)
   }
 
   /** Đặt dải góc hợp lệ của pháo (kẹp lại góc hiện tại). */
@@ -58,6 +63,7 @@ export class AimInput {
     window.removeEventListener('blur', this.onBlur)
     window.removeEventListener('mousedown', this.onMouseDown)
     window.removeEventListener('mouseup', this.onMouseUp)
+    window.removeEventListener('mousemove', this.onMouseMove)
   }
 
   private keyDown(e: KeyboardEvent): void {
@@ -89,6 +95,7 @@ export class AimInput {
   release(): void {
     if (!this.charging) return
     this.charging = false
+    this.mouseCharge = false
     if (!this.locked) {
       this.lastPower = this.power
       this.onFire(this.angle, this.power, this.slot)
@@ -101,6 +108,7 @@ export class AimInput {
     this.left = this.right = false
     this.moveDir = 0
     this.charging = false
+    this.mouseCharge = false
     this.power = 0
   }
 
@@ -108,7 +116,11 @@ export class AimInput {
     if (this.locked) { this.cancel(); return }
     if (this.slot === 2 && !this.ssReady) this.slot = 0
     this.moveDir = this.moveMode ? ((this.right ? 1 : 0) - (this.left ? 1 : 0)) as -1 | 0 | 1 : 0
-    if (this.charging) this.power = Math.min(100, this.power + (100 / TUNING.powerChargeS) * dt)
+    if (this.charging) {
+      // lực tự tăng theo thời gian; tụ bằng chuột thì kéo phải cộng thêm, kéo trái trừ bớt: lực nào mạnh hơn thì lực trượt về phía đó
+      this.power = clamp(this.power + (100 / TUNING.powerChargeS) * dt + this.dragX * POWER_PER_DRAG_PX, 0, 100)
+      this.dragX = 0
+    }
     const dir = (this.up > 0 ? 1 : 0) - (this.down > 0 ? 1 : 0)
     if (this.up > 0) this.up += dt
     if (this.down > 0) this.down += dt

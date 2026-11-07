@@ -110,3 +110,4 @@ Chưa tách task chi tiết; xem `02-phases.md`.
 - Sứa Đèn: dòng ánh sáng sau đạn (shots.json `ribbon`, `ribbonW`; vẽ bằng code, thon dần về đuôi): đ1 vàng, đ2 xanh ngọc, quả đèn đ2 đổi sang xanh ngọc.
 - Sứa Đèn: dòng ánh sáng dài từ nòng tới khi đạn nổ; đạn 2 = 1 quả vàng + 1 quả xanh ngọc (shots.json: alt, ribbonAlt; ảnh shot-2b.png).
 - Sứa Đèn: dòng sáng vẽ một nét liền (hết đứt nét), kiểu neon (quầng + lõi trắng) + quầng neon quanh đạn.
+- Sứa Đèn đ2: xoắn lâu hơn (convergeS 1,6 → 3 s, turns 1,5 → 3) cho khó chụm hơn.

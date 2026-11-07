@@ -267,12 +267,14 @@ describe('twin (Sứa Đèn đ2, Rùa Thành đ2, Cua Lăn đ1)', () => {
     return m
   }
   it('Sứa Đèn đ2: 2 viên xoắn rộng ra rồi chụm lại, mỗi viên một vụ nổ có sát thương riêng', () => {
-    const r = shoot('sua-den', 1, 45, 80)
+    const r = shoot('sua-den', 1, 60, 100)
     expect(r.paths).toHaveLength(2)
     expect(maxOffset(r.paths[0]!, r.paths[1]!)).toBeGreaterThan(30)
     const a = r.paths[0]!, b = r.paths[1]!
-    // gần thời điểm chụm (1,6 s) hai viên gần như trùng nhau
-    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 1.6) < 0.02) expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(8)
+    // gần thời điểm chụm (3 s) hai viên gần như trùng nhau
+    let checked = 0
+    for (let i = 0; i < Math.min(a.length, b.length); i += 3) if (Math.abs(a[i]! - 3) < 0.05) { checked++; expect(Math.hypot(a[i + 1]! - b[i + 1]!, a[i + 2]! - b[i + 2]!)).toBeLessThan(10) }
+    expect(checked).toBeGreaterThan(0)
     expect(r.events.filter(e => e.kind === 'explode')).toHaveLength(2)
   })
   it('đứng đúng chỗ chụm thì bị trúng (ít nhất một viên)', () => {

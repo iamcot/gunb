@@ -1,4 +1,5 @@
 import { FALL_DAMAGE_PER_PX, GRAVITY, MAX_SLOPE_DEG, POWER_CHARGE_S, TURN_TIME_S, WIND_SCALE } from './constants'
+import { defaultItemsTuning, type ItemsTuning } from './items'
 import { createDefaultMobiles, type MobileDef } from './mobiles'
 import { defaultWeatherTuning, type WeatherTuning } from './weather'
 
@@ -12,6 +13,7 @@ export interface Tuning {
   turn: TurnTuning
   ss: SsTuning
   weather: WeatherTuning
+  items: ItemsTuning
 }
 
 export interface MoveTuning {
@@ -47,6 +49,7 @@ export function createDefaultTuning(): Tuning {
     turn: { timeS: TURN_TIME_S, timeoutPenalty: 150 },
     ss: { max: 100, perDamageDealt: 0.6, perDamageTaken: 0.4, perTurn: 8 },
     weather: defaultWeatherTuning(),
+    items: defaultItemsTuning(),
   }
 }
 
@@ -63,4 +66,5 @@ export function resetTuning(): void {
   TUNING.turn = d.turn
   TUNING.ss = d.ss
   TUNING.weather = d.weather
+  TUNING.items = d.items
 }

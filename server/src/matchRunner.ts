@@ -1,6 +1,6 @@
 import {
   BotDriver, MsgType, addShotStats, newStats, TUNING, applyAction, createDefaultTuning, createMatch, currentPlayer, encodeMaskRle, isSettled, snapshotOf,
-  type BotCmd, type BotLevel, type MatchPlayerInfo, type MatchState, type ShotSlot, type Team, type TerrainMask, type Tuning,
+  type BotCmd, type BotLevel, type ItemId, type MatchPlayerInfo, type MatchState, type ShotSlot, type Team, type TerrainMask, type Tuning,
 } from '@gunb/shared'
 
 export const TICK_S = 1 / 30
@@ -10,7 +10,7 @@ const SHOT_PLAYBACK_PAD = 1.0     // s chờ thêm sau khi phát lại phát b�
 const NO_SHOT_WAIT = 0.4
 export const RECONNECT_GRACE_S = 60
 
-export interface RunnerPlayer { pid: number; name: string; team: Team; mobileId: string; bot?: BotLevel }
+export interface RunnerPlayer { pid: number; name: string; team: Team; mobileId: string; items?: ItemId[]; bot?: BotLevel }
 
 export interface RunnerOptions {
   seed: number
@@ -43,7 +43,7 @@ export class MatchRunner {
   private settledFor = 0
   private tickNo = 0
   private lastTurnKey = ''
-  private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0 }
+  private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0, item: -1 }
   private timer: ReturnType<typeof setInterval> | null = null
   private ended = false
 
@@ -53,11 +53,11 @@ export class MatchRunner {
     this.mask = opts.mask.clone()
     this.state = createMatch({
       seed: opts.seed, mask: this.mask, spawnZones: opts.zones, tuning: this.tuning,
-      players: opts.players.map(p => ({ name: p.name, team: p.team, mobileId: p.mobileId })),
+      players: opts.players.map(p => ({ name: p.name, team: p.team, mobileId: p.mobileId, items: p.items })),
     })
     this.stats.push(...newStats(opts.players.length))
     this.seats = opts.players.map((p, i) => ({ id: i, pid: p.pid, connected: true, offlineFor: 0, bot: p.bot ? new BotDriver(p.bot) : null }))
-    this.info = opts.players.map((p, i) => ({ id: i, pid: p.pid, name: p.name, team: p.team, mobileId: p.mobileId }))
+    this.info = opts.players.map((p, i) => ({ id: i, pid: p.pid, name: p.name, team: p.team, mobileId: p.mobileId, items: p.items ?? [] }))
     this.held.angle = currentPlayer(this.state).aimAngle
   }
 
@@ -110,14 +110,22 @@ export class MatchRunner {
     const seat = this.seatOf(pid)
     if (!seat || seat.id !== this.state.turnPlayerId || !Number.isFinite(angle) || !Number.isFinite(power)) return
     const s = slot === 1 || slot === 2 ? slot : 0
+    const item = this.state.turnItem ?? undefined
     const res = applyAction(this.state, { t: 'fire', id: seat.id, angle, power, slot: s }, { mask: this.mask, tuning: this.tuning })
     if (!res.ok || !res.shot) return
     addShotStats(this.stats, this.state, seat.id, res.shot)
     const { maskAfter: _drop, ...net } = res.shot
     this.held.dir = 0
     this.resolveWait = res.shot.endT + SHOT_PLAYBACK_PAD
-    this.broadcast({ t: MsgType.Shot, result: net, shooter: seat.id, slot: s } as never)
+    this.broadcast({ t: MsgType.Shot, result: net, shooter: seat.id, slot: s, item } as never)
     this.snapshotNow()
+  }
+
+  /** Dùng item ở ô `slot` (chỉ trong lượt của mình, lúc đang ngắm, mỗi lượt 1 item). */
+  onItem(pid: number, slot: number): void {
+    const seat = this.seatOf(pid)
+    if (!seat || seat.id !== this.state.turnPlayerId || !Number.isInteger(slot)) return
+    if (applyAction(this.state, { t: 'item', id: seat.id, slot }, { mask: this.mask, tuning: this.tuning }).ok) this.snapshotNow()
   }
 
   onSkip(pid: number): void {
@@ -167,6 +175,7 @@ export class MatchRunner {
       if (seat.bot) {
         const c = this.botCmd
         seat.bot.step(s, this.mask, this.tuning, dt, c)
+        if (c.item >= 0) this.onItem(seat.pid, c.item)
         applyAction(s, { t: 'aim', id: cur.id, angle: c.angle }, env)
         if (c.dir !== 0) applyAction(s, { t: 'move', id: cur.id, dir: c.dir, dt }, env)
         applyAction(s, { t: 'tick', dt }, env)

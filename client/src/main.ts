@@ -127,7 +127,9 @@ async function main(): Promise<void> {
   const debugEl = document.getElementById('debug')!
   window.addEventListener('keydown', e => {
     ctx.keys.add(e.code)
-    if (e.code === 'F3') { e.preventDefault(); debugOn = !debugOn; debugEl.style.display = debugOn ? 'block' : 'none'; view.maskSprite.visible = debugOn }
+    // Trong trận F1–F3 là ô item; bảng debug + lớp phủ mask chuyển sang F4 (ngoài trận F3 vẫn bật được như cũ)
+    if (ctx.hud.visible && ctx.hud.itemKey(e.code)) { e.preventDefault(); return }
+    if (e.code === 'F3' || e.code === 'F4') { e.preventDefault(); debugOn = !debugOn; debugEl.style.display = debugOn ? 'block' : 'none'; view.maskSprite.visible = debugOn }
     else if (e.code === 'F6') { e.preventDefault(); tuning.toggle() }
     else if (e.code === 'Escape' && mode) toMenu()
   })

@@ -4,6 +4,7 @@ import type { ShotSlot } from './shots'
 import type { Snapshot } from './netState'
 import type { BotLevel } from './bot'
 import type { PlayerStats } from './stats'
+import type { ItemId } from './items'
 
 /** Số loại message. Thêm loại mới ở cuối, không đổi số cũ. */
 export enum MsgType {
@@ -33,6 +34,7 @@ export enum MsgType {
   AddBot = 23,        // C→S  {level, team}  (chủ phòng)
   RemoveBot = 24,     // C→S  {pid}          (chủ phòng)
   Stats = 25,         // S→C  {stats}        (khi hết trận)
+  UseItem = 26,       // C→S  {slot}         (ô item 0..2, trong lượt của mình)
 }
 
 export interface Msg {
@@ -42,7 +44,7 @@ export interface Msg {
 
 export type RoomStatus = 'lobby' | 'loading' | 'playing' | 'ended'
 
-export interface RoomMember { pid: number; name: string; team: 0 | 1; mobileId: string; ready: boolean; connected: boolean; bot?: BotLevel }
+export interface RoomMember { pid: number; name: string; team: 0 | 1; mobileId: string; ready: boolean; connected: boolean; bot?: BotLevel; items: ItemId[] }
 
 export interface RoomInfo {
   id: string
@@ -57,7 +59,7 @@ export interface RoomInfo {
 
 export interface RoomSummary { id: string; name: string; players: number; max: number; status: RoomStatus; mapId: string }
 
-export interface MatchPlayerInfo { id: number; pid: number; name: string; team: 0 | 1; mobileId: string }
+export interface MatchPlayerInfo { id: number; pid: number; name: string; team: 0 | 1; mobileId: string; items: ItemId[] }
 
 /** ShotResult gửi qua mạng: bỏ `maskAfter` (client chỉ cần hash để kiểm tra). */
 export type ShotResultNet = Omit<ShotResult, 'maskAfter'>
@@ -67,7 +69,8 @@ export interface HelloMsg { t: MsgType.Hello; name: string; token?: string }
 export interface WelcomeMsg { t: MsgType.Welcome; pid: number; token: string; name: string; resumed: boolean }
 export interface CreateRoomMsg { t: MsgType.CreateRoom; name: string; max: number; mapId: string; turnTime: number }
 export interface JoinRoomMsg { t: MsgType.JoinRoom; roomId: string }
-export interface SetSeatMsg { t: MsgType.SetSeat; team?: 0 | 1; mobileId?: string; ready?: boolean }
+export interface SetSeatMsg { t: MsgType.SetSeat; team?: 0 | 1; mobileId?: string; ready?: boolean; items?: ItemId[] }
+export interface UseItemMsg { t: MsgType.UseItem; slot: number }
 export interface ChatMsgOut { t: MsgType.Chat; text: string }
 export interface LoadProgressMsg { t: MsgType.LoadProgress; pct: number; ready: boolean }
 export interface InputMsg { t: MsgType.Input; dir: -1 | 0 | 1; angle: number }
@@ -78,8 +81,8 @@ export interface ChatMsgIn { t: MsgType.ChatMsg; from: string; text: string }
 export interface LoadingMsg { t: MsgType.Loading; members: { pid: number; pct: number; ready: boolean }[] }
 export interface MatchStartMsg { t: MsgType.MatchStart; seed: number; mapId: string; turnTime: number; players: MatchPlayerInfo[]; youId: number }
 export interface SnapshotMsg { t: MsgType.Snapshot; s: Snapshot }
-/** `shooter` = id người bắn, `slot` = loại đạn (client vẽ đúng ảnh đạn). */
-export interface ShotMsg { t: MsgType.Shot; result: ShotResultNet; shooter: number; slot: ShotSlot }
+/** `shooter` = id người bắn, `slot` = loại đạn (client vẽ đúng ảnh đạn), `item` = item dùng lượt đó (Dịch chuyển thì vẽ quả dịch chuyển). */
+export interface ShotMsg { t: MsgType.Shot; result: ShotResultNet; shooter: number; slot: ShotSlot; item?: ItemId }
 export interface TerrainMsg { t: MsgType.Terrain; w: number; h: number; rle: Uint8Array }
 export interface AddBotMsg { t: MsgType.AddBot; level: BotLevel; team: 0 | 1 }
 export interface RemoveBotMsg { t: MsgType.RemoveBot; pid: number }

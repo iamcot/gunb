@@ -1,5 +1,5 @@
 import {
-  MsgType, TEAM_NAMES, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
+  MsgType, TEAM_NAMES, isItemId, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
   aimRange, type AimRange, groundYBelow,
 } from '@gunb/shared'
@@ -15,7 +15,7 @@ import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
 import { WeatherView } from './weatherView'
 
-const HELP = '↑↓ góc · ←→ đi · 1/2/3 chọn đạn · giữ Space tích lực, nhả để bắn · WASD / chuột phải kéo camera · Esc: rời trận'
+const HELP = '↑↓ góc · ←→ đi · 1/2/3 chọn đạn · F1–F3 item · giữ Space tích lực, nhả để bắn · WASD / chuột phải kéo camera · Esc: rời trận'
 const EASE = 25               // độ mượt khi kéo vị trí hiển thị về vị trí server (1/s)
 const SNAP_DIST = 150         // lệch hơn mức này thì nhảy thẳng (xe rơi, vào lại)
 const INPUT_MIN_GAP = 0.05    // s giữa hai Input gửi đi
@@ -58,7 +58,7 @@ export class OnlineMode implements Mode {
     this.players = start.players
     this.match = createMatch({
       seed: start.seed, mask: mask.clone(), spawnZones: ctx.map.spawnZones,
-      players: start.players.map(p => ({ name: p.name, team: p.team as Team, mobileId: p.mobileId })),
+      players: start.players.map(p => ({ name: p.name, team: p.team as Team, mobileId: p.mobileId, items: (p.items ?? []).filter(isItemId) })),
     })
     const n = this.match.players.length
     this.tx = new Float64Array(n); this.ty = new Float64Array(n); this.tt = new Float64Array(n)
@@ -71,6 +71,11 @@ export class OnlineMode implements Mode {
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
     this.aim.onFire = (angle, power, slot) => this.fire(angle, power, slot)
+    ctx.hud.onItem = slot => { if (this.canUseItem()) this.net.send({ t: MsgType.UseItem, slot }) }
+  }
+
+  private canUseItem(): boolean {
+    return this.isMyTurn() && !this.playback && !this.aim.charging && this.match.turnItem === null
   }
 
   // ---------- tin từ server ----------
@@ -94,14 +99,14 @@ export class OnlineMode implements Mode {
 
   onStats(stats: PlayerStats[]): void { this.stats = stats }
 
-  onShot(result: ShotResultNet, shooterId: number, slot: number): void {
+  onShot(result: ShotResultNet, shooterId: number, slot: number, item?: unknown): void {
     for (const q of this.match.players) this.shownHp.set(q.id, q.hp)   // máu trước phát bắn; snapshot kế tiếp đã có máu sau
     this.aim.locked = true
     const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
-    }, getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
+    }, item === 'teleport' ? null : getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 
   /** Địa hình đầy đủ từ server (vào lại trận hoặc sau khi hash lệch). Nếu đang phát lại thì chờ xong mới áp. */
@@ -156,7 +161,8 @@ export class OnlineMode implements Mode {
     if (this.isMyTurn() && !this.playback) {
       aim.locked = false
       const p = currentPlayer(m)
-      aim.ssReady = p.ss >= TUNING.ss.max
+      aim.ssReady = p.ss >= TUNING.ss.max && m.turnItem !== 'dual'   // Bắn 2 lần không dùng với SS
+      if (!aim.ssReady && aim.slot === 2) aim.slot = 0
       const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
@@ -180,6 +186,8 @@ export class OnlineMode implements Mode {
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
+    const me = m.players[this.start.youId]
+    ctx.hud.setItems(me?.items ?? null, this.isMyTurn() ? m.turnItem : null, this.canUseItem())
     const cur = currentPlayer(m)
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
     ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
@@ -216,6 +224,8 @@ export class OnlineMode implements Mode {
   }
 
   destroy(): void {
+    this.ctx.hud.onItem = null
+    this.ctx.hud.setItems(null, null, false)
     this.aim.dispose()
     this.turnHud.destroy()
     this.shotBar.destroy()

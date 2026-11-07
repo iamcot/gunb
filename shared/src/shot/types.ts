@@ -1,5 +1,5 @@
 import type { TerrainMask } from '../terrain/mask'
-import type { ShotSlot } from '../shots'
+import type { ShotDef, ShotSlot } from '../shots'
 import type { Wind } from '../wind'
 import type { Weather } from '../weather'
 
@@ -31,6 +31,8 @@ export interface ShotInput {
   skipHash?: boolean
   /** Sự kiện thời tiết của lượt này (từ `weatherForTurn`), hoặc không có. */
   weather?: Weather | null
+  /** Thay đạn của ô `fire.slot` bằng đạn này (item Dịch chuyển). */
+  shotDef?: ShotDef
 }
 
 export type ShotEvent =
@@ -42,6 +44,7 @@ export type ShotEvent =
   | { t: number; kind: 'split'; x: number; y: number }     // đạn tách ở đỉnh quỹ đạo (hiệu ứng)
   | { t: number; kind: 'bolt'; x: number; y: number }      // tia sét giáng xuống (hiệu ứng; vụ nổ đi kèm có event explode riêng)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }
+  | { t: number; kind: 'teleport'; x: number; y: number }   // quả dịch chuyển chạm: người bắn chuyển tới đây
 
 export interface ShotResult {
   /** Mỗi viên đạn một đường, mảng phẳng [t, x, y, t, x, y, ...] (t tính từ lúc bắn); điểm cuối là điểm chạm/tách/ra biên. */

@@ -1,4 +1,5 @@
 import type { MatchPhase, MatchState } from './match'
+import { isItemId } from './items'
 
 /** Ảnh chụp trạng thái động của trận (vị trí, máu, lượt...) gửi từ server xuống client. Thông tin tĩnh (tên, đội, pháo) gửi một lần ở MatchStart. */
 export interface Snapshot {
@@ -10,6 +11,10 @@ export interface Snapshot {
   wind: [number, number]
   /** Mỗi người một dòng: [x, y, facing, tilt, hp, fuel, onGround(0/1), alive(0/1), aimAngle, delay, ss, debuffTurns, debuffAmount, lastActed] */
   p: number[][]
+  /** Ô item từng người ('' = trống/đã dùng). */
+  items: string[][]
+  /** Item đã dùng lượt này ('' = chưa). */
+  turnItem: string
 }
 
 export function snapshotOf(s: MatchState): Snapshot {
@@ -20,6 +25,8 @@ export function snapshotOf(s: MatchState): Snapshot {
       p.body.x, p.body.y, p.body.facing, p.body.tilt, p.hp, p.body.fuel, p.body.onGround ? 1 : 0, p.body.alive ? 1 : 0,
       p.aimAngle, p.delay, p.ss, p.armorDebuff.turns, p.armorDebuff.amount, p.lastActed,
     ]),
+    items: s.players.map(p => p.items.map(i => i ?? '')),
+    turnItem: s.turnItem ?? '',
   }
 }
 
@@ -39,5 +46,8 @@ export function applySnapshot(s: MatchState, snap: Snapshot): void {
     p.body.onGround = onGround === 1; p.body.alive = alive === 1
     p.hp = hp; p.aimAngle = aim; p.delay = delay; p.ss = ss
     p.armorDebuff.turns = dbT; p.armorDebuff.amount = dbA; p.lastActed = last
+    const it = snap.items?.[i]
+    if (it) for (let k = 0; k < p.items.length; k++) { const v = it[k]; p.items[k] = isItemId(v) ? v : null }
   })
+  s.turnItem = isItemId(snap.turnItem) ? snap.turnItem : null
 }

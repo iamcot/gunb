@@ -6,9 +6,9 @@ const ITEMS_KEY = 'gunb.items'
 
 const esc = (s: string): string => s.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)
 
-/** Icon item: ảnh nếu có, không thì ký hiệu chữ (ảnh lỗi thì tự gỡ, lộ ký hiệu bên dưới). */
+/** Icon item: ảnh `assets/ui/items/<id>.png` (tải xong thì ẩn ký hiệu chữ bên dưới); ảnh lỗi thì tự gỡ, lộ ký hiệu chữ. */
 export function itemIconHtml(id: ItemId): string {
-  return `<span class="it-ico it-${id}"><b>${GLYPH[id]}</b><img src="/ui/items/${id}.png" alt="" onerror="this.remove()"></span>`
+  return `<span class="it-ico it-${id}"><b>${GLYPH[id]}</b><img src="/ui/items/${id}.png" alt="" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()"></span>`
 }
 
 /** Dòng mô tả (tooltip): tên, công dụng, delay. */

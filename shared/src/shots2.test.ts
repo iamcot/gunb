@@ -4,7 +4,7 @@ import { simulateShot } from './shot/simulateShot'
 import type { ShotResult, ShotVehicle } from './shot/types'
 import type { ShotSlot } from './shots'
 import { createDefaultTuning } from './tuning'
-import { WEATHER_KINDS, defaultWeatherTuning, weatherForTurn, type Weather } from './weather'
+import { WEATHER_KINDS, defaultWeatherTuning, weatherForRound, type Weather } from './weather'
 
 const W = 2400, H = 1200, G = 800
 const tuning = createDefaultTuning()
@@ -167,10 +167,10 @@ describe('Diều Hâu Giấy (gió ngược)', () => {
 describe('thời tiết', () => {
   const t = defaultWeatherTuning()
   it('xác định theo seed+lượt; chance 0 thì không bao giờ có; chance 1 thì đủ 4 loại', () => {
-    expect(weatherForTurn(5, 3, W, H, t)).toEqual(weatherForTurn(5, 3, W, H, t))
-    for (let i = 1; i < 50; i++) expect(weatherForTurn(9, i, W, H, { ...t, chance: 0 })).toBeNull()
+    expect(weatherForRound(5, 3, W, H, t)).toEqual(weatherForRound(5, 3, W, H, t))
+    for (let i = 1; i < 50; i++) expect(weatherForRound(9, i, W, H, { ...t, chance: 0 })).toBeNull()
     const kinds = new Set<string>()
-    for (let i = 1; i < 200; i++) kinds.add(weatherForTurn(9, i, W, H, { ...t, chance: 1 })!.kind)
+    for (let i = 1; i < 200; i++) kinds.add(weatherForRound(9, i, W, H, { ...t, chance: 1 })!.kind)
     expect([...kinds].sort()).toEqual([...WEATHER_KINDS].sort())
   })
   const base: Weather = { kind: 'whirl', x: 1200, y: 600, hw: 5000, hh: 0, x2: 0, y2: 0 }

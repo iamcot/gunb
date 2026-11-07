@@ -1,11 +1,11 @@
-import { ANGLE_MAX, ANGLE_MIN, TUNING, WEATHER_NAMES, WIND_MAX, weatherForTurn, windMagnitude, type Wind } from '@gunb/shared'
+import { ANGLE_MAX, ANGLE_MIN, ITEM_SLOTS, TUNING, type ItemId, WEATHER_NAMES, WIND_MAX, weatherForRound, windMagnitude, type Wind } from '@gunb/shared'
 import { audio } from './audio'
 import './ui/hud.css'
 import { clearIconHtml, weatherIconHtml } from './weatherView'
+import { itemIconHtml, itemTitle } from './ui/items'
 
 const WIND_LEVELS = 5
 const WEATHER_AHEAD = 5   // số lượt thời tiết sắp tới hiện trên thanh trên
-const ITEM_SLOTS = 3      // ô item (để dành, chưa dùng)
 
 /** Vạch chia của đồng hồ góc (0..90°, tâm (8,56), bán kính 50 trong toạ độ SVG; trục Y hướng xuống). */
 function dialTicks(): string {
@@ -19,7 +19,7 @@ function dialTicks(): string {
 }
 
 /**
- * Thanh trên (`#topbar`): trái = Esc + âm thanh, rồi thời tiết lượt này + các lượt sắp tới; phải = ô item (để dành).
+ * Thanh trên (`#topbar`): trái = Esc + âm thanh, rồi thời tiết lượt này + các lượt sắp tới; phải = ô item F1–F3 (`setItems`; bấm hoặc phím F1–F3 để dùng).
  * Giữa trên (`#hud-top`): báo thời tiết (weatherView.ts gắn vào đầu) rồi vòng gió bên dưới, có báo thời tiết thì vòng gió bị đẩy xuống.
  * HUD HTML (bảng điều khiển dưới cùng): ô thanh đạn (`#hud-shots`, shotBar.ts tự gắn vào), đồng hồ góc, thanh lực (kèm vạch lực
  * lần bắn trước), la bàn gió; gợi ý phím; mũi tên khi đạn bay quá mép trên. Kiểu dáng ở ui/hud.css.
@@ -44,6 +44,11 @@ export class Hud {
   private readonly soundBtn: HTMLElement
   private readonly wxNow: HTMLElement
   private readonly wxNext: HTMLElement
+  private readonly itemEls: HTMLButtonElement[]
+  private itemsKey = ''
+  private itemsUsable = false
+  /** Người chơi bấm ô item (chuột hoặc F1–F3). Mode đang chạy gán. */
+  onItem: ((slot: number) => void) | null = null
   private weatherKey = ''
   private windKey = ''
   private aimKey = ''
@@ -79,12 +84,14 @@ export class Hud {
       <div class="tb-wx"><div class="tb-now" title="Thời tiết lượt này"></div>
         <div class="tb-queue"><span class="cap">Sắp tới</span><div class="tb-next"></div></div></div>
       <div class="tb-space"></div>
-      <div class="tb-items" title="Item (sắp có)">${Array.from({ length: ITEM_SLOTS }, (_, i) => `<div class="tb-slot"><small>F${i + 1}</small></div>`).join('')}</div>`
+      <div class="tb-items">${Array.from({ length: ITEM_SLOTS }, (_, i) => `<button class="tb-slot" data-item="${i}" disabled><small>F${i + 1}</small><span class="ic"></span></button>`).join('')}</div>`
     document.body.appendChild(bar)
     this.topbar = bar
     this.soundBtn = bar.querySelector('.tb-snd')!
     this.wxNow = bar.querySelector('.tb-now')!
     this.wxNext = bar.querySelector('.tb-next')!
+    this.itemEls = Array.from(bar.querySelectorAll<HTMLButtonElement>('.tb-slot'))
+    this.itemEls.forEach((b, i) => b.addEventListener('click', () => { if (this.itemsUsable) this.onItem?.(i) }))
     bar.querySelector('[data-a="esc"]')!.addEventListener('click', () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape' })))
     bar.querySelector('[data-a="sound"]')!.addEventListener('click', () => { audio.unlock(); audio.setMuted(!audio.muted); this.syncSound() })
     this.syncSound()
@@ -129,6 +136,36 @@ export class Hud {
 
   setHelp(text: string): void { this.helpEl.textContent = text }
 
+  /**
+   * Ô item trên thanh trên. `items` = ô của mình (null = trống/đã dùng; cả mảng null = không có ô, ví dụ đang xem người khác),
+   * `used` = item đã dùng lượt này (sáng ô đó lên nếu còn hiện), `usable` = đang lượt mình và chưa dùng item. Gọi mỗi frame được.
+   */
+  setItems(items: readonly (ItemId | null)[] | null, used: ItemId | null, usable: boolean): void {
+    const key = `${items?.join() ?? '-'}|${used}|${usable}`
+    if (key === this.itemsKey) return
+    this.itemsKey = key
+    this.itemsUsable = usable
+    this.itemEls.forEach((b, i) => {
+      const id = items?.[i] ?? null
+      b.disabled = !usable || !id
+      b.classList.toggle('has', !!id)
+      b.title = id ? `${itemTitle(id)} — F${i + 1}` : 'Ô item trống'
+      b.querySelector('.ic')!.innerHTML = id ? itemIconHtml(id) : ''
+    })
+    this.topbar.classList.toggle('item-used', !!used)
+    this.topbar.querySelector('.tb-items')!.setAttribute('data-used', used ? TUNING.items[used].name : '')
+  }
+
+  /** Phím F1..F3 → ô 0..2 (trả true nếu đã xử lý). */
+  itemKey(code: string): boolean {
+    const m = /^F([1-9])$/.exec(code)
+    if (!m) return false
+    const i = Number(m[1]) - 1
+    if (i >= ITEM_SLOTS) return false
+    if (this.itemsUsable && !this.itemEls[i]!.disabled) this.onItem?.(i)
+    return true
+  }
+
   private syncSound(): void {
     this.soundBtn.textContent = audio.muted ? '🔇' : '🔊'
     const old = document.getElementById('mutebtn')
@@ -139,8 +176,8 @@ export class Hud {
    * Thời tiết lượt này + WEATHER_AHEAD lượt sau, suy ra từ seed + số lượt (giống server, shared/weather.ts).
    * null = không có thời tiết (tập bắn). Gọi mỗi frame được (chỉ tính lại khi đổi lượt).
    */
-  setWeatherTurn(seed: number | null, turnNo = 0, mapW = 0, mapH = 0): void {
-    const key = seed === null ? '-' : `${seed}:${turnNo}`
+  setWeatherTurn(seed: number | null, roundNo = 0, mapW = 0, mapH = 0): void {
+    const key = seed === null ? '-' : `${seed}:${roundNo}`
     if (key === this.weatherKey) return
     this.weatherKey = key
     if (seed === null) {
@@ -149,13 +186,13 @@ export class Hud {
       this.wxNext.innerHTML = ''
       return
     }
-    const now = weatherForTurn(seed, turnNo, mapW, mapH, TUNING.weather)
+    const now = weatherForRound(seed, roundNo, mapW, mapH, TUNING.weather)
     this.wxNow.className = 'tb-now' + (now ? ` k-${now.kind}` : ' k-clear')
-    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Lượt này</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Lượt này</small><b>Trời quang</b></span>`
+    this.wxNow.innerHTML = now ? `<i>${weatherIconHtml(now.kind)}</i><span><small>Vòng ${roundNo}</small><b>${WEATHER_NAMES[now.kind]}</b></span>` : `<i>${clearIconHtml()}</i><span><small>Vòng ${roundNo}</small><b>Trời quang</b></span>`
     let html = ''
     for (let k = 1; k <= WEATHER_AHEAD; k++) {
-      const w = weatherForTurn(seed, turnNo + k, mapW, mapH, TUNING.weather)
-      html += w ? `<i class="k-${w.kind}" title="+${k} lượt: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} lượt: trời quang">${clearIconHtml()}</i>`
+      const w = weatherForRound(seed, roundNo + k, mapW, mapH, TUNING.weather)
+      html += w ? `<i class="k-${w.kind}" title="+${k} vòng: ${WEATHER_NAMES[w.kind]}">${weatherIconHtml(w.kind)}</i>` : `<i class="clear" title="+${k} vòng: trời quang">${clearIconHtml()}</i>`
     }
     this.wxNext.innerHTML = html
   }

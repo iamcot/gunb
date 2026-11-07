@@ -145,4 +145,30 @@ describe('Lobby', () => {
     expect(lobby.roomIds()).toHaveLength(1)
     expect((b.last(MsgType.RoomState)!.room as { members: unknown[] }).members).toHaveLength(2)
   })
+
+  it('item: chọn trong phòng (lọc id lạ), mang vào trận, dùng trong lượt của mình', () => {
+    const lobby = new Lobby({ autoTick: false })
+    const a = new Fake(lobby), b = new Fake(lobby)
+    a.hello('An'); b.hello('Bình')
+    a.say({ t: MsgType.CreateRoom, name: 'p', max: 2, mapId: 'thu-nghiem', turnTime: 20 } as never)
+    b.say({ t: MsgType.JoinRoom, roomId: lobby.roomIds()[0]! } as never)
+    a.say({ t: MsgType.SetSeat, items: ['heal', 'bogus', 'windShield', 'dual', 'dual'] } as never)
+    b.say({ t: MsgType.SetSeat, team: 1, items: ['heal'], ready: true } as never)
+    const room = a.last(MsgType.RoomState)!.room as { members: { items: string[] }[] }
+    expect(room.members[0]!.items).toEqual(['heal', 'windShield', 'dual'])
+    a.say({ t: MsgType.StartGame } as never)
+    a.say({ t: MsgType.LoadProgress, pct: 100, ready: true } as never)
+    b.say({ t: MsgType.LoadProgress, pct: 100, ready: true } as never)
+    const start = a.last(MsgType.MatchStart)! as unknown as { players: { items: string[] }[]; youId: number }
+    expect(start.players[0]!.items).toEqual(['heal', 'windShield', 'dual'])
+    const snap0 = a.last(MsgType.Snapshot)!.s as { turnPlayerId: number }
+    const mover = snap0.turnPlayerId === start.youId ? a : b
+    const other = mover === a ? b : a
+    other.say({ t: MsgType.UseItem, slot: 0 } as never)          // không phải lượt: bỏ qua
+    expect((a.last(MsgType.Snapshot)!.s as { turnItem: string }).turnItem).toBe('')
+    mover.say({ t: MsgType.UseItem, slot: 0 } as never)
+    const snap = a.last(MsgType.Snapshot)!.s as { turnItem: string; items: string[][] }
+    expect(snap.turnItem).toBe('heal')
+    expect(snap.items[snap0.turnPlayerId]![0]).toBe('')
+  })
 })

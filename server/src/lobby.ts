@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import {
-  MAX_PLAYERS, MOBILE_IDS, MsgType, decodeMsg, encodeMsg,
-  type BotLevel, type Msg, type RoomInfo, type RoomMember, type RoomStatus, type RoomSummary, type Team,
+  BOT_ITEMS, MAX_PLAYERS, MOBILE_IDS, MsgType, decodeMsg, encodeMsg, sanitizeItems,
+  type BotLevel, type ItemId, type Msg, type RoomInfo, type RoomMember, type RoomStatus, type RoomSummary, type Team,
 } from '@gunb/shared'
 import { MatchRunner, RECONNECT_GRACE_S } from './matchRunner'
 import { listMapIds, loadMap } from './mapLoader'
@@ -9,11 +9,12 @@ import { listMapIds, loadMap } from './mapLoader'
 export const LOAD_TIMEOUT_S = 45
 const MAX_NAME = 20
 const MAX_CHAT = 200
+const RESULTS_HOLD_S = 3      // hết trận: phòng giữ trạng thái "Kết thúc" chừng này giây rồi về chờ
 
 /** Cổng gửi nhị phân tối thiểu để test không cần ws thật. */
 export interface Conn { send(data: Uint8Array): void; close(): void }
 
-interface Member { pid: number; team: Team; mobileId: string; ready: boolean; pct: number; loaded: boolean; bot?: BotLevel; botName?: string }
+interface Member { pid: number; team: Team; mobileId: string; items: ItemId[]; ready: boolean; pct: number; loaded: boolean; bot?: BotLevel; botName?: string }
 
 interface Client { pid: number; name: string; token: string; conn: Conn | null; roomId: string | null; offlineAt: number }
 
@@ -81,6 +82,7 @@ export class Lobby {
       case MsgType.LoadProgress: this.loadProgress(c, m); break
       case MsgType.Input: { const r = this.runnerOf(c); if (r) r.onInput(c.pid, Number(m.dir), Number(m.angle)); break }
       case MsgType.Fire: { const r = this.runnerOf(c); if (r) r.onFire(c.pid, Number(m.angle), Number(m.power), m.slot as never); break }
+      case MsgType.UseItem: this.runnerOf(c)?.onItem(c.pid, Number(m.slot)); break
       case MsgType.Skip: this.runnerOf(c)?.onSkip(c.pid); break
       case MsgType.NeedTerrain: this.runnerOf(c)?.sendTerrain(c.pid); break
     }
@@ -130,9 +132,9 @@ export class Lobby {
 
   private info(r: Room): RoomInfo {
     const members: RoomMember[] = r.members.map(m => {
-      if (m.bot) return { pid: m.pid, name: m.botName!, team: m.team, mobileId: m.mobileId, ready: true, connected: true, bot: m.bot }
+      if (m.bot) return { pid: m.pid, name: m.botName!, team: m.team, mobileId: m.mobileId, ready: true, connected: true, bot: m.bot, items: m.items }
       const c = this.clients.get(m.pid)
-      return { pid: m.pid, name: c?.name ?? '?', team: m.team, mobileId: m.mobileId, ready: m.ready, connected: !!c?.conn }
+      return { pid: m.pid, name: c?.name ?? '?', team: m.team, mobileId: m.mobileId, ready: m.ready, connected: !!c?.conn, items: m.items }
     })
     return { id: r.id, name: r.name, hostPid: r.hostPid, max: r.max, mapId: r.mapId, turnTime: r.turnTime, status: r.status, members }
   }
@@ -159,7 +161,7 @@ export class Lobby {
   private addMember(room: Room, c: Client): void {
     const t0 = room.members.filter(x => x.team === 0).length
     const t1 = room.members.length - t0
-    room.members.push({ pid: c.pid, team: t0 <= t1 ? 0 : 1, mobileId: MOBILE_IDS[0]!, ready: false, pct: 0, loaded: false })
+    room.members.push({ pid: c.pid, team: t0 <= t1 ? 0 : 1, mobileId: MOBILE_IDS[0]!, items: [], ready: false, pct: 0, loaded: false })
     c.roomId = room.id
     this.pushRoom(room)
   }
@@ -214,7 +216,7 @@ export class Lobby {
     const n = this.nextBot++
     const label = { easy: 'Dễ', normal: 'Vừa', hard: 'Khó' }[level]
     room.members.push({
-      pid: -n, team: m.team === 1 ? 1 : 0, mobileId: MOBILE_IDS[n % MOBILE_IDS.length]!, ready: true, pct: 100, loaded: true,
+      pid: -n, team: m.team === 1 ? 1 : 0, mobileId: MOBILE_IDS[n % MOBILE_IDS.length]!, items: [...BOT_ITEMS], ready: true, pct: 100, loaded: true,
       bot: level, botName: `Máy ${n} (${label})`,
     })
     this.pushRoom(room)
@@ -235,6 +237,7 @@ export class Lobby {
     if (!room || !me || room.status !== 'lobby') return
     if (m.team === 0 || m.team === 1) { me.team = m.team; me.ready = false }
     if (typeof m.mobileId === 'string' && (MOBILE_IDS as readonly string[]).includes(m.mobileId)) me.mobileId = m.mobileId
+    if (Array.isArray(m.items) && !(me.ready && room.hostPid !== c.pid)) me.items = sanitizeItems(m.items)
     if (typeof m.ready === 'boolean') me.ready = m.ready
     this.pushRoom(room)
   }
@@ -297,7 +300,7 @@ export class Lobby {
     }
     room.status = 'playing'
     const seed = (Math.random() * 0xffffffff) >>> 0
-    const players = room.members.map(m => ({ pid: m.pid, name: m.bot ? m.botName! : this.clients.get(m.pid)?.name ?? '?', team: m.team, mobileId: m.mobileId, bot: m.bot }))
+    const players = room.members.map(m => ({ pid: m.pid, name: m.bot ? m.botName! : this.clients.get(m.pid)?.name ?? '?', team: m.team, mobileId: m.mobileId, items: m.items, bot: m.bot }))
     const runner = new MatchRunner({
       seed, mask: map.mask, mapId: room.mapId, zones: map.meta.spawnZones, players, turnTime: room.turnTime,
       send: (pid, msg) => this.sendPid(pid, msg),
@@ -314,7 +317,7 @@ export class Lobby {
 
   private onMatchEnd(room: Room): void {
     room.status = 'ended'
-    // cho client xem bảng kết quả vài giây, sau đó đưa cả phòng về sảnh chờ
+    // giữ phòng ở trạng thái 'ended' một lúc (người vào lại vẫn nhận trận), rồi đưa phòng về chờ; client tự giữ bảng kết quả tới khi người chơi bấm Về phòng chờ
     setTimeout(() => {
       if (!this.rooms.has(room.id)) return
       room.runner = null
@@ -325,7 +328,7 @@ export class Lobby {
       if (!room.members.some(m => m.pid === room.hostPid)) room.hostPid = room.members.find(m => !m.bot)!.pid
       this.pushRoom(room)
       this.broadcastList()
-    }, 8000).unref?.()
+    }, RESULTS_HOLD_S * 1000).unref?.()
     this.pushRoom(room)
   }
 

@@ -1,20 +1,21 @@
 import {
   BotDriver, TEAM_NAMES, TUNING, weatherOf, addShotStats, applyAction, newStats, createMatch, currentPlayer, isSettled, windMagnitude,
   type BotCmd, type BotLevel, type MatchState, type ShotSlot, type Team, type TerrainMask,
-  aimRange, type AimRange, groundYBelow,
+  aimRange, type AimRange, groundYBelow, BOT_ITEMS, ITEM_IDS,
 } from '@gunb/shared'
 import { getShotArt, getShotSfx } from './shotArt'
 import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import { ShotPlayback } from './playback'
-import { resultsHtml } from './results'
+import { RESULTS_DELAY_S, resultsHtml, showResults } from './results'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
 import { WeatherView } from './weatherView'
+import { loadSavedItems } from './ui/items'
 
-const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đạn (3 = SS khi đầy) · giữ Space tích lực, nhả để bắn · Esc: menu'
+const HELP = '↑↓ góc · ←→ đi (tốn nhiên liệu) · 1/2/3 chọn đạn (3 = SS khi đầy) · F1–F3 item · giữ Space tích lực, nhả để bắn · Esc: menu'
 const SETTLE_PAUSE = 0.3
 
 /** `botLevel`: có thì đội Đỏ do máy chơi, đội Xanh là người (chung một bàn phím). */
@@ -38,17 +39,22 @@ export class HotseatMode implements Mode {
   private readonly range: AimRange = { min: 0, max: 90 }
   private lastHash: boolean | null = null
   private overlay: HTMLElement | null = null
+  private endWait = RESULTS_DELAY_S
   private readonly stats
   private readonly bot: BotDriver | null
-  private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0 }
+  private readonly botCmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0, item: -1 }
 
   constructor(private readonly ctx: GameCtx, private readonly setup: HotseatSetup, private readonly onNewGame: () => void, private readonly onMenu: () => void) {
     ctx.view.reset()
     this.mask = ctx.view.mask.clone()
     const players = []
+    // item: người dùng bộ đã chọn ở phòng chờ online (chưa chọn thì 3 item đầu), máy dùng bộ của máy
+    const saved = loadSavedItems()
+    const human = saved.length ? saved : ITEM_IDS.slice(0, 3)
     for (let i = 0; i < setup.perTeam * 2; i++) {
       const team = (i % 2) as Team
-      players.push({ name: `${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}${setup.botLevel && team === 1 ? ' (máy)' : ''}`, team, mobileId: setup.mobileIds[i] ?? 'oc-thiet-giap' })
+      const bot = !!setup.botLevel && team === 1
+      players.push({ name: `${TEAM_NAMES[team]} ${Math.floor(i / 2) + 1}${bot ? ' (máy)' : ''}`, team, mobileId: setup.mobileIds[i] ?? 'oc-thiet-giap', items: bot ? BOT_ITEMS : human })
     }
     this.match = createMatch({ seed: (Date.now() & 0x7fffffff) >>> 0, mask: this.mask, spawnZones: ctx.map.spawnZones, players })
     this.stats = newStats(this.match.players.length)
@@ -61,7 +67,19 @@ export class HotseatMode implements Mode {
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
     this.aim.onFire = (_angle, power, slot) => this.fire(power, slot)
+    ctx.hud.onItem = slot => { if (this.canUseItem()) this.useItem(slot) }
     this.beginTurnUi()
+  }
+
+  private isBotTurn(): boolean { return this.bot !== null && currentPlayer(this.match).team === 1 }
+
+  private canUseItem(): boolean {
+    const m = this.match
+    return m.phase === 'aiming' && !this.playback && !this.isBotTurn() && !this.aim.charging && m.turnItem === null
+  }
+
+  private useItem(slot: number): void {
+    applyAction(this.match, { t: 'item', id: this.match.turnPlayerId, slot }, { mask: this.mask })
   }
 
   private beginTurnUi(): void {
@@ -93,7 +111,7 @@ export class HotseatMode implements Mode {
     this.vehicles.fireAnim(p.id)
     this.playback = new ShotPlayback(res.shot, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
-    }, getShotArt(p.mobileId, slot), getShotSfx(p.mobileId, slot))
+    }, m.turnItem === 'teleport' ? null : getShotArt(p.mobileId, slot), getShotSfx(p.mobileId, slot))
   }
 
   update(dt: number): void {
@@ -104,13 +122,15 @@ export class HotseatMode implements Mode {
       const isBot = this.bot !== null && p.team === 1
       aim.locked = isBot
       if (this.setup.allSkills) p.ss = TUNING.ss.max   // debug: bật hết skill
-      aim.ssReady = p.ss >= TUNING.ss.max
+      aim.ssReady = p.ss >= TUNING.ss.max && m.turnItem !== 'dual'   // Bắn 2 lần không dùng với SS
+      if (!aim.ssReady && aim.slot === 2) aim.slot = 0
       const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
       if (isBot) {
         const c = this.botCmd
         this.bot!.step(m, this.mask, TUNING, dt, c)
+        if (c.item >= 0) this.useItem(c.item)
         aim.angle = c.angle
         aim.moveDir = c.dir
         if (c.fire) { this.fire(c.power, c.slot); return }
@@ -137,31 +157,31 @@ export class HotseatMode implements Mode {
             this.settledFor = 0
             applyAction(m, { t: 'endTurn' }, { mask: this.mask })
             this.shownHp.clear()
-            if ((m.phase as string) === 'ended') this.showEnd()
           }
         } else this.settledFor = 0
       }
     }
     if (!this.playback && m.phase !== 'resolving') this.shownHp.clear()
-    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
-    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
+    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
     const cur = currentPlayer(m)
+    this.ctx.hud.setItems(cur.items, m.turnItem, this.canUseItem())
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
     ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
     this.shotBar.setVisible(m.phase !== 'ended')
+    // hết trận: chờ hồn thoát xác bay xong rồi mới bung bảng kết quả
+    if (m.phase === 'ended' && !this.playback && !this.overlay && !this.vehicles.dying && (this.endWait -= dt) <= 0) this.showEnd()
   }
 
   private showEnd(): void {
     const m = this.match
-    const el = document.createElement('div')
-    el.className = 'overlay'
-    el.innerHTML = `<div class="panel" style="max-width:92vw">${resultsHtml(m, this.stats)}<div class="row"><button id="again">Ván mới</button><button id="tomenu">Về menu</button></div></div>`
+    // chơi với máy: người là đội Xanh; 2 người 1 máy thì chỉ ghi đội nào thắng
+    const el = showResults(resultsHtml(m, this.stats, this.bot ? { team: 0 } : null, [{ id: 'tomenu', label: 'Về menu' }, { id: 'again', label: 'Ván mới', cls: 'go big' }]))
     el.querySelector('#again')!.addEventListener('click', () => this.onNewGame())
     el.querySelector('#tomenu')!.addEventListener('click', () => this.onMenu())
-    document.body.appendChild(el)
     this.overlay = el
   }
 
@@ -178,6 +198,8 @@ export class HotseatMode implements Mode {
   }
 
   destroy(): void {
+    this.ctx.hud.onItem = null
+    this.ctx.hud.setItems(null, null, false)
     this.aim.dispose()
     this.turnHud.destroy()
     this.shotBar.destroy()

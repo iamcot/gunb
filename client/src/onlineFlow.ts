@@ -1,5 +1,5 @@
 import {
-  GAME_NAME, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
+  GAME_NAME, ITEM_SLOTS, MAX_PLAYERS, MOBILE_IDS, MsgType, TEAM_NAMES, TUNING, decodeMaskRle, parseMap,
   type BotLevel, type Msg, type MatchStartMsg, type RoomInfo, type RoomSummary, type PlayerStats, type Snapshot, type ShotResultNet, type TerrainMask,
 } from '@gunb/shared'
 import type { GameCtx, Mode } from './ctx'
@@ -7,6 +7,7 @@ import { NetClient, type NetStatus } from './net'
 import { OnlineMode } from './onlineMode'
 import { MAPS, mapCard } from './ui/maps'
 import { fillPortraits } from './ui/portrait'
+import { bindItemPicker, itemIconHtml, itemPickerHtml, loadSavedItems, saveItems } from './ui/items'
 import './ui/lobby.css'
 
 const NAME_KEY = 'gunb.name'
@@ -71,6 +72,7 @@ export class OnlineFlow {
   private myName = ''
   private roomFilter: 'all' | 'wait' = 'all'
   private botLevel: BotLevel = 'normal'
+  private pickTab: 'mob' | 'item' = 'mob'   // ô dưới cột phải: chọn xe / chọn item
   private toastTimer = 0
 
   /** `onBack` null: không có nút Quay lại (trang login là trang đầu tiên). */
@@ -276,7 +278,8 @@ export class OnlineFlow {
           </div>
           <div class="gs-col">
             <div class="gs-box gs-detail" id="mdetail"></div>
-            <div class="gs-box"><h3>Chọn xe</h3><div class="gs-grid" id="mgrid"></div></div>
+            <div class="gs-box gs-pickbox"><div class="gs-ptabs"><button class="gs-tab" data-ptab="mob">Chọn xe</button><button class="gs-tab" data-ptab="item" title="Bấm item để thêm vào ô (được trùng), bấm ô để bỏ. Trong trận: F1–F3 hoặc bấm ô trên thanh trên, mỗi lượt 1 item.">Item <span id="icount"></span></button></div>
+              <div class="gs-grid" id="mgrid"></div><div id="ipick"></div></div>
           </div>
         </div>`, true, `<span class="num" id="rnum"></span><span id="rtitle"></span>`)
       this.shellFor = r.id
@@ -286,10 +289,14 @@ export class OnlineFlow {
         if (e.key === 'Enter' && cin.value.trim()) { this.net?.send({ t: MsgType.Chat, text: cin.value }); cin.value = '' }
       })
       this.renderChat()
+      el.querySelectorAll<HTMLButtonElement>('[data-ptab]').forEach(b => b.addEventListener('click', () => { this.pickTab = b.dataset.ptab === 'item' ? 'item' : 'mob'; this.renderRoom() }))
       // vào phòng mới: dùng lại xe đã chọn lần trước
       const saved = this.savedMobile()
       const mine0 = r.members.find(m => m.pid === this.net?.pid)
       if (r.status === 'lobby' && mine0 && mine0.mobileId !== saved) this.net?.send({ t: MsgType.SetSeat, mobileId: saved })
+      // và bộ item lần trước
+      const savedItems = loadSavedItems()
+      if (r.status === 'lobby' && mine0 && savedItems.join() !== mine0.items.join()) this.net?.send({ t: MsgType.SetSeat, items: savedItems })
     }
     const el = this.el!
     const me = this.net?.pid ?? 0
@@ -320,7 +327,7 @@ export class OnlineFlow {
           : m.ready || m.bot ? '<span class="gs-badge ready">Sẵn sàng</span>' : '<span class="gs-badge">Đang chọn…</span>'
         html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">
           <div class="pic"><img data-portrait="${esc(m.mobileId)}" alt=""><span class="fallback">${esc(def?.name ?? m.mobileId)}</span></div>
-          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${badge}</div>
+          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${badge}</div>
           ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">${ico('remove', '✕', true)}</button>` : ''}</div>`
       }
       el.querySelector(`#team${team}`)!.innerHTML = html
@@ -342,7 +349,16 @@ export class OnlineFlow {
     actions.querySelector('#team')?.addEventListener('click', () => { if (mine) this.net?.send({ t: MsgType.SetSeat, team: mine.team === 0 ? 1 : 0 }) })
     actions.querySelector<HTMLSelectElement>('#blv')?.addEventListener('change', e => { this.botLevel = (e.target as HTMLSelectElement).value as BotLevel })
 
-    this.renderMobilePicker(mine?.mobileId ?? MOBILE_IDS[0], editable && !!mine && !(mine.ready && !isHost))
+    const canPick = editable && !!mine && !(mine.ready && !isHost)
+    this.renderMobilePicker(mine?.mobileId ?? MOBILE_IDS[0], canPick)
+    const ipick = el.querySelector<HTMLElement>('#ipick')!
+    const items = mine?.items ?? []
+    ipick.innerHTML = itemPickerHtml(items, canPick)
+    el.querySelector('#icount')!.textContent = `${items.length}/${ITEM_SLOTS}`
+    el.querySelectorAll<HTMLElement>('[data-ptab]').forEach(b => b.classList.toggle('on', b.dataset.ptab === this.pickTab))
+    el.querySelector<HTMLElement>('#mgrid')!.style.display = this.pickTab === 'mob' ? '' : 'none'   // .gs-grid đặt display nên không dùng `hidden`
+    ipick.style.display = this.pickTab === 'item' ? '' : 'none'
+    bindItemPicker(ipick, items, next => { saveItems(next); this.net?.send({ t: MsgType.SetSeat, items: next }) })
     fillPortraits(el)
     if (this.errText) this.toast(this.errText)
   }
@@ -458,7 +474,7 @@ export class OnlineFlow {
       }
       case MsgType.Snapshot: this.mode?.onSnapshot(m.s as Snapshot); break
       case MsgType.Stats: this.mode?.onStats(m.stats as PlayerStats[]); break
-      case MsgType.Shot: this.mode?.onShot(m.result as ShotResultNet, Number(m.shooter), Number(m.slot)); break
+      case MsgType.Shot: this.mode?.onShot(m.result as ShotResultNet, Number(m.shooter), Number(m.slot), m.item); break
       case MsgType.Error:
         this.errText = String(m.text)
         this.toast(this.errText)
@@ -477,10 +493,13 @@ export class OnlineFlow {
       return
     }
     if (room.status === 'lobby') {
+      // vừa hết trận: để người chơi xem hết bảng kết quả, họ bấm Về phòng chờ (hoặc hết giờ đếm) thì mới chuyển
+      if (this.mode?.holdingResults) { this.mode.roomReady(); return }
       if (this.mode) this.leaveGame()
       if (this.screen !== 'room') this.show('room')
       else this.renderRoom()
     } else if (room.status === 'loading') {
+      if (this.mode) this.leaveGame()   // chủ phòng đã bắt đầu ván mới khi mình còn xem bảng kết quả
       if (this.screen !== 'loading' || this.loadingRoom !== room.id) void this.startLoading(room)
       else this.renderLoading()
     }
@@ -488,7 +507,9 @@ export class OnlineFlow {
   }
 
   private enterGame(start: MatchStartMsg, mask: TerrainMask): void {
-    this.mode = new OnlineMode(this.host.ctx, this.net!, start, mask, () => { this.leaveGame(); this.show('lobby'); this.net?.send({ t: MsgType.ListRooms }) })
+    this.mode = new OnlineMode(this.host.ctx, this.net!, start, mask,
+      () => { this.leaveGame(); this.show('lobby'); this.net?.send({ t: MsgType.ListRooms }) },
+      () => { this.leaveGame(); if (this.room?.status === 'lobby') this.show('room'); else this.show('lobby') })
     this.host.startMode(this.mode)
     this.show('game')
   }

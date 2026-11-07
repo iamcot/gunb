@@ -1,5 +1,5 @@
 import type { TerrainMask } from '../terrain/mask'
-import type { ShotSlot } from '../shots'
+import type { ShotDef, ShotSlot } from '../shots'
 import type { Wind } from '../wind'
 import type { Weather } from '../weather'
 
@@ -29,8 +29,10 @@ export interface ShotInput {
   fire: FireCmd
   /** Bỏ tính hash địa hình sau phát bắn (terrainHashAfter = 0). Dành cho bot thử nhiều phát bắn, nơi chỉ cần sát thương. */
   skipHash?: boolean
-  /** Sự kiện thời tiết của lượt này (từ `weatherForTurn`), hoặc không có. */
+  /** Sự kiện thời tiết của vòng này (từ `weatherForRound`), hoặc không có. */
   weather?: Weather | null
+  /** Thay đạn của ô `fire.slot` bằng đạn này (item Dịch chuyển). */
+  shotDef?: ShotDef
 }
 
 export type ShotEvent =
@@ -43,6 +45,7 @@ export type ShotEvent =
   | { t: number; kind: 'bolt'; x: number; y: number }      // tia sét giáng xuống (hiệu ứng; vụ nổ đi kèm có event explode riêng)
   | { t: number; kind: 'beam'; x: number; y: number; w: number; sky: boolean; x0: number; y0: number }  // tia laser vệ tinh tới (x, y), nửa bề rộng w: sky = từ tận trời thẳng đứng, không thì từ vệ tinh ở (x0, y0) (hiệu ứng; khoét + sát thương có event riêng)
   | { t: number; kind: 'armorBreak'; id: number; turns: number; amount: number }
+  | { t: number; kind: 'teleport'; x: number; y: number }   // quả dịch chuyển chạm: người bắn chuyển tới đây
 
 export interface ShotResult {
   /** Mỗi viên đạn một đường, mảng phẳng [t, x, y, t, x, y, ...] (t tính từ lúc bắn); điểm cuối là điểm chạm/tách/ra biên. */

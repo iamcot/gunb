@@ -1,5 +1,5 @@
 import {
-  MsgType, TEAM_NAMES, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
+  MsgType, TEAM_NAMES, isItemId, TUNING, weatherOf, applySnapshot, createMatch, currentPlayer,
   type MatchPlayerInfo, type MatchStartMsg, type MatchState, type ShotResult, type ShotResultNet, type ShotSlot, type PlayerStats, type Snapshot, type Team, type TerrainMask,
   aimRange, type AimRange, groundYBelow,
 } from '@gunb/shared'
@@ -8,18 +8,19 @@ import { audio } from './audio'
 import type { GameCtx, Mode } from './ctx'
 import { AimInput } from './input'
 import type { NetClient } from './net'
-import { resultsHtml } from './results'
+import { RESULTS_DELAY_S, resultsHtml, showResults } from './results'
 import { ShotPlayback } from './playback'
 import { ShotBar } from './shotBar'
 import { TurnHud } from './turnHud'
 import { VehicleViews } from './vehicleView'
 import { WeatherView } from './weatherView'
 
-const HELP = '↑↓ góc · ←→ đi · 1/2/3 chọn đạn · giữ Space tích lực, nhả để bắn · WASD / chuột phải kéo camera · Esc: rời trận'
+const HELP = '↑↓ góc · ←→ đi · 1/2/3 chọn đạn · F1–F3 item · giữ Space tích lực, nhả để bắn · WASD / chuột phải kéo camera · Esc: rời trận'
 const EASE = 25               // độ mượt khi kéo vị trí hiển thị về vị trí server (1/s)
 const SNAP_DIST = 150         // lệch hơn mức này thì nhảy thẳng (xe rơi, vào lại)
 const INPUT_MIN_GAP = 0.05    // s giữa hai Input gửi đi
 const INPUT_KEEPALIVE = 0.25
+const RESULTS_AUTO_BACK_S = 15 // bảng kết quả: tự về phòng chờ sau chừng này giây
 
 /**
  * Chế độ online: server giữ trận thật; client giữ một bản sao (MatchState) cập nhật bằng Snapshot, phát lại Shot,
@@ -51,14 +52,18 @@ export class OnlineMode implements Mode {
   private lastDir = -9
   private lastAngle = -9
   private overlay: HTMLElement | null = null
+  private endWait = RESULTS_DELAY_S
+  private backT = RESULTS_AUTO_BACK_S
+  private roomBack = false   // server đã đưa phòng về trạng thái chờ
+  private wantBack = false   // người chơi đã bấm Về phòng chờ, đợi server
   private stats: PlayerStats[] | null = null
   private readonly players: MatchPlayerInfo[]
 
-  constructor(private readonly ctx: GameCtx, private readonly net: NetClient, private readonly start: MatchStartMsg, mask: TerrainMask, private readonly onLeave: () => void) {
+  constructor(private readonly ctx: GameCtx, private readonly net: NetClient, private readonly start: MatchStartMsg, mask: TerrainMask, private readonly onLeave: () => void, private readonly onBack: () => void) {
     this.players = start.players
     this.match = createMatch({
       seed: start.seed, mask: mask.clone(), spawnZones: ctx.map.spawnZones,
-      players: start.players.map(p => ({ name: p.name, team: p.team as Team, mobileId: p.mobileId })),
+      players: start.players.map(p => ({ name: p.name, team: p.team as Team, mobileId: p.mobileId, items: (p.items ?? []).filter(isItemId) })),
     })
     const n = this.match.players.length
     this.tx = new Float64Array(n); this.ty = new Float64Array(n); this.tt = new Float64Array(n)
@@ -71,6 +76,11 @@ export class OnlineMode implements Mode {
     ctx.hud.setHelp(HELP)
     this.turnHud.setVisible(true)
     this.aim.onFire = (angle, power, slot) => this.fire(angle, power, slot)
+    ctx.hud.onItem = slot => { if (this.canUseItem()) this.net.send({ t: MsgType.UseItem, slot }) }
+  }
+
+  private canUseItem(): boolean {
+    return this.isMyTurn() && !this.playback && !this.aim.charging && this.match.turnItem === null
   }
 
   // ---------- tin từ server ----------
@@ -94,14 +104,14 @@ export class OnlineMode implements Mode {
 
   onStats(stats: PlayerStats[]): void { this.stats = stats }
 
-  onShot(result: ShotResultNet, shooterId: number, slot: number): void {
+  onShot(result: ShotResultNet, shooterId: number, slot: number, item?: unknown): void {
     for (const q of this.match.players) this.shownHp.set(q.id, q.hp)   // máu trước phát bắn; snapshot kế tiếp đã có máu sau
     this.aim.locked = true
     const shooter = this.match.players[shooterId] ?? currentPlayer(this.match)
     this.vehicles.fireAnim(shooter.id)
     this.playback = new ShotPlayback(result as ShotResult, this.ctx.view, this.ctx.fx, {
       onDamage: (id, _amount, hpAfter) => { this.shownHp.set(id, hpAfter); this.vehicles.hitAnim(id) },
-    }, getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
+    }, item === 'teleport' ? null : getShotArt(shooter.mobileId, slot), getShotSfx(shooter.mobileId, slot))
   }
 
   /** Địa hình đầy đủ từ server (vào lại trận hoặc sau khi hash lệch). Nếu đang phát lại thì chờ xong mới áp. */
@@ -156,7 +166,8 @@ export class OnlineMode implements Mode {
     if (this.isMyTurn() && !this.playback) {
       aim.locked = false
       const p = currentPlayer(m)
-      aim.ssReady = p.ss >= TUNING.ss.max
+      aim.ssReady = p.ss >= TUNING.ss.max && m.turnItem !== 'dual'   // Bắn 2 lần không dùng với SS
+      if (!aim.ssReady && aim.slot === 2) aim.slot = 0
       const ar = aimRange(this.range, TUNING.mobiles[p.mobileId]!, p.body.facing, p.body.tilt)
       aim.setRange(ar.min, ar.max)   // dải góc đổi theo dốc (xe slopeAim)
       aim.update(dt)
@@ -175,16 +186,38 @@ export class OnlineMode implements Mode {
       if (this.pendingMask) { ctx.view.applyMask(this.pendingMask); this.pendingMask = null }
     }
     if (!this.playback) this.shownHp.clear()
-    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.turnNo}`)
-    ctx.hud.setWeatherTurn(m.seed, m.turnNo, ctx.map.width, ctx.map.height)
+    this.weather.set(weatherOf(m, ctx.map.width, ctx.map.height), `${m.seed}:${m.roundNo}`)
+    ctx.hud.setWeatherTurn(m.seed, m.roundNo, ctx.map.width, ctx.map.height)
     this.weather.update(dt)
     this.vehicles.update(dt, m, this.shownHp)
     this.turnHud.update(m)
+    const me = m.players[this.start.youId]
+    ctx.hud.setItems(me?.items ?? null, this.isMyTurn() ? m.turnItem : null, this.canUseItem())
     const cur = currentPlayer(m)
     this.shotBar.update(TUNING.mobiles[cur.mobileId]!, aim.slot, cur.ss, TUNING.ss.max)
     ctx.hud.setWind(m.wind, TUNING.mobiles[cur.mobileId]!.shots[aim.slot].windFactor)
     this.shotBar.setVisible(m.phase !== 'ended')
-    if (m.phase === 'ended' && !this.playback && !this.overlay) this.showEnd()
+    // hết trận: chờ phát bắn cuối + hồn thoát xác bay xong rồi mới bung bảng kết quả
+    if (m.phase === 'ended' && !this.playback && !this.overlay && !this.vehicles.dying && (this.endWait -= dt) <= 0) this.showEnd()
+    if (this.overlay) this.tickBack(dt)
+  }
+
+  /** Đã hết trận và chưa rời màn chơi: phòng về trạng thái chờ thì không kéo người chơi ra ngay mà để họ xem hết bảng kết quả. */
+  get holdingResults(): boolean { return this.match.phase === 'ended' }
+
+  /** Server báo phòng đã về trạng thái chờ. */
+  roomReady(): void {
+    this.roomBack = true
+    if (this.wantBack) this.onBack()
+  }
+
+  private tickBack(dt: number): void {
+    const btn = this.overlay!.querySelector<HTMLButtonElement>('#back')
+    if (!btn) return
+    if (this.wantBack) { btn.textContent = 'Đang về phòng…'; btn.disabled = true; return }
+    this.backT -= dt
+    if (this.backT <= 0) { this.wantBack = true; if (this.roomBack) { this.onBack(); return } }
+    btn.textContent = `Về phòng chờ (${Math.max(0, Math.ceil(this.backT))})`
   }
 
   private sendInput(dt: number): void {
@@ -199,11 +232,14 @@ export class OnlineMode implements Mode {
 
   private showEnd(): void {
     const m = this.match
-    const el = document.createElement('div')
-    el.className = 'overlay'
-    el.innerHTML = `<div class="panel" style="max-width:92vw">${resultsHtml(m, this.stats)}<p>Tự về phòng chờ (giữ nguyên đội) sau vài giây…</p><div class="row"><button id="leave">Rời phòng</button></div></div>`
+    const you = this.start.youId
+    const el = showResults(resultsHtml(m, this.stats, { team: m.players[you]!.team, id: you },
+      [{ id: 'leave', label: 'Rời phòng' }, { id: 'back', label: `Về phòng chờ (${RESULTS_AUTO_BACK_S})`, cls: 'go big' }], 'Giữ nguyên đội và xe khi về phòng'))
     el.querySelector('#leave')!.addEventListener('click', () => { this.net.send({ t: MsgType.LeaveRoom }); this.onLeave() })
-    document.body.appendChild(el)
+    el.querySelector('#back')!.addEventListener('click', () => {
+      this.wantBack = true
+      if (this.roomBack) this.onBack()
+    })
     this.overlay = el
   }
 
@@ -216,6 +252,8 @@ export class OnlineMode implements Mode {
   }
 
   destroy(): void {
+    this.ctx.hud.onItem = null
+    this.ctx.hud.setItems(null, null, false)
     this.aim.dispose()
     this.turnHud.destroy()
     this.shotBar.destroy()

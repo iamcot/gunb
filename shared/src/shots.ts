@@ -27,6 +27,8 @@ export type Behavior =
    *  `from: 'shooter'` = vệ tinh ở trên đầu xe bắn `altitude` px, tia chéo từ đó tới điểm nhắm. Mỗi tia rộng 2×`halfWidth` px, đi thẳng qua điểm nhắm
    *  và đốt xuyên `depth` px đất tính từ chỗ chạm đất đầu tiên (khoét rãnh dọc theo tia), gây `damage` lên mọi xe nằm trên tia (giảm theo khoảng cách tới tia). */
   | { kind: 'satellite'; from: 'sky' | 'shooter'; altitude: number; delay: number; count: number; spacing: number; interval: number; halfWidth: number; depth: number; damage: number }
+  /** Item Dịch chuyển: chạm đất/xe thì không nổ, chỉ báo event `teleport` (chỗ đứng mới của người bắn). */
+  | { kind: 'teleport' }
 
 export interface ShotDef {
   name: string

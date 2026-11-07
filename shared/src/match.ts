@@ -3,8 +3,9 @@ import { aimRange, type AimRange } from './aim'
 import { clamp, hashSeed, mulberry32 } from './math'
 import { createBody, stepMobile, type MobileBody, type MoveResult } from './physics/mobileMove'
 import { simulateShot, sanitizeFire } from './shot/simulateShot'
-import { weatherForTurn, type Weather } from './weather'
+import { weatherForRound, type Weather } from './weather'
 import type { ShotResult, ShotVehicle } from './shot/types'
+import { ITEM_SLOTS, type ItemId } from './items'
 import type { ShotSlot } from './shots'
 import type { MobileDef } from './mobiles'
 import type { MapFile } from './map/types'
@@ -30,6 +31,7 @@ export interface PlayerState {
   aimAngle: number
   ss: number                                  // thanh SS, 0..tuning.ss.max
   armorDebuff: { turns: number; amount: number }   // giảm giáp còn `turns` lượt của chính người này
+  items: (ItemId | null)[]                    // ô item F1..F3; null = trống / đã dùng
 }
 
 /** aiming: người đến lượt đang ngắm/đi; resolving: đã bắn/bỏ lượt, chờ phát lại + rơi xong rồi `endTurn`; ended: hết trận. */
@@ -41,10 +43,18 @@ export interface MatchState {
   wind: Wind
   turnPlayerId: number
   turnNo: number
+  /** Vòng hiện tại (từ 1). Hết một vòng = mọi xe còn sống đều đã bắn ít nhất một lượt kể từ đầu vòng; gió + thời tiết chỉ đổi khi sang vòng mới. */
+  roundNo: number
+  /** Số lượt (turnNo) lúc vòng hiện tại bắt đầu. */
+  roundStart: number
   turnTimeLeft: number
   phase: MatchPhase
   /** Đội thắng; -1 = hoà; null = chưa hết trận. */
   winner: Team | -1 | null
+  /** Item người đến lượt đã dùng trong lượt này (mỗi lượt tối đa 1). */
+  turnItem: ItemId | null
+  /** Quả dịch chuyển đã chạm: áp ở `tick` đầu tiên của pha resolving (sau khi phát lại xong) để xe không nhảy trước khi đạn tới. */
+  pendingTeleport: { id: number; x: number; y: number } | null
 }
 
 export type Action =
@@ -52,6 +62,7 @@ export type Action =
   | { t: 'move'; id: number; dir: -1 | 0 | 1; dt: number }
   | { t: 'fire'; id: number; angle: number; power: number; slot: ShotSlot }
   | { t: 'skip'; id: number }
+  | { t: 'item'; id: number; slot: number }
   | { t: 'tick'; dt: number }
   | { t: 'endTurn' }
 
@@ -67,7 +78,7 @@ export interface CreateMatchOptions {
   seed: number
   mask: TerrainMask
   spawnZones: MapFile['spawnZones']
-  players: { name: string; team: Team; mobileId: string }[]
+  players: { name: string; team: Team; mobileId: string; items?: readonly ItemId[] }[]
   tuning?: Tuning
 }
 
@@ -81,9 +92,9 @@ export const mobileOf = (p: PlayerState, t: Tuning = TUNING): MobileDef => t.mob
 const out: MoveResult = { moved: 0, damage: 0, died: false }
 const aimRng: AimRange = { min: 0, max: 90 }
 
-/** Gió của lượt `turnNo`: sinh từ seed của trận nên mọi nơi tính ra như nhau. */
-export function windForTurn(seed: number, turnNo: number): Wind {
-  return makeWind(mulberry32((seed ^ Math.imul(turnNo, 0x9e3779b1)) >>> 0))
+/** Gió của vòng `roundNo`: sinh từ seed của trận nên mọi nơi tính ra như nhau. */
+export function windForRound(seed: number, roundNo: number): Wind {
+  return makeWind(mulberry32((seed ^ Math.imul(roundNo, 0x9e3779b1)) >>> 0))
 }
 
 export function createMatch(opts: CreateMatchOptions): MatchState {
@@ -114,16 +125,17 @@ export function createMatch(opts: CreateMatchOptions): MatchState {
     const facing: 1 | -1 = p.team === 0 ? 1 : -1
     const body = createBody(x, (gy < 0 ? opts.mask.height : gy) - r, r, facing, def.speedMul)
     body.tilt = slopeAt(opts.mask, x, body.y + r - 2 * t.move.stepUp, r * 0.8)
-    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 } }
+    return { id: i, name: p.name, team: p.team, mobileId: p.mobileId, body, hp: def.hp, maxHp: def.hp, armor: def.armor, delay: 0, lastActed: -1, aimAngle: clamp(45, aimRange(aimRng, def, body.facing, body.tilt).min, aimRng.max), ss: 0, armorDebuff: { turns: 0, amount: 0 },
+      items: Array.from({ length: ITEM_SLOTS }, (_, k) => p.items?.[k] ?? null) }
   })
-  const state: MatchState = { seed: opts.seed, players, wind: windForTurn(opts.seed, 1), turnPlayerId: 0, turnNo: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null }
+  const state: MatchState = { seed: opts.seed, players, wind: windForRound(opts.seed, 1), turnPlayerId: 0, turnNo: 1, roundNo: 1, roundStart: 1, turnTimeLeft: t.turn.timeS, phase: 'aiming', winner: null, turnItem: null, pendingTeleport: null }
   state.turnPlayerId = pickNext(players)!.id
   players[state.turnPlayerId]!.body.fuel = t.mobiles[players[state.turnPlayerId]!.mobileId]!.fuel
   return state
 }
 
-/** Sự kiện thời tiết của lượt hiện tại (null nếu không có). */
-export const weatherOf = (s: MatchState, mapW: number, mapH: number, t: Tuning = TUNING): Weather | null => weatherForTurn(s.seed, s.turnNo, mapW, mapH, t.weather)
+/** Sự kiện thời tiết của vòng hiện tại (null nếu không có). */
+export const weatherOf = (s: MatchState, mapW: number, mapH: number, t: Tuning = TUNING): Weather | null => weatherForRound(s.seed, s.roundNo, mapW, mapH, t.weather)
 
 export const currentPlayer = (s: MatchState): PlayerState => s.players[s.turnPlayerId]!
 
@@ -181,29 +193,40 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       if (a.id !== s.turnPlayerId || s.phase !== 'aiming') return { ok: false }
       const p = currentPlayer(s)
       if (!p.body.onGround) return { ok: false }
-      if (a.slot === 2 && p.ss < t.ss.max) return { ok: false }   // SS chưa đầy
+      if (a.slot === 2 && (p.ss < t.ss.max || s.turnItem === 'dual')) return { ok: false }   // SS chưa đầy / không bắn đôi SS
       const def = t.mobiles[p.mobileId]!
       const fire = sanitizeFire({ angle: a.angle, power: a.power, slot: a.slot }, def, p.body.facing, p.body.tilt)
-      const shot = simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire, weather: weatherOf(s, env.mask.width, env.mask.height, t) }, t)
+      const tele = s.turnItem === 'teleport'
+      const shotDef = tele ? t.items.teleport.shot : undefined
+      const weather = weatherOf(s, env.mask.width, env.mask.height, t)
+      const sim = (): ShotResult => simulateShot({ mask: env.mask, vehicles: vehicles(s), wind: s.wind, shooterId: p.id, facing: p.body.facing, tilt: p.body.tilt, fire, weather, shotDef }, t)
+      let shot = sim()
       env.mask.data.set(shot.maskAfter.data)
       if (fire.slot === 2) p.ss = 0
-      for (const e of shot.events) {
-        if (e.kind === 'damage') {
-          const target = s.players[e.id]!
-          target.hp = e.hpAfter
-          if (target.hp <= 0) target.body.alive = false
-          if (target.team !== p.team) {
-            p.ss = Math.min(t.ss.max, p.ss + e.amount * t.ss.perDamageDealt)
-            target.ss = Math.min(t.ss.max, target.ss + e.amount * t.ss.perDamageTaken)
-          }
-        } else if (e.kind === 'armorBreak') {
-          s.players[e.id]!.armorDebuff = { turns: e.turns, amount: e.amount }
-        }
+      applyShotEvents(s, p, shot, t)
+      if (s.turnItem === 'dual' && p.hp > 0) {
+        // phát thứ 2: cùng góc/lực, trên địa hình + máu sau phát 1; ghép nối tiếp vào một ShotResult để phát lại liền mạch
+        const second = sim()
+        env.mask.data.set(second.maskAfter.data)
+        applyShotEvents(s, p, second, t)
+        shot = appendShot(shot, second, shot.endT + t.items.dual.gap)
       }
       p.aimAngle = fire.angle
-      p.delay += def.shots[fire.slot].delay
+      p.delay += (shotDef ?? def.shots[fire.slot]).delay
       s.phase = 'resolving'
       return { ok: true, shot }
+    }
+    case 'item': {
+      if (a.id !== s.turnPlayerId || s.phase !== 'aiming' || s.turnItem !== null) return { ok: false }
+      const p = currentPlayer(s)
+      const id = p.items[a.slot]
+      if (!id || p.hp <= 0) return { ok: false }
+      p.items[a.slot] = null
+      s.turnItem = id
+      p.delay += t.items[id].delay
+      if (id === 'heal') p.hp = Math.min(p.maxHp, p.hp + t.items.heal.amount)
+      else if (id === 'windShield') { s.wind.x = 0; s.wind.y = 0 }
+      return { ok: true }
     }
     case 'skip': {
       if (a.id !== s.turnPlayerId || s.phase !== 'aiming') return { ok: false }
@@ -212,6 +235,7 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       return { ok: true }
     }
     case 'tick': {
+      if (s.pendingTeleport && s.phase === 'resolving') { teleport(s, s.pendingTeleport, env.mask); s.pendingTeleport = null }
       for (const p of s.players) {
         if (p.hp <= 0) continue
         stepMobile(p.body, 0, a.dt, env.mask, t, out)
@@ -238,6 +262,10 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       const ended = currentPlayer(s)
       ended.lastActed = s.turnNo
       if (ended.armorDebuff.turns > 0) ended.armorDebuff.turns--
+      // Lá chắn gió chỉ có tác dụng trong lượt của người dùng: trả lại gió của vòng cho các lượt sau
+      if (s.turnItem === 'windShield') s.wind = windForRound(s.seed, s.roundNo)
+      s.turnItem = null
+      if (s.pendingTeleport) { teleport(s, s.pendingTeleport, env.mask); s.pendingTeleport = null }
       s.turnNo++
       const w = winnerOf(s)
       if (w !== null) { s.winner = w; s.phase = 'ended'; return { ok: true } }
@@ -252,7 +280,12 @@ export function applyAction(s: MatchState, a: Action, env: MatchEnv): ActionResu
       s.turnPlayerId = next.id
       next.body.fuel = t.mobiles[next.mobileId]!.fuel
       next.ss = Math.min(t.ss.max, next.ss + t.ss.perTurn)
-      s.wind = windForTurn(s.seed, s.turnNo)
+      // mọi xe còn sống đã bắn trong vòng này → sang vòng mới, đổi gió (thời tiết suy từ roundNo)
+      if (s.players.every(p => p.hp <= 0 || p.lastActed >= s.roundStart)) {
+        s.roundNo++
+        s.roundStart = s.turnNo
+        s.wind = windForRound(s.seed, s.roundNo)
+      }
       s.turnTimeLeft = t.turn.timeS
       s.phase = 'aiming'
       return { ok: true }
@@ -267,4 +300,49 @@ function applyBodyResult(p: PlayerState): void {
     p.hp = Math.max(0, p.hp - Math.round(out.damage * (1 - p.armor)))
     if (p.hp <= 0) p.body.alive = false
   }
+}
+
+/** Áp sự kiện của một phát bắn lên trận: máu, SS, giảm giáp, dịch chuyển (để dành). */
+function applyShotEvents(s: MatchState, p: PlayerState, shot: ShotResult, t: Tuning): void {
+  for (const e of shot.events) {
+    if (e.kind === 'damage') {
+      const target = s.players[e.id]!
+      target.hp = e.hpAfter
+      if (target.hp <= 0) target.body.alive = false
+      if (target.team !== p.team) {
+        p.ss = Math.min(t.ss.max, p.ss + e.amount * t.ss.perDamageDealt)
+        target.ss = Math.min(t.ss.max, target.ss + e.amount * t.ss.perDamageTaken)
+      }
+    } else if (e.kind === 'armorBreak') {
+      s.players[e.id]!.armorDebuff = { turns: e.turns, amount: e.amount }
+    } else if (e.kind === 'teleport') {
+      s.pendingTeleport = { id: p.id, x: e.x, y: e.y }
+    }
+  }
+}
+
+/** Nối phát `b` vào sau phát `a`, lệch thời gian `offset` s (item Bắn 2 lần). Hash/mask lấy theo phát sau. */
+export function appendShot(a: ShotResult, b: ShotResult, offset: number): ShotResult {
+  return {
+    paths: [...a.paths, ...b.paths.map(path => path.map((v, i) => (i % 3 === 0 ? v + offset : v)))],
+    events: [...a.events, ...b.events.map(e => ({ ...e, t: e.t + offset }))],
+    endT: offset + b.endT,
+    terrainHashAfter: b.terrainHashAfter,
+    maskAfter: b.maskAfter,
+  }
+}
+
+/** Đặt xe lên chỗ quả dịch chuyển chạm: ngay trên mặt đất của cột đó, để rơi/bám đất như thường (không tính sát thương rơi). */
+function teleport(s: MatchState, tp: { id: number; x: number; y: number }, mask: TerrainMask): void {
+  const p = s.players[tp.id]
+  if (!p || p.hp <= 0) return
+  const b = p.body
+  const x = clamp(Math.round(tp.x), b.radius, mask.width - 1 - b.radius)
+  let y = Math.min(mask.height - 1, Math.round(tp.y))
+  while (y > 0 && mask.isSolid(x, y - 1)) y--
+  b.x = x
+  b.y = y - b.radius - 1
+  b.vy = 0
+  b.onGround = false
+  b.fallStartBottom = b.y + b.radius
 }

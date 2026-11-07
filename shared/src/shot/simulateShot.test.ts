@@ -73,13 +73,12 @@ describe('simulateShot: đạn xuất phát từ đầu nòng', () => {
 })
 
 describe('simulateShot: behavior', () => {
-  it('burst (Diều Hâu, đạn 2): 2 quả bắn cách nhau interval, 2 vụ nổ, 2 đường đạn', () => {
+  it('burst: 2 quả bắn cách nhau interval, 2 vụ nổ, 2 đường đạn', () => {
     const t = createDefaultTuning()
-    const r = simulateShot(input({ vehicles: [veh(1, 200, { mobileId: 'dieu-hau-giay' }), veh(2, 1000)], fire: { angle: 45, power: 60, slot: 1 } }), t)
+    const r = simulateShot(input({ fire: { angle: 45, power: 60, slot: 1 }, shotDef: { name: 't', maxSpeed: 780, windFactor: 1, gravityFactor: 1, blastRadius: 50, carveRadius: 30, damage: 280, delay: 0, behavior: { kind: 'burst', count: 2, interval: 0.25, angleStepDeg: 0 } } }), t)
     expect(r.paths).toHaveLength(2)
     expect(explodes(r)).toHaveLength(2)
-    const iv = (t.mobiles['dieu-hau-giay']!.shots[1].behavior as { interval: number }).interval
-    expect(r.paths[1]![0]).toBeCloseTo(iv, 1)
+    expect(r.paths[1]![0]).toBeCloseTo(0.25, 1)
     expect(explodes(r)[1]!.t).toBeGreaterThan(explodes(r)[0]!.t)
   })
 

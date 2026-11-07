@@ -342,3 +342,20 @@ describe('tandem (Ốc Thiết Giáp đ2)', () => {
     expect(hits[1]!.amount).toBeGreaterThan(hits[0]!.amount)
   })
 })
+
+describe('curve / boomerang (Diều Hâu Giấy)', () => {
+  const far = (r: ShotResult): { maxX: number; endX: number } => {
+    const pa = r.paths[0]!; let maxX = 0
+    for (let i = 1; i < pa.length; i += 3) maxX = Math.max(maxX, pa[i]! - 400)
+    return { maxX, endX: pa[pa.length - 2]! - 400 }
+  }
+  it('bắn góc cao, lực mạnh: bay ra rồi quay lại phía người bắn', () => {
+    const f = far(shoot('dieu-hau-giay', 0, 75, 100))
+    expect(f.maxX).toBeGreaterThan(100)
+    expect(f.endX).toBeLessThan(f.maxX - 100)
+  })
+  it('bắn thấp: vẫn bay tới trước; đạn 2 là 4 quả', () => {
+    expect(far(shoot('dieu-hau-giay', 0, 20, 70)).endX).toBeGreaterThan(100)
+    expect(shoot('dieu-hau-giay', 1, 45, 60).paths).toHaveLength(4)
+  })
+})

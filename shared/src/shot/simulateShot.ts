@@ -362,6 +362,7 @@ export function simulateShot(input: ShotInput, tuning: Tuning = TUNING): ShotRes
       if (W.kind === 'whirl' && Math.abs(s.p.x - W.x) <= W.hw) say -= wt.whirl.lift
       else if (W.kind === 'mirror' && Math.abs(s.p.x - W.x) <= W.hw) { sax = ax - 2 * wax; say = ay - 2 * way }
     }
+    if (def.curve) sax -= input.facing * def.curve.returnAccel * Math.min(1, (t - s.tStart) / def.curve.rampS)   // boomerang: kéo ngược về phía người bắn
     if (beh.kind === 'ghost') { stepGhost(s, t, sax, say); return }
     const r = stepProjectile(s.p, sax, say, DT_SIM, mask)
     s.p.t = t

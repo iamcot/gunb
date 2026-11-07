@@ -318,10 +318,11 @@ export class OnlineFlow {
 
     for (const team of [0, 1] as const) {
       const members = r.members.filter(m => m.team === team)
-      const slots = Math.max(perTeam, members.length)
+      const slots = Math.max(Math.floor(MAX_PLAYERS / 2), members.length)   // luôn hiện đủ ô; ô vượt số người của phòng bị khoá
       let html = `<img class="logo" src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="${esc(TEAM_NAMES[team])}" title="${esc(TEAM_NAMES[team])}" onerror="this.remove()"><div class="slots">`
       for (let i = 0; i < slots; i++) {
         const m = members[i]
+        if (!m && i >= perTeam) { html += `<div class="gs-slot emptyslot locked"><div>🔒</div></div>`; continue }
         if (!m) {
           html += `<div class="gs-slot emptyslot"><div>Chỗ trống${isHost && editable ? `<br><button class="gs-btn sm" data-bot="${team}">${ico('add-bot', '＋')}Thêm máy</button>` : ''}</div></div>`
           continue

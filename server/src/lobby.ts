@@ -325,7 +325,7 @@ export class Lobby {
       room.runner = null
       room.status = 'lobby'
       room.members = room.members.filter(m => m.bot || !!this.clients.get(m.pid)?.conn)
-      for (const m of room.members) { m.ready = false; m.rolled = undefined }
+      for (const m of room.members) { m.ready = !!m.bot; m.rolled = undefined }   // máy luôn sẵn sàng
       if (!room.members.some(m => !m.bot)) return this.closeRoom(room)
       if (!room.members.some(m => m.pid === room.hostPid)) room.hostPid = room.members.find(m => !m.bot)!.pid
       this.pushRoom(room)

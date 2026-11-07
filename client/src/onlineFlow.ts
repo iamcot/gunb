@@ -15,6 +15,7 @@ const esc = (s: string): string => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<
 const MOBILE_KEY = 'gunb.mobile'          // xe chọn lần trước (chỉ là tiện ích giao diện)
 const LOGO_URL = '/ui/logo.png'
 /** Icon nút đã có ảnh trong `assets/ui/icons/` (thêm tên khi có file mới). Chưa có ảnh thì dùng ký tự thay thế. */
+const BUBBLE_MS = 8000   // bóng thoại hiện bấy nhiêu ms
 const ICONS = new Set(['create', 'quick-join', 'refresh', 'ready', 'start', 'switch-team', 'leave', 'add-bot', 'chat', 'remove'])
 /** `only`: nút chỉ có icon (không kèm chữ). */
 const ico = (name: string, fallback = '', only = false): string =>
@@ -72,7 +73,8 @@ export class OnlineFlow {
   private myName = ''
   private roomFilter: 'all' | 'wait' = 'all'
   private botLevel: BotLevel = 'normal'
-  private pickTab: 'mob' | 'item' = 'mob'   // ô dưới cột phải: chọn xe / chọn item
+  private readonly bubbles = new Map<string, { text: string; at: number }>()   // câu chat gần nhất của mỗi người (theo tên), hiện thành bóng thoại trên khung
+  private bubbleTimer: ReturnType<typeof setTimeout> | null = null
   private toastTimer = 0
 
   /** `onBack` null: không có nút Quay lại (trang login là trang đầu tiên). */
@@ -270,17 +272,17 @@ export class OnlineFlow {
     const r = this.room
     if (!r) return
     if (this.shellFor !== r.id) {
-      const el = this.panel(`<div class="gs-body">
-          <div class="gs-col">
-            <div class="gs-box gs-info" id="rinfo"></div>
-            <div class="gs-teams"><div class="gs-team t0" id="team0"></div><div class="gs-mid" id="ractions"></div><div class="gs-team t1" id="team1"></div></div>
-            <div class="gs-box gs-chat"><div class="log" id="gschat"></div><div class="row">${ico('chat')}<input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi"></div></div>
+      const el = this.panel(`<div class="gs-body gs-roomx">
+          <div class="gs-arena">
+            <div class="gs-team t0" id="team0"></div>
+            <div class="gs-mid"><div class="gs-box gs-info" id="rinfo"></div><div class="gs-actions" id="ractions"></div></div>
+            <div class="gs-team t1" id="team1"></div>
           </div>
-          <div class="gs-col">
-            <div class="gs-box gs-detail" id="mdetail"></div>
-            <div class="gs-box gs-pickbox"><div class="gs-ptabs"><button class="gs-tab" data-ptab="mob">Chọn xe</button><button class="gs-tab" data-ptab="item" title="Bấm item để thêm vào ô (được trùng), bấm ô để bỏ. Trong trận: F1–F3 hoặc bấm ô trên thanh trên, mỗi lượt 1 item.">Item <span id="icount"></span></button></div>
-              <div class="gs-grid" id="mgrid"></div><div id="ipick"></div></div>
+          <div class="gs-bottom">
+            <div class="gs-box gs-carbox"><div class="gs-grid" id="mgrid"></div><div class="gs-detail" id="mdetail"></div></div>
+            <div class="gs-box gs-itembox"><div class="ttl" title="Bấm item để thêm vào ô (được trùng), bấm ô để bỏ. Trong trận: F1–F3 hoặc bấm ô trên thanh trên, mỗi lượt 1 item.">Item <span id="icount"></span></div><div id="ipick"></div></div>
           </div>
+          <div class="gs-chatbar">${ico('chat')}<input id="chatin" maxlength="200" placeholder="Nhắn tin, Enter để gửi (hiện thành bóng thoại trên khung của bạn)"></div>
         </div>`, true, `<span class="num" id="rnum"></span><span id="rtitle"></span>`)
       this.shellFor = r.id
       const cin = el.querySelector<HTMLInputElement>('#chatin')!
@@ -288,8 +290,6 @@ export class OnlineFlow {
         e.stopPropagation()
         if (e.key === 'Enter' && cin.value.trim()) { this.net?.send({ t: MsgType.Chat, text: cin.value }); cin.value = '' }
       })
-      this.renderChat()
-      el.querySelectorAll<HTMLButtonElement>('[data-ptab]').forEach(b => b.addEventListener('click', () => { this.pickTab = b.dataset.ptab === 'item' ? 'item' : 'mob'; this.renderRoom() }))
       // vào phòng mới: dùng lại xe đã chọn lần trước
       const saved = this.savedMobile()
       const mine0 = r.members.find(m => m.pid === this.net?.pid)
@@ -314,7 +314,7 @@ export class OnlineFlow {
     for (const team of [0, 1] as const) {
       const members = r.members.filter(m => m.team === team)
       const slots = Math.max(perTeam, members.length)
-      let html = `<h4><img src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="" onerror="this.remove()">${esc(TEAM_NAMES[team])}</h4>`
+      let html = `<h4><img src="/ui/team-${team === 0 ? 'blue' : 'red'}.png" alt="" onerror="this.remove()"><span>${esc(TEAM_NAMES[team])}</span></h4><div class="slots">`
       for (let i = 0; i < slots; i++) {
         const m = members[i]
         if (!m) {
@@ -326,12 +326,15 @@ export class OnlineFlow {
         const badge = !m.connected ? '<span class="gs-badge off">Mất kết nối</span>'
           : m.pid === r.hostPid ? '<span class="gs-badge host">Chủ phòng</span>'
           : m.ready || m.bot ? '<span class="gs-badge ready">Sẵn sàng</span>' : '<span class="gs-badge">Đang chọn…</span>'
-        html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">
-          <div class="pic">${isRand ? '<img src="/ui/random-mobile.png" alt="?">' : `<img data-portrait="${esc(m.mobileId)}" alt="">`}<span class="fallback">${esc(isRand ? 'Ngẫu nhiên' : def?.name ?? m.mobileId)}</span></div>
-          <div class="who"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(isRand ? 'Ngẫu nhiên (bốc khi vào game)' : def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}${badge}</div>
+        const bub = this.bubbles.get(m.name)
+        const bubble = bub && Date.now() - bub.at < BUBBLE_MS ? `<div class="bubble">${esc(bub.text)}</div>` : ''
+        html += `<div class="gs-slot${m.pid === me ? ' me' : ''}">${bubble}
+          <div class="pic"><img class="pilot" src="/pilots/nam/stand.png" alt="" onerror="this.remove()">${isRand ? '<img class="car" src="/ui/random-mobile.png" alt="?">' : `<img class="car" data-portrait="${esc(m.mobileId)}" alt="">`}<span class="fallback">${esc(isRand ? 'Ngẫu nhiên' : def?.name ?? m.mobileId)}</span></div>
+          <div class="plate"><b>${esc(m.name)}${m.pid === me ? ' (bạn)' : ''}</b><small>${esc(isRand ? 'Ngẫu nhiên' : def?.name ?? m.mobileId)}${m.bot ? ` · Máy ${BOT_LABEL[m.bot] ?? ''}` : ''}</small>${badge}</div>
+          ${m.items?.length ? `<span class="gs-mitems">${m.items.map(itemIconHtml).join('')}</span>` : ''}
           ${m.bot && isHost && editable ? `<button class="gs-btn sm rm" data-rm="${m.pid}" title="Bỏ máy">${ico('remove', '✕', true)}</button>` : ''}</div>`
       }
-      el.querySelector(`#team${team}`)!.innerHTML = html
+      el.querySelector(`#team${team}`)!.innerHTML = html + '</div>'
     }
     el.querySelectorAll<HTMLButtonElement>('[data-rm]').forEach(b => b.addEventListener('click', () => this.net?.send({ t: MsgType.RemoveBot, pid: Number(b.dataset.rm) })))
     el.querySelectorAll<HTMLButtonElement>('[data-bot]').forEach(b => b.addEventListener('click', () =>
@@ -356,9 +359,6 @@ export class OnlineFlow {
     const items = mine?.items ?? []
     ipick.innerHTML = itemPickerHtml(items, canPick)
     el.querySelector('#icount')!.textContent = `${items.length}/${ITEM_SLOTS}`
-    el.querySelectorAll<HTMLElement>('[data-ptab]').forEach(b => b.classList.toggle('on', b.dataset.ptab === this.pickTab))
-    el.querySelector<HTMLElement>('#mgrid')!.style.display = this.pickTab === 'mob' ? '' : 'none'   // .gs-grid đặt display nên không dùng `hidden`
-    ipick.style.display = this.pickTab === 'item' ? '' : 'none'
     bindItemPicker(ipick, items, next => { saveItems(next); this.net?.send({ t: MsgType.SetSeat, items: next }) })
     fillPortraits(el)
     if (this.errText) this.toast(this.errText)
@@ -396,13 +396,6 @@ export class OnlineFlow {
     let id: string | null = null
     try { id = localStorage.getItem(MOBILE_KEY) } catch { /* bỏ qua */ }
     return id === RANDOM_MOBILE || (id && TUNING.mobiles[id] && ALL_MOBILE_IDS.includes(id)) ? id! : MOBILE_IDS[0]
-  }
-
-  private renderChat(): void {
-    const log = this.el?.querySelector('#gschat')
-    if (!log) return
-    log.innerHTML = this.chat.length === 0 ? '<div class="sys">Chào mừng vào phòng! Nhắn tin cho cả phòng ở ô bên dưới.</div>' : this.chat.slice(-30).map(l => `<div>${l}</div>`).join('')
-    log.scrollTop = log.scrollHeight
   }
 
   private renderLoading(): void {
@@ -458,7 +451,10 @@ export class OnlineFlow {
       case MsgType.RoomState: this.onRoomState(m.room as RoomInfo | null); break
       case MsgType.ChatMsg:
         this.chat.push(`<b>${esc(String(m.from))}:</b> ${esc(String(m.text))}`)
-        this.renderChat()
+        this.bubbles.set(String(m.from), { text: String(m.text), at: Date.now() })
+        if (this.bubbleTimer) clearTimeout(this.bubbleTimer)
+        this.bubbleTimer = setTimeout(() => { this.bubbleTimer = null; if (this.screen === 'room') this.renderRoom() }, BUBBLE_MS + 100)
+        if (this.screen === 'room') this.renderRoom()
         break
       case MsgType.Loading:
         for (const x of m.members as { pid: number; pct: number; ready: boolean }[]) this.loadPct.set(x.pid, x)

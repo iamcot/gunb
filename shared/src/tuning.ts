@@ -45,9 +45,9 @@ export function createDefaultTuning(): Tuning {
     windScale: WIND_SCALE,
     powerChargeS: POWER_CHARGE_S,
     mobiles: createDefaultMobiles(),
-    move: { speed: 90, maxSlopeDeg: MAX_SLOPE_DEG, stepUp: 14, snapDown: 8, fallDamagePerPx: FALL_DAMAGE_PER_PX, fallSafePx: 24, delayPerPx: 0.2 },
-    turn: { timeS: TURN_TIME_S, timeoutPenalty: 150 },
-    ss: { max: 100, perDamageDealt: 0.6, perDamageTaken: 0.4, perTurn: 8 },
+    move: { speed: 90, maxSlopeDeg: MAX_SLOPE_DEG, stepUp: 14, snapDown: 8, fallDamagePerPx: FALL_DAMAGE_PER_PX, fallSafePx: 24, delayPerPx: 0.5 },
+    turn: { timeS: TURN_TIME_S, timeoutPenalty: 375 },
+    ss: { max: 100, perDamageDealt: 0.06, perDamageTaken: 0.04, perTurn: 8 },
     weather: defaultWeatherTuning(),
     items: defaultItemsTuning(),
   }

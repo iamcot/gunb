@@ -21,12 +21,12 @@ export class Practice {
 
   constructor(private readonly mask: TerrainMask) {
     const sx = this.flattestX(150, 600)
-    this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 100, armor: 0 }
+    this.shooter = { id: 1, mobileId: 'oc-thiet-giap', x: sx, y: this.groundCenterY(sx, SHOOTER_R), radius: SHOOTER_R, hp: 1000, armor: 0 }
     this.vehicles = [this.shooter]
     this.container.addChild(this.shooterGfx, this.barrelGfx)
     ;[450, 800, 1200].forEach((dx, i) => {
       const x = sx + dx
-      const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 100, armor: 0 }
+      const v: ShotVehicle = { id: 2 + i, mobileId: 'oc-thiet-giap', x, y: this.groundCenterY(x, TARGET_R), radius: TARGET_R, hp: 1000, armor: 0 }
       const g = new Graphics()
       const label = new Text({ text: '100', style: { fill: 0xffffff, fontSize: 14, fontWeight: '700', stroke: { color: 0x000000, width: 3 } } })
       label.anchor.set(0.5, 1)
@@ -66,7 +66,7 @@ export class Practice {
   }
 
   resetHp(): void {
-    for (const v of this.vehicles) v.hp = 100
+    for (const v of this.vehicles) v.hp = 1000
     this.drawTargets()
   }
 

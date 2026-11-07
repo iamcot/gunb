@@ -53,14 +53,14 @@ export class TuningPanel {
       { label: 'SS: cộng theo sát thương gây ra', get: () => TUNING.ss.perDamageDealt, set: v => { TUNING.ss.perDamageDealt = v }, step: 0.1 },
       { label: 'SS: cộng theo sát thương nhận', get: () => TUNING.ss.perDamageTaken, set: v => { TUNING.ss.perDamageTaken = v }, step: 0.1 },
       { label: 'SS: cộng mỗi lượt', get: () => TUNING.ss.perTurn, set: v => { TUNING.ss.perTurn = v }, step: 1 },
-      { label: `${m.name}: máu`, get: () => m.hp, set: v => { m.hp = v }, step: 5 },
+      { label: `${m.name}: máu`, get: () => m.hp, set: v => { m.hp = v }, step: 50 },
       { label: `${m.name}: giáp (0..1)`, get: () => m.armor, set: v => { m.armor = v }, step: 0.05 },
       { label: `${m.name}: nhiên liệu`, get: () => m.fuel, set: v => { m.fuel = v }, step: 10 },
       { label: `${SLOT_NAMES[this.slot]}: tốc độ tối đa`, get: () => sh().maxSpeed, set: v => { sh().maxSpeed = v }, step: 20 },
       { label: `${SLOT_NAMES[this.slot]}: ảnh hưởng gió`, get: () => sh().windFactor, set: v => { sh().windFactor = v }, step: 0.1 },
       { label: `${SLOT_NAMES[this.slot]}: bán kính sát thương`, get: () => sh().blastRadius, set: v => { sh().blastRadius = v }, step: 5 },
       { label: `${SLOT_NAMES[this.slot]}: bán kính hố`, get: () => sh().carveRadius, set: v => { sh().carveRadius = v }, step: 5 },
-      { label: `${SLOT_NAMES[this.slot]}: sát thương`, get: () => sh().damage, set: v => { sh().damage = v }, step: 5 },
+      { label: `${SLOT_NAMES[this.slot]}: sát thương`, get: () => sh().damage, set: v => { sh().damage = v }, step: 10 },
       { label: `${SLOT_NAMES[this.slot]}: delay`, get: () => sh().delay, set: v => { sh().delay = v }, step: 10 },
     ]
   }

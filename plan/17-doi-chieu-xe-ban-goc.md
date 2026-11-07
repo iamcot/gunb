@@ -177,3 +177,26 @@ Mỗi task: viết test cho cơ chế mới → `npm run typecheck` + `npm test`
 4. Mìn nằm chờ (C3) làm cuối cùng.
 
 Việc code bắt đầu từ A0, thực hiện ở thread/PR riêng, không gộp vào PR plan này.
+
+## 7. Hình ảnh và âm thanh cần chuẩn bị (theo thứ tự làm)
+
+Quy ước đã có: ảnh đạn PNG nền trong suốt, vẽ **nằm ngang, đầu chĩa phải**, đặt ở `assets/mobiles/<id>/shot-N.png` kèm `shots.json` (độ dài vẽ, `fire`, `boom`); hiệu ứng chung ở `assets/fx/`; âm `.ogg` ở cùng thư mục xe. Mọi file mới phải vào `assets/CREDITS.json`. Code chạy được khi thiếu file (vẽ bằng code), nên chuẩn bị muộn hơn code cũng không chặn việc.
+
+| Task | Hình cần | Âm cần |
+|---|---|---|
+| **B1** Ốc SS, Diều SS | Ốc: `shot-3` dạng nhỏ + `shot-3-big` (đạn phình to, cùng phong cách). Diều: `shot-3` boomerang thường + `shot-3-gold` (hoá vàng, sáng) | Tiếng "phình to" (nhỏ), tiếng hoá vàng (chuông ngắn, sáng) |
+| **B5** Bọ Lôi | **Xe vẽ lại nếu cần**: thân + nòng, nòng ở phía đầu, hướng phải (prompt `plan/06-prompt-xe.md`). Đạn: `shot-1`, `shot-2` cầu điện, `shot-3` mũi tên điện. FX: tia sét dọc từ trời (dải dọc ghép được, có thể dùng lại `storm-bolt.png`), tia sét chéo, dư chấn (tia điện nhỏ quanh xe), vòng điện cho SS | Sét giáng (đã có `bolt-3.ogg`, thêm 1 bản ngắn cho tia chéo), dư chấn (rè điện nhẹ) |
+| **B4** Chũi Khoan | `shot-2` mũi chũi lặn, `shot-3` mini-chũi xuyên đất (hơi mờ viền). FX: đất bật ra chỗ lặn và chỗ trồi (dùng lại `dirt-*.png`, thêm 1 nắp đất nứt nếu muốn) | Tiếng lặn xuống đất, tiếng trồi lên (đất vỡ), tiếng xuyên đất của mini-chũi |
+| **B3** Sứa Đèn (tia) | `shot-1` **một tia laser** (dải dài, đầu sáng, đuôi mờ), `shot-2` **hai tia hai màu khác nhau** (hai ảnh `shot-2a`, `shot-2b`), `shot-3` quả cầu sáng lớn. FX: nổ laser, vòng xoá khiên, vệt khiên bị vỡ | Tiếng bắn tia (1, 2 tia), tiếng 2 tia chụm lại, nổ laser, khiên vỡ |
+| **B3** Rùa Thành (nước) | `shot-1` dòng nước, `shot-2a/2b` hai dòng nước, `shot-3` quả nước lớn + `water-small` (quả nhỏ sau khi tách). FX: bắn tung nước, vòng nước tách | Tiếng nước bắn, tiếng nước tách thành 6 (B7), nổ nước |
+| **B3** Cua Lăn đ1 | `shot-1` đĩa (xoay), 3 đĩa dùng chung một ảnh | Tiếng đĩa xoay (vù), nổ đất nặng |
+| **B6** Diều Hâu Giấy | `shot-1/2` boomerang (xoay được quanh tâm; đạn 2 dùng chung ảnh cho 4 quả) | Tiếng boomerang xoay vù vù (loop ngắn), tiếng quay về |
+| **B2** Ốc đ2 | `shot-2` đầu trước + `shot-2b` đầu sau (tách được 2 hình) | Nổ đầu 1 (nhẹ), nổ đầu 2 (nặng) |
+| **B8** Cua SS | Con lớn bò: 2–4 khung chạy hoặc ảnh xoay nhẹ | Tiếng bước chân nặng |
+| **C1** Khiên | Icon khiên nhỏ cho thanh máu (có thể vẽ bằng code) | Tiếng trúng khiên, khiên vỡ |
+| **C2** Long Ngư Cơ | Đạn: cầu lửa nhỏ (đ1), cầu lửa (đ2, dùng chung), quả cầu đỏ (SS), **rồng con** (hướng phải, lật được). FX: lửa nổ | Tiếng lửa bắn, rồng con hiện ra, rồng con lao vào |
+| **C2** Kỳ Lân Sắt | Kiếm lớn dẫn đường, kiếm nhỏ (nhiều), kiếm SS | Tiếng kiếm bay, kiếm cắm |
+| **C3** Cua mìn | Mìn: nằm yên, râu đỏ quay (2 khung), đang bò | Bíp khi phát hiện địch, nổ |
+| **C4** Cú Thiên Văn | Dùng ảnh #11 + thêm tia SS quét 5 tia | Dùng âm #11 |
+
+**Làm trước:** B1, B5, B4, B3 (khớp thứ tự code). Xe Bọ Lôi quay đầu nòng là việc cần ảnh sớm nhất vì ảnh cũ vẽ bắn bằng đuôi.

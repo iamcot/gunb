@@ -36,7 +36,7 @@ describe('item', () => {
   it('Hồi máu: không quá máu tối đa, cộng delay, ô đã dùng thành trống, mỗi lượt chỉ 1 item', () => {
     const { s, mask } = make(['heal', 'heal', 'dual'])
     const p = currentPlayer(s)
-    p.hp = p.maxHp - 10
+    p.hp = p.maxHp - 100
     const d0 = p.delay
     expect(applyAction(s, { t: 'item', id: p.id, slot: 0 }, { mask }).ok).toBe(true)
     expect(p.hp).toBe(p.maxHp)
@@ -120,7 +120,7 @@ describe('item', () => {
   it('máy dùng Hồi máu đầu lượt khi đã mất đủ máu', () => {
     const { s, mask } = make(['heal', 'windShield', 'dual'])
     const p = currentPlayer(s)
-    p.hp = p.maxHp - 50
+    p.hp = p.maxHp - 500
     const bot = new BotDriver('easy')
     const cmd: BotCmd = { angle: 45, dir: 0, fire: false, power: 0, slot: 0, item: -1 }
     bot.step(s, mask, tuning, 1 / 30, cmd)
